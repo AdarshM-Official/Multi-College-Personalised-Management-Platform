@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Faculty Directory | {{ request.college.name }}{% endblock %}
+
+{% block content %}
+<div class="card card-premium border-0 mb-4">
+    <div class="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-bold mb-1 text-primary">Institution Faculty</h5>
+            <p class="small text-muted mb-0">Navigate through degree wings and subjects to find faculty.</p>
+        </div>
+        <a href="{% url 'add_teacher' %}" class="btn btn-premium btn-sm">
+            <i class="bi bi-person-plus-fill me-1"></i> Add Teacher
+        </a>
+    </div>
+</div>
+
+<div class="accordion accordion-flush premium-accordion" id="degreeAccordion">
+    {% for group in hierarchy %}
+    <div class="accordion-item border-0 mb-3 shadow-sm rounded-4 overflow-hidden">
+        <h2 class="accordion-header">
+            <button class="accordion-button collapsed fw-bold d-flex align-items-center py-3 px-4" type="button" 
+                    data-bs-toggle="collapse" data-bs-target="#degree-{{ group.dept.id }}">
+                <div class="bg-primary-soft text-primary rounded-circle p-2 me-3" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;">
+                    <i class="bi bi-mortarboard-fill"></i>
+                </div>
+                <span>{{ group.dept.name }}</span>
+                <span class="badge bg-light text-muted ms-auto me-3 small fw-normal">{{ group.specs|length }} Subjects</span>
+            </button>
+        </h2>
+        <div id="degree-{{ group.dept.id }}" class="accordion-collapse collapse" data-bs-parent="#degreeAccordion">
+            <div class="accordion-body p-3 bg-light-soft">
+                
+                <!-- Inner Subjects Accordion -->
+                <div class="accordion accordion-flush" id="specAccordion-{{ group.dept.id }}">
+                    {% for s_item in group.specs %}
+                    <div class="accordion-item border-0 mb-2 rounded-3 shadow-xs overflow-hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed py-2 px-3 bg-white" type="button" 
+                                    data-bs-toggle="collapse" data-bs-target="#spec-{{ group.dept.id }}-{{ forloop.counter }}">
+                                <i class="bi bi-journal-check text-success me-2"></i>
+                                <span class="small fw-bold text-dark">{% if s_item.spec %}{{ s_item.spec.name }}{% else %}General Staff{% endif %}</span>
+                                <span class="badge bg-success-soft text-success ms-auto me-2 x-small">{{ s_item.teachers.count }} Faculty</span>
+                            </button>
+                        </h2>
+                        <div id="spec-{{ group.dept.id }}-{{ forloop.counter }}" class="accordion-collapse collapse">
+                            <div class="accordion-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <tbody class="bg-white">
+                                            {% for teacher in s_item.teachers %}
+                                            <tr class="border-light">
+                                                <td class="ps-4" style="width: 40px;">
+                                                    {% if teacher.profile_photo %}
+                                                        <img src="{{ teacher.profile_photo.url }}" class="avatar-xs rounded-circle object-fit-cover" alt="Photo">
+                                                    {% else %}
+                                                        <div class="avatar-xs bg-light text-dark rounded-circle d-flex align-items-center justify-content-center x-small fw-bold">
+                                                            {{ teacher.user.first_name|first }}{{ teacher.user.last_name|first }}
+                                                        </div>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <div class="small fw-bold text-dark">{{ teacher.user.get_full_name }}</div>
+                                                    <div class="x-small text-muted">{{ teacher.qualification }}</div>
+                                                </td>
+                                                <td class="text-end pe-4">
+                                                    <div class="btn-group">
+                                                        <a href="{% url 'teacher_detail' teacher.id %}" class="btn btn-sm btn-icon text-muted" title="View Profile"><i class="bi bi-eye x-small"></i></a>
+                                                        <a href="{% url 'edit_teacher' teacher.id %}" class="btn btn-sm btn-icon text-muted" title="Edit Profile"><i class="bi bi-pencil x-small"></i></a>
+                                                        <a href="{% url 'delete_teacher' teacher.id %}" class="btn btn-sm btn-icon text-danger" title="Remove Account" onclick="return confirm('Remove faculty account permanently?')"><i class="bi bi-trash x-small"></i></a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="card border-dashed p-5 text-center bg-white rounded-4">
+        <i class="bi bi-person-vcard display-4 text-muted mb-3"></i>
+        <h5 class="fw-bold">No Faculty Recorded</h5>
+        <p class="text-muted small">Once you onboard teachers, they will appear here organized by degree and subject.</p>
+        <div class="mt-3">
+            <a href="{% url 'add_teacher' %}" class="btn btn-premium btn-sm">Add First Teacher</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+.premium-accordion .accordion-button:not(.collapsed) {
+    background-color: #fff;
+    color: var(--bs-primary);
+    box-shadow: none;
+}
+.premium-accordion .accordion-button:after {
+    background-size: 0.8rem;
+}
+.bg-light-soft {
+    background-color: #f8fafc;
+}
+.shadow-xs {
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.avatar-xs {
+    width: 28px;
+    height: 28px;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Faculty Portal | {{ stats.dept }}{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card card-premium p-4 border-0 bg-primary text-white">
+            <div class="d-flex justify-content-between mb-3">
+                <i class="bi bi-file-earmark-text fs-2"></i>
+                <span class="badge bg-white text-primary">Live</span>
+            </div>
+            <h3 class="fw-bold mb-1">08</h3>
+            <p class="opacity-75 small mb-0">Active Assignments</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-premium p-4 border-0">
+            <div class="d-flex justify-content-between mb-3">
+                <div class="bg-primary-soft p-2 rounded-3"><i class="bi bi-people-fill text-primary"></i></div>
+            </div>
+            <h3 class="fw-bold mb-1">42</h3>
+            <p class="text-muted small mb-0">Assigned Students</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-premium p-4 border-0">
+            <div class="d-flex justify-content-between mb-3">
+                <div class="bg-warning-soft p-2 rounded-3"><i class="bi bi-chat-dots-fill text-warning"></i></div>
+                <span class="badge bg-danger">3 New</span>
+            </div>
+            <h3 class="fw-bold mb-1">15</h3>
+            <p class="text-muted small mb-0">Pending Reviews</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-7">
+        <div class="card card-premium border-0 h-100">
+            <div class="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0">Recent Assignments</h5>
+                <a href="{% url 'create_assignment' %}" class="btn btn-premium btn-sm">Create New</a>
+            </div>
+            <div class="card-body p-4 pt-0">
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle">
+                        <thead>
+                            <tr class="text-muted smaill">
+                                <th>Assignment Title</th>
+                                <th>Submissions</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <p class="mb-0 fw-bold">Intro to Quantum Physics</p>
+                                    <span class="small text-muted">Posted 2 days ago</span>
+                                </td>
+                                <td>35/42</td>
+                                <td><span class="badge bg-success-soft text-success px-3">Marking</span></td>
+                            </tr>
+                            <!-- Add dynamic assignments here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-5">
+        <div class="card card-premium border-0 h-100">
+            <div class="card-header bg-white border-0 p-4">
+                <h5 class="fw-bold mb-0">Daily Management</h5>
+            </div>
+            <div class="card-body p-4 pt-0">
+                <div class="p-4 rounded-4 border bg-primary text-white mb-3">
+                    <h6 class="fw-bold mb-2"><i class="bi bi-calendar-check me-2"></i>Mark Attendance</h6>
+                    <p class="small opacity-75 mb-3">Record the presence for today's classroom sessions.</p>
+                    <a href="{% url 'mark_attendance' %}" class="btn btn-light btn-sm w-100 fw-bold text-primary">Open Attendance Log</a>
+                </div>
+                
+                <div class="p-4 rounded-4 border bg-dark text-white">
+                    <h6 class="fw-bold mb-2"><i class="bi bi-journal-text me-2"></i>Grade Book</h6>
+                    <p class="small opacity-75 mb-3">Update marks and provide feedback for submitted work.</p>
+                    <a href="#" class="btn btn-outline-light btn-sm w-100">View Grade Sheets</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

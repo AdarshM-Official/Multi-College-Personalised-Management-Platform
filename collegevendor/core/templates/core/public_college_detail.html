@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ college.name }} | Institution Profile{% endblock %}
+
+{% block content %}
+<!-- Institutional Header -->
+<div class="bg-premium py-5 pt-5 mb-0 overflow-hidden position-relative">
+    <div class="container py-4 position-relative z-1">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <div class="shadow-lg p-3 bg-white rounded-5 mb-3 mb-md-0">
+                    {% if college.logo %}
+                        <img src="{{ college.logo.url }}" alt="Logo" class="rounded" style="width: 120px; height: 120px; object-fit: contain;">
+                    {% else %}
+                        <div class="display-1 text-primary"><i class="bi bi-mortarboard-fill"></i></div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col text-white ms-md-4">
+                <div class="hero-badge bg-white-soft text-white border border-white-opaque mb-3">
+                    Est. {% if college.established_year %}{{ college.established_year }}{% else %}Registry 2024{% endif %}
+                </div>
+                <h1 class="display-4 fw-bold mb-2">{{ college.name }}</h1>
+                <p class="lead opacity-75 mb-0"><i class="bi bi-geo-alt-fill me-2"></i> {{ college.address }}</p>
+            </div>
+        </div>
+    </div>
+    <!-- Abstract Shapes -->
+    <div class="decoration-circle-1"></div>
+    <div class="decoration-circle-2"></div>
+</div>
+
+<div class="container mt-n5 position-relative z-2">
+    <div class="row g-4">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            
+            <!-- Gallery Slider / Grid -->
+            {% if college.images.exists %}
+            <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+                <div id="collegeGallery" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        {% for img in college.images.all %}
+                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                            <img src="{{ img.image.url }}" class="d-block w-100 object-fit-cover" style="height: 450px;" alt="...">
+                            {% if img.caption %}
+                            <div class="carousel-caption d-none d-md-block bg-dark-soft rounded-pill px-4 mx-auto" style="width: fit-content;">
+                                <p class="mb-0 small fw-bold">{{ img.caption }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if college.images.count > 1 %}
+                    <button class="carousel-control-prev" type="button" data-bs-target="#collegeGallery" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon rounded-circle bg-dark p-3" aria-hidden="true"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#collegeGallery" data-bs-slide="next">
+                        <span class="carousel-control-next-icon rounded-circle bg-dark p-3" aria-hidden="true"></span>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- About Section -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4 p-4 p-md-5">
+                <h4 class="fw-bold mb-4">About Our Institution</h4>
+                <div class="fs-5 text-muted mb-4" style="line-height: 1.8;">
+                    {{ college.description|linebreaks|default:"This institution is dedicated to academic excellence, fostering a community of research, innovation, and holistic development. We provide a state-of-the-art learning environment supported by experienced faculty and modern infrastructure." }}
+                </div>
+
+                <div class="row g-4 mt-2">
+                    <div class="col-md-6 border-start border-4 border-primary ps-4">
+                        <div class="x-small text-uppercase text-muted fw-bold mb-1">Contact Email</div>
+                        <div class="fw-bold text-dark">{{ college.contact_email }}</div>
+                    </div>
+                    <div class="col-md-6 border-start border-4 border-primary ps-4">
+                        <div class="x-small text-uppercase text-muted fw-bold mb-1">Official Website</div>
+                        <div class="fw-bold"><a href="{{ college.website }}" class="text-primary text-decoration-none">{{ college.website|default:"mgt-panel.edu" }}</a></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Achievements -->
+            {% if college.achievements.exists %}
+            <div class="card border-0 shadow-sm rounded-4 mb-4 p-4 p-md-5">
+                <h4 class="fw-bold mb-4">Milestones & Excellence</h4>
+                <div class="list-group list-group-flush">
+                    {% for ach in college.achievements.all|dictsortreversed:"date" %}
+                    <div class="list-group-item px-0 py-4 border-light">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="bg-primary-soft p-3 rounded-4 mt-1">
+                                <i class="bi bi-trophy-fill text-primary"></i>
+                            </div>
+                            <div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h5 class="fw-bold mb-0 text-dark">{{ ach.title }}</h5>
+                                    <span class="badge bg-light text-muted rounded-pill px-3 py-2 small fw-normal">{% if ach.date %}{{ ach.date|date:"Y" }}{% else %}Registry{% endif %}</span>
+                                </div>
+                                <p class="text-muted mb-0 lh-lg">{{ ach.description }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Academic Offerings -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4 p-4 p-md-5">
+                <h4 class="fw-bold mb-4">Academic Offerings</h4>
+                <p class="text-muted small mb-4">Browse our currently established degree wings and specialized course subjects.</p>
+                
+                <div class="accordion accordion-flush" id="academicAccordion">
+                    {% for dept in departments %}
+                    <div class="accordion-item border rounded-3 mb-3 overflow-hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-bold py-3" type="button" data-bs-toggle="collapse" data-bs-target="#dept-{{ dept.id }}">
+                                <i class="bi bi-mortarboard-fill text-primary me-2"></i> {{ dept.name }}
+                                <span class="badge bg-light text-muted ms-auto me-3 small fw-normal">{{ dept.category }}</span>
+                            </button>
+                        </h2>
+                        <div id="dept-{{ dept.id }}" class="accordion-collapse collapse" data-bs-parent="#academicAccordion">
+                            <div class="accordion-body bg-light">
+                                <ul class="list-group list-group-flush small rounded-3 overflow-hidden">
+                                    {% for spec in dept.specializations.all %}
+                                    <li class="list-group-item d-flex align-items-center justify-content-between">
+                                        <span><i class="bi bi-journal-check text-success me-2"></i> {{ spec.name }}</span>
+                                        <span class="x-small text-muted">Active</span>
+                                    </li>
+                                    {% empty %}
+                                    <li class="list-group-item text-muted x-small">No specializations mapped for this degree yet.</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4 bg-light rounded-4">
+                        <i class="bi bi-building-dash display-5 text-muted mb-3 opacity-25"></i>
+                        <p class="text-muted small">Academic structure details are being updated.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar / Actions -->
+        <div class="col-lg-4">
+            <div class="sticky-top" style="top: 2rem;">
+                <div class="card border-0 shadow-sm rounded-4 p-4">
+                    <h6 class="fw-bold mb-3">Institutional Overview</h6>
+                    <ul class="list-group list-group-flush small">
+                        <li class="list-group-item px-0 border-0 d-flex justify-content-between">
+                            <span class="text-muted">Status</span>
+                            <span class="badge bg-success-soft text-success rounded-pill px-3">Verified Member</span>
+                        </li>
+                        <li class="list-group-item px-0 border-0 d-flex justify-content-between">
+                            <span class="text-muted">Degree Wings</span>
+                            <span class="fw-bold text-dark">{{ departments.count }}</span>
+                        </li>
+                        <li class="list-group-item px-0 border-0 d-flex justify-content-between">
+                            <span class="text-muted">Public Subjects</span>
+                            <span class="fw-bold text-dark">{% if total_specs %}{{ total_specs }}{% else %}Catalogued{% endif %}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-premium {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+}
+.bg-white-soft { background: rgba(255,255,255,0.15); }
+.border-white-opaque { border-color: rgba(255,255,255,0.2) !important; }
+.mt-n5 { margin-top: -3rem !important; }
+.hero-badge {
+    padding: 6px 16px;
+    border-radius: 100px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-block;
+}
+.bg-dark-soft { background: rgba(0,0,0,0.6); }
+.btn-white { background: white; border: none; }
+.decoration-circle-1 {
+    position: absolute;
+    top: -10%;
+    right: -10%;
+    width: 350px;
+    height: 350px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+}
+.decoration-circle-2 {
+    position: absolute;
+    bottom: -15%;
+    left: 15%;
+    width: 150px;
+    height: 150px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+}
+.bg-success-soft { background-color: rgba(16, 185, 129, 0.1); }
+</style>
+{% endblock %}

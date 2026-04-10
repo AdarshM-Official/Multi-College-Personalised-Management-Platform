@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}SaaS Manager | Admin Console{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card card-premium p-4 border-0 bg-dark text-white">
+            <h1 class="fw-bold mb-0">{{ stats.total_colleges }}</h1>
+            <p class="small opacity-75 mb-0">Total Institutions</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-premium p-4 border-0">
+            <h1 class="fw-bold mb-0 text-success">{{ stats.approved_colleges }}</h1>
+            <p class="small text-muted mb-0">Active Portals</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-premium p-4 border-0">
+            <h1 class="fw-bold mb-0 text-warning">{{ pending_colleges.count }}</h1>
+            <p class="small text-muted mb-0">Pending Approvals</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-premium p-4 border-0">
+            <h1 class="fw-bold mb-0 text-primary">{{ stats.total_users }}</h1>
+            <p class="small text-muted mb-0">Total Platform Users</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Action Center -->
+    <div class="col-md-8">
+        <!-- Pending Queue -->
+        <div class="card card-premium border-0 mb-4">
+            <div class="card-header bg-white border-0 p-4">
+                <h5 class="fw-bold mb-0"><i class="bi bi-shield-check me-2 text-warning"></i>Pending Approval Queue</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light smaill text-muted">
+                            <tr>
+                                <th class="ps-4">College</th>
+                                <th>Reg No</th>
+                                <th>Verification</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for coll in pending_colleges %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold">{{ coll.name }}</div>
+                                    <div class="small text-muted">{{ coll.contact_email }}</div>
+                                </td>
+                                <td>{{ coll.registration_number }}</td>
+                                <td>
+                                    {% if coll.verification_document %}
+                                        <a href="{{ coll.verification_document.url }}" class="link-primary small" target="_blank">View Doc</a>
+                                    {% else %}
+                                        <span class="text-muted small">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a href="{% url 'approve_college' coll.id 'approve' %}" class="btn btn-sm btn-success">Approve</a>
+                                    <a href="{% url 'approve_college' coll.id 'reject' %}" class="btn btn-sm btn-outline-danger">Reject</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center py-4 text-muted">No pending registrations.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- All Colleges -->
+        <div class="card card-premium border-0">
+            <div class="card-header bg-white border-0 p-4">
+                <h5 class="fw-bold mb-0"><i class="bi bi-list-stars me-2 text-primary"></i>Managed Institutions</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light smaill text-muted">
+                            <tr>
+                                <th class="ps-4">Name</th>
+                                <th>Status</th>
+                                <th>Onboarded</th>
+                                <th class="text-end pe-4">Options</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for coll in all_colleges %}
+                            <tr>
+                                <td class="ps-4 fw-bold">{{ coll.name }}</td>
+                                <td>
+                                    {% if coll.status == 'APPROVED' %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% elif coll.status == 'PENDING' %}
+                                        <span class="badge bg-warning">Pending</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Rejected</span>
+                                    {% endif %}
+                                </td>
+                                <td class="small">{{ coll.created_at|date:"M d, Y" }}</td>
+                                <td class="text-end pe-4">
+                                    <a href="{% url 'delete_college' coll.id %}" class="btn btn-sm btn-icon border-0" onclick="return confirm('Delete this college and ALL its data?')">
+                                        <i class="bi bi-trash text-danger"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Communication Sidebar -->
+    <div class="col-md-4">
+        <div class="card card-premium border-0 sticky-top" style="top: 20px;">
+            <div class="card-header bg-white border-0 p-4">
+                <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-send-fill me-2"></i>Platform Broadcast</h5>
+            </div>
+            <div class="card-body p-4 pt-0">
+                <form action="{% url 'send_platform_notification' %}" method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Target Institution</label>
+                        <select name="college_id" class="form-select border-0 bg-light">
+                            <option value="ALL">All Colleges (Broadcast)</option>
+                            {% for coll in all_colleges %}
+                                <option value="{{ coll.id }}">{{ coll.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Message Title</label>
+                        <input type="text" name="title" class="form-control border-0 bg-light" placeholder="Platform Maintenance..." required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Content</label>
+                        <textarea name="message" class="form-control border-0 bg-light" rows="4" placeholder="Enter message for college admins..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-premium w-100 py-3">Dispatch Broadcast</button>
+                    <p class="x-small text-muted mt-3 text-center">
+                        <i class="bi bi-info-circle me-1"></i> Notifications appear in the college admin's notification panel.
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

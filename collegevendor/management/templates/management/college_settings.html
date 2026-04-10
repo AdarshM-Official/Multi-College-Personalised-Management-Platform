@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+
+{% block title %}Institutional Preferences | {{ college.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-11">
+        
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="fw-bold mb-1">Institutional Profile</h4>
+                <p class="text-muted small mb-0">Manage global settings, branding, and contact details for {{ college.name }}.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'dashboard' %}" class="btn btn-light btn-sm px-3 rounded-pill">Back to Dashboard</a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Sidebar Navigation -->
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden sticky-top" style="top: 2rem;">
+                    <div class="list-group list-group-flush small">
+                        <a href="#general" class="list-group-item list-group-item-action py-3 px-4 active border-0">
+                            <i class="bi bi-info-circle me-2"></i> General Information
+                        </a>
+                        <a href="#branding" class="list-group-item list-group-item-action py-3 px-4 border-0">
+                            <i class="bi bi-palette me-2"></i> Branding & Logo
+                        </a>
+                        <a href="#achievements" class="list-group-item list-group-item-action py-3 px-4 border-0">
+                            <i class="bi bi-trophy me-2"></i> Achievements
+                        </a>
+                        <a href="#gallery" class="list-group-item list-group-item-action py-3 px-4 border-0">
+                            <i class="bi bi-images me-2"></i> Campus Gallery
+                        </a>
+                        <a href="#contact" class="list-group-item list-group-item-action py-3 px-4 border-0">
+                            <i class="bi bi-geo-alt me-2"></i> Location & Contact
+                        </a>
+                        <a href="#verification" class="list-group-item list-group-item-action py-3 px-4 border-0 text-muted">
+                            <i class="bi bi-shield-check me-2"></i> Verification (Read Only)
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Form -->
+            <div class="col-md-9">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <!-- General Info -->
+                    <div id="general" class="card border-0 shadow-sm rounded-4 mb-4">
+                        <div class="card-header bg-white py-3 px-4 border-light">
+                            <h6 class="fw-bold mb-0">General Information</h6>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-md-8">
+                                    <label class="form-label small fw-bold">Institution Name</label>
+                                    {{ form.name }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Established Year</label>
+                                    {{ form.established_year }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">District</label>
+                                    {{ form.district }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">Official Website</label>
+                                    {{ form.website }}
+                                </div>
+                                <div class="col-12 mt-4">
+                                    <label class="form-label small fw-bold text-muted mb-3">Academic Body / University Affiliation</label>
+                                    <div class="university-grid-container p-4 rounded-4 bg-light border border-light-subtle">
+                                        <div class="row row-cols-1 row-cols-md-2 g-3">
+                                            {% for choice in form.university_affiliation %}
+                                            <div class="col">
+                                                <div class="form-check custom-university-check bg-white p-3 rounded-3 border h-100 transition-all">
+                                                    {{ choice.tag }}
+                                                    <label class="form-check-label ms-2 small fw-bold text-dark" for="{{ choice.id_for_label }}">
+                                                        {{ choice.choice_label }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="form-text x-small text-muted mt-2">Manage your institution's diverse academic wings and affiliations.</div>
+                                </div>
+                                <div class="col-12 mt-4">
+                                    <label class="form-label small fw-bold">Institutional Mission / Description</label>
+                                    {{ form.description }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Branding -->
+                    <div id="branding" class="card border-0 shadow-sm rounded-4 mb-4">
+                        <div class="card-header bg-white py-3 px-4 border-light">
+                            <h6 class="fw-bold mb-0">Branding & Assets</h6>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-4">
+                                <div class="me-4 shadow-sm p-2 bg-light rounded-3">
+                                    {% if college.logo %}
+                                        <img src="{{ college.logo.url }}" alt="Logo" class="rounded" style="width: 80px; height: 80px; object-fit: contain;">
+                                    {% else %}
+                                        <div class="bg-white d-flex align-items-center justify-content-center rounded" style="width: 80px; height: 80px;">
+                                            <i class="bi bi-image text-muted display-6"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <label class="form-label small fw-bold">Institution Logo</label>
+                                    {{ form.logo }}
+                                    <div class="form-text x-small">Recommended: Square PNG with transparent background.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Milestones & Achievements -->
+                    <div id="achievements" class="card border-0 shadow-sm rounded-4 mb-4">
+                        <div class="card-header bg-white py-3 px-4 border-light d-flex justify-content-between align-items-center">
+                            <h6 class="fw-bold mb-0">Milestones & Achievements</h6>
+                            <span class="badge bg-light text-primary rounded-pill small fw-normal">{{ college.achievements.count }} Tracked</span>
+                        </div>
+                        <div class="card-body p-4">
+                            <!-- Add New -->
+                            <div class="bg-light p-3 rounded-4 mb-4">
+                                <h6 class="x-small fw-bold text-uppercase text-muted mb-3 letter-spacing-1">Record New Achievement</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-8">
+                                        <input type="text" name="achievement_title" class="form-control form-control-sm" placeholder="Milestone Title (e.g. NAAC A++ Accredited)">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="date" name="achievement_date" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-12">
+                                        <textarea name="achievement_description" class="form-control form-control-sm" rows="2" placeholder="Brief description of the accomplishment..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- List -->
+                            {% if college.achievements.exists %}
+                            <div class="list-group list-group-flush border-top">
+                                {% for ach in college.achievements.all|dictsortreversed:"date" %}
+                                <div class="list-group-item px-0 py-3 border-light">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="fw-bold mb-1 small text-dark"><i class="bi bi-patch-check-fill text-primary me-2"></i>{{ ach.title }}</h6>
+                                            <p class="x-small text-muted mb-0 lh-base">{{ ach.description }}</p>
+                                        </div>
+                                        <span class="x-small text-muted fw-bold">{% if ach.date %}{{ ach.date|date:"M Y" }}{% else %}Recent{% endif %}</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4 border rounded-4 border-dashed">
+                                <i class="bi bi-trophy display-6 text-muted opacity-25"></i>
+                                <p class="small text-muted mb-0">No institutional milestones recorded yet.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Gallery -->
+                    <div id="gallery" class="card border-0 shadow-sm rounded-4 mb-4">
+                        <div class="card-header bg-white py-3 px-4 border-light">
+                            <h6 class="fw-bold mb-0">Campus Gallery</h6>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="mb-4">
+                                <label class="form-label small fw-bold">Upload New Images</label>
+                                <input type="file" name="gallery_images" multiple class="form-control mb-2" accept="image/*">
+                                <div class="form-text x-small">Select multiple photos of your campus, facilities, and events.</div>
+                            </div>
+                            
+                            {% if college.images.exists %}
+                            <h6 class="x-small fw-bold text-uppercase text-muted mb-3 letter-spacing-1">Current Gallery</h6>
+                            <div class="row g-3">
+                                {% for img in college.images.all %}
+                                <div class="col-4 col-md-3">
+                                    <div class="position-relative group">
+                                        <img src="{{ img.image.url }}" class="rounded-3 shadow-sm w-100 object-fit-cover" style="height: 100px;">
+                                        <div class="position-absolute top-0 end-0 p-1 opacity-0 group-hover-100">
+                                            <!-- Potential delete functionality -->
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Contact -->
+                    <div id="contact" class="card border-0 shadow-sm rounded-4 mb-4">
+                        <div class="card-header bg-white py-3 px-4 border-light">
+                            <h6 class="fw-bold mb-0">Location & Communication</h6>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">Contact Email</label>
+                                    {{ form.contact_email }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">Phone Number</label>
+                                    {{ form.phone_number }}
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small fw-bold">Physical Address</label>
+                                    {{ form.address }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Verification (Read Only) -->
+                    <div id="verification" class="card border-0 shadow-sm bg-light-soft rounded-4 mb-4">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="fw-bold mb-1">Status: <span class="text-success">{{ college.status }}</span></h6>
+                                    <p class="x-small text-muted mb-0">Registration: <b>{{ college.registration_number }}</b></p>
+                                </div>
+                                <i class="bi bi-patch-check-fill text-success display-6"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="card border-0 shadow-sm rounded-4 bg-primary text-white p-4 d-flex flex-row align-items-center justify-content-between">
+                        <div>
+                            <h6 class="fw-bold mb-0">Ready to save?</h6>
+                            <p class="x-small mb-0 opacity-75">Changes will reflect across all student and faculty portals instantly.</p>
+                        </div>
+                        <button type="submit" class="btn btn-white btn-sm px-4 rounded-pill fw-bold text-primary">Save Institutional Profile</button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+.bg-light-soft { background-color: #f8fafc; }
+.btn-white { background: white; border: none; }
+.sticky-top { transition: all 0.3s ease; }
+.group:hover .group-hover-100 { opacity: 1 !important; }
+.rounded-3 { border-radius: 0.75rem !important; }
+.transition-all { transition: all 0.3s ease; }
+.custom-university-check { transition: all 0.2s; }
+.custom-university-check:hover { 
+    border-color: #6366f1 !important; 
+    background: #f8faff !important;
+    transform: scale(1.01);
+}
+.form-check-input:checked + .form-check-label { color: #6366f1 !important; }
+</style>
+{% endblock %}

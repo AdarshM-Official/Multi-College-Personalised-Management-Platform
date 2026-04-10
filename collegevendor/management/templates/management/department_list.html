@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block title %}Departments Directory | {{ request.college.name }}{% endblock %}
+
+{% block content %}
+<div class="card card-premium border-0 mb-4">
+    <div class="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-bold mb-1 text-primary">Academic Structure</h5>
+            <p class="small text-muted mb-0">Manage departments and their specific degree courses.</p>
+        </div>
+        <a href="{% url 'add_department' %}" class="btn btn-premium btn-sm">
+            <i class="bi bi-plus-lg me-1"></i> New Department
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- UG Section -->
+    <div class="col-md-6">
+        <div class="card card-premium border-0 border-top border-info border-4">
+            <div class="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-info"><i class="bi bi-mortarboard me-2"></i>Undergraduate (UG)</h5>
+                <span class="badge bg-info-soft text-info">{{ ug_departments.count }} Depts</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light small text-muted fw-bold">
+                            <tr>
+                                <th class="ps-4">Department & Courses</th>
+                                <th class="text-center">Students</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dept in ug_departments %}
+                            <tr>
+                                <td class="ps-4 py-3">
+                                    <div class="fw-bold text-dark mb-2">{{ dept.name }}</div>
+                                    <div class="specialization-container">
+                                        {% for spec in dept.specializations.all %}
+                                        <div class="d-flex align-items-center justify-content-between bg-light rounded-2 p-2 mb-1 border-start border-info border-3">
+                                            <span class="x-small fw-bold">{{ spec.name }}</span>
+                                            <div class="d-flex gap-1 x-small">
+                                                <a href="{% url 'edit_specialization' spec.id %}" class="text-muted"><i class="bi bi-pencil"></i></a>
+                                                <a href="{% url 'delete_specialization' spec.id %}" class="text-danger"><i class="bi bi-trash"></i></a>
+                                            </div>
+                                        </div>
+                                        {% empty %}
+                                        <div class="x-small text-muted italic">No courses found.</div>
+                                        {% endfor %}
+                                        <a href="{% url 'add_specialization' %}" class="btn btn-sm btn-link text-info p-0 mt-1 x-small fw-bold">
+                                            <i class="bi bi-plus-circle-fill me-1"></i> Add Course
+                                        </a>
+                                    </div>
+                                </td>
+                                <td class="text-center"><span class="badge bg-light text-dark fw-bold">{{ dept.students.count }}</span></td>
+                                <td class="pe-4 text-end">
+                                    <div class="btn-group">
+                                        <a href="{% url 'edit_department' dept.id %}" class="btn btn-sm btn-light p-2"><i class="bi bi-gear-fill"></i></a>
+                                        <a href="{% url 'delete_department' dept.id %}" class="btn btn-sm btn-light p-2 text-danger" onclick="return confirm('Delete department?')"><i class="bi bi-trash-fill"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center py-5 text-muted small italic">No UG departments established yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PG Section -->
+    <div class="col-md-6">
+        <div class="card card-premium border-0 border-top border-purple border-4">
+            <div class="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0 text-purple"><i class="bi bi-award me-2"></i>Postgraduate (PG)</h5>
+                <span class="badge bg-purple-soft text-purple">{{ pg_departments.count }} Depts</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light small text-muted fw-bold">
+                            <tr>
+                                <th class="ps-4">Department & Courses</th>
+                                <th class="text-center">Students</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dept in pg_departments %}
+                            <tr>
+                                <td class="ps-4 py-3">
+                                    <div class="fw-bold text-dark mb-2">{{ dept.name }}</div>
+                                    <div class="specialization-container">
+                                        {% for spec in dept.specializations.all %}
+                                        <div class="d-flex align-items-center justify-content-between bg-light rounded-2 p-2 mb-1 border-start border-purple border-3">
+                                            <span class="x-small fw-bold">{{ spec.name }}</span>
+                                            <div class="d-flex gap-1 x-small">
+                                                <a href="{% url 'edit_specialization' spec.id %}" class="text-muted"><i class="bi bi-pencil"></i></a>
+                                                <a href="{% url 'delete_specialization' spec.id %}" class="text-danger"><i class="bi bi-trash"></i></a>
+                                            </div>
+                                        </div>
+                                        {% empty %}
+                                        <div class="x-small text-muted italic">No courses found.</div>
+                                        {% endfor %}
+                                        <a href="{% url 'add_specialization' %}" class="btn btn-sm btn-link text-purple p-0 mt-1 x-small fw-bold">
+                                            <i class="bi bi-plus-circle-fill me-1"></i> Add Course
+                                        </a>
+                                    </div>
+                                </td>
+                                <td class="text-center"><span class="badge bg-light text-dark fw-bold">{{ dept.students.count }}</span></td>
+                                <td class="pe-4 text-end">
+                                    <div class="btn-group">
+                                        <a href="{% url 'edit_department' dept.id %}" class="btn btn-sm btn-light p-2"><i class="bi bi-gear-fill"></i></a>
+                                        <a href="{% url 'delete_department' dept.id %}" class="btn btn-sm btn-light p-2 text-danger" onclick="return confirm('Delete department?')"><i class="bi bi-trash-fill"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center py-5 text-muted small italic">No PG departments established yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

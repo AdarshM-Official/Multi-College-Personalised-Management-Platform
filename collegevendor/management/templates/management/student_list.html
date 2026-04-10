@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Students Directory | {{ request.college.name }}{% endblock %}
+
+{% block content %}
+<div class="card card-premium border-0 overflow-hidden">
+    <div class="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-bold mb-1">Students Directory</h5>
+            <p class="small text-muted mb-0">Total {{ students.count }} students registered in the system.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <div class="input-group input-group-sm" style="width: 250px;">
+                <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control bg-light border-0" placeholder="Search by name or roll...">
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light bg-opacity-50">
+                    <tr class="small text-muted text-uppercase fw-bold">
+                        <th class="ps-4">Identity & Info</th>
+                        <th>Academic ID</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th class="pe-4 text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold me-3" style="width: 42px; height: 42px;">
+                                    {{ student.user.first_name|first }}{{ student.user.last_name|first }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ student.user.get_full_name }}</div>
+                                    <div class="small text-muted">{{ student.user.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-light text-dark border">{{ student.roll_number }}</span></td>
+                        <td>{{ student.department.name|default:"Not Assigned" }}</td>
+                        <td><span class="badge bg-success-soft text-success">Active</span></td>
+                        <td class="pe-4 text-end">
+                            <button class="btn btn-sm btn-icon-only rounded-circle bg-light border-0"><i class="bi bi-pencil-square"></i></button>
+                            <button class="btn btn-sm btn-icon-only rounded-circle bg-light border-0 ms-1"><i class="bi bi-trash-fill text-danger"></i></button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5">
+                            <img src="https://cdni.iconscout.com/illustration/premium/thumb/empty-state-card-4969248-4131566.png" alt="Empty" height="150" class="mb-3 opacity-50">
+                            <p class="text-muted mb-0">No students are currently catalogued for {{ request.college.name }}.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

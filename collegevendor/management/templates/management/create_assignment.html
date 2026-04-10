@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Assignment | {{ request.college.name }}{% endblock %}
+
+{% block content %}
+<div class="col-md-8 offset-md-2">
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <h3 class="fw-bold mb-4">Post New Assignment</h3>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Assignment Title</label>
+                    <input type="text" name="title" class="form-control" placeholder="e.g. Data Structures Project 1" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Instructions / Description</label>
+                    <textarea name="description" class="form-control" rows="5" placeholder="Provide detailed instructions for the students..." required></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Upload Reference File</label>
+                        <input type="file" name="file" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Submission Deadline</label>
+                        <input type="datetime-local" name="deadline" class="form-control" required>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary px-4 py-2">Publish Assignment</button>
+                    <a href="{% url 'dashboard' %}" class="btn btn-link">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

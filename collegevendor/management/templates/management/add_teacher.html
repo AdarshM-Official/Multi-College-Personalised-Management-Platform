@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}Onboard Faculty | {{ request.college.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card card-premium border-0 shadow-lg">
+            <div class="card-header bg-white border-0 p-4">
+                <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-person-plus-fill me-2"></i>Faculty Registration</h5>
+                <p class="small text-muted mb-0">Create a new teacher profile and assign them to a department.</p>
+            </div>
+            <div class="card-body p-4 pt-0">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form.role }}
+                    
+                    {% if form.errors %}
+                    <div class="alert alert-danger small p-2 mb-3">
+                        <ul class="mb-0">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}<li><b>{{ field|title }}:</b> {{ error }}</li>{% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        <div class="col-md-6 text-uppercase fw-bold text-muted" style="font-size: 0.75rem; letter-spacing: 1px;">Personal Information</div>
+                        <div class="col-md-6 text-end"><span class="badge bg-light text-dark">Step 1 of 2</span></div>
+                        
+                        <div class="col-md-4 mb-3 text-center">
+                            <label class="form-label small fw-bold d-block">Profile Photo</label>
+                            {{ form.profile_photo }}
+                            <div class="form-text x-small">Upload a professional headshot.</div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold">First Name</label>
+                                    {{ form.first_name }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label small fw-bold">Last Name</label>
+                                    {{ form.last_name }}
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label small fw-bold">Email Address</label>
+                                    {{ form.email }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Contact Number</label>
+                            {{ form.phone_number }}
+                        </div>
+                        {% if form.password %}
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Temporary Password</label>
+                            {{ form.password }}
+                        </div>
+                        {% endif %}
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label small fw-bold">Residential Address</label>
+                            {{ form.address }}
+                        </div>
+
+                        <div class="col-12 text-uppercase fw-bold text-muted mt-4" style="font-size: 0.75rem; letter-spacing: 1px;">Academic Assignment</div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Degree Type</label>
+                            {{ form.department }}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Subject Expertise</label>
+                            {{ form.specialization }}
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label small fw-bold">Highest Qualification</label>
+                            {{ form.qualification }}
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top text-end">
+                        <button type="submit" class="btn btn-premium px-5">Finalize Faculty Registration</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data for Dynamic Filtering -->
+<script id="specs-data" type="application/json">
+[
+    {% for spec in form.fields.specialization.queryset %}
+    {"id": "{{ spec.id }}", "name": "{{ spec.name }}", "dept": "{{ spec.department.id }}"}{% if not forloop.last %},{% endif %}
+    {% endfor %}
+]
+</script>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deptSelect = document.getElementById('id_department');
+    const specSelect = document.getElementById('id_specialization');
+    const specsData = JSON.parse(document.getElementById('specs-data').textContent);
+
+    deptSelect.addEventListener('change', function() {
+        const deptId = this.value;
+        specSelect.innerHTML = '<option value="">Select Subject Expertise...</option>';
+        
+        const filtered = specsData.filter(s => s.dept === deptId);
+        
+        filtered.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            specSelect.appendChild(opt);
+        });
+
+        if (filtered.length === 0 && deptId) {
+            const opt = document.createElement('option');
+            opt.textContent = "No subjects found for this degree type";
+            opt.disabled = true;
+            specSelect.appendChild(opt);
+        }
+    });
+
+    // Handle initial state (edit/back)
+    if (deptSelect.value) {
+        // We preserve selection if possible
+        const initialSpecId = specSelect.value;
+        deptSelect.dispatchEvent(new Event('change'));
+        if (initialSpecId) specSelect.value = initialSpecId;
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}
