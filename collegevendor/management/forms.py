@@ -131,6 +131,13 @@ class DepartmentForm(forms.ModelForm):
         ('Bachelor of Architecture (BArch)', 'Bachelor of Architecture (BArch) – architecture'),
         ('Bachelor of Agriculture (BSc Agriculture)', 'Bachelor of Agriculture (BSc Agriculture) – agriculture'),
         ('Bachelor of Veterinary Science (BVSc)', 'Bachelor of Veterinary Science (BVSc) – veterinary'),
+        ('Master of Arts (MA)', 'Master of Arts (MA) – humanities, languages, social sciences'),
+        ('Master of Science (MSc)', 'Master of Science (MSc) – science & research subjects'),
+        ('Master of Commerce (MCom)', 'Master of Commerce (MCom) – finance, accounting, business'),
+        ('Master of Business Administration (MBA)', 'Master of Business Administration (MBA) – management & business'),
+        ('Master of Computer Applications (MCA)', 'Master of Computer Applications (MCA) – computer & IT'),
+        ('Master of Architecture (MArch)', 'Master of Architecture (MArch) – architecture'),
+        ('Master of Agriculture (MSc Agriculture)', 'Master of Agriculture (MSc Agriculture) – agriculture'),
         ('Other', 'Other (Custom Degree Type)'),
     ]
     
@@ -184,3 +191,7 @@ class SpecializationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if college:
             self.fields['department'].queryset = Department.objects.filter(college=college)
+
+class ExcelImportForm(forms.Form):
+    excel_file = forms.FileField(label="Select Excel File", widget=forms.FileInput(attrs={'class': 'form-control', 'accept': '.xlsx, .xls'}))
+

@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+import pandas as pd
 from .models import StudentProfile, TeacherProfile, Department, Specialization, Assignment, Submission, Attendance
 from accounts.models import CustomUser
-from .forms import StudentForm, TeacherForm, TeacherEditForm, AssignmentForm, DepartmentForm, SpecializationForm, CollegeSettingsForm
+from .forms import StudentForm, TeacherForm, TeacherEditForm, AssignmentForm, DepartmentForm, SpecializationForm, CollegeSettingsForm, ExcelImportForm
 from colleges.models import College, CollegeImage, CollegeAchievement
 
 @login_required
@@ -233,6 +235,215 @@ def delete_department(request, dept_id):
     if request.user.role != 'COLLEGE_ADMIN': return redirect('dashboard')
     dept = get_object_or_404(Department, id=dept_id, college=request.college)
     dept.delete(); messages.warning(request, "Department removed."); return redirect('department_list')
+
+@login_required
+def import_departments_excel(request):
+    if request.user.role != 'COLLEGE_ADMIN': return redirect('dashboard')
+    if request.method == 'POST':
+        form = ExcelImportForm(request.POST, request.FILES)
+        if form.is_valid():
+            file = request.FILES['excel_file']
+            try:
+                # Load Excel file
+                df = pd.read_excel(file)
+                
+                # Normalize column names to lowercase and strip spaces
+                df.columns = [str(c).strip().lower() for c in df.columns]
+                
+                # Check for mandatory columns (Department Name and Category are essential)
+                # We also support optional 'Description' and 'Specializations'
+                name_col = next((c for c in df.columns if 'name' in c or 'department' in c), None)
+                cat_col = next((c for c in df.columns if 'category' in c or 'type' in c), None)
+                desc_col = next((c for c in df.columns if 'desc' in c), None)
+                spec_col = next((c for c in df.columns if 'spec' in c or 'course' in c), None)
+
+                if not name_col or not cat_col:
+                    messages.error(request, "Excel must contain 'Department Name' and 'Category' (UG/PG) columns.")
+                    return redirect('department_list')
+                
+                created_count = 0
+                for _, row in df.iterrows():
+                    name = str(row[name_col]).strip()
+                    category = str(row[cat_col]).strip().upper()
+                    description = str(row[desc_col]).strip() if desc_col and pd.notna(row[desc_col]) else ""
+                    specializations = str(row[spec_col]).strip() if spec_col and pd.notna(row[spec_col]) else ""
+                    
+                    if not name or category not in ['UG', 'PG']:
+                        continue
+                    
+                    # Create or update department
+                    dept, created = Department.objects.get_or_create(
+                        college=request.college,
+                        name=name,
+                        category=category,
+                        defaults={'description': description}
+                    )
+                    
+                    # Process specializations if provided
+                    if specializations:
+                        specs = [s.strip() for s in specializations.split(',') if s.strip()]
+                        for s_name in specs:
+                            Specialization.objects.get_or_create(
+                                department=dept,
+                                name=s_name,
+                                college=request.college
+                            )
+                    created_count += 1
+                
+                messages.success(request, f"Successfully processed {created_count} departments from Excel.")
+            except Exception as e:
+                import traceback
+                print(traceback.format_exc())
+                messages.error(request, f"Error processing file: {str(e)}")
+            return redirect('department_list')
+    return redirect('department_list')
+
+@login_required
+def download_department_template(request):
+    if request.user.role != 'COLLEGE_ADMIN': return redirect('dashboard')
+    
+    # Define columns
+    columns = ['Department Name', 'Category', 'Description', 'Specializations']
+    # Example data
+    data = [
+        ['Bachelor of Computer Applications (BCA)', 'UG', 'IT and Computer Science department', 'Software Engineering, Web Development, Cyber Security'],
+        ['Master of Science (MSc)', 'PG', 'Postgraduate Science Research', 'Applied Physics, Organic Chemistry']
+    ]
+    
+    df = pd.DataFrame(data, columns=columns)
+    
+    # Create the Excel file in memory
+    import io
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Sheet1')
+    
+    output.seek(0)
+    
+    response = HttpResponse(
+        output.read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=department_import_template.xlsx'
+    return response
+
+@login_required
+def download_teacher_template(request):
+    if request.user.role != 'COLLEGE_ADMIN': return redirect('dashboard')
+    
+    columns = [
+        'First Name', 'Last Name', 'Email', 'Password', 
+        'Phone Number', 'Address', 'Department', 'Specialization', 'Qualification'
+    ]
+    
+    # Get some departments and specializations for example data
+    dept = Department.objects.filter(college=request.college).first()
+    spec = Specialization.objects.filter(department=dept).first() if dept else None
+    
+    dept_name = dept.name if dept else "Computer Science"
+    spec_name = spec.name if spec else "Software Engineering"
+    
+    data = [
+        ['John', 'Doe', 'john.doe@example.com', 'Pass1234', '9876543210', '123 Tech Lane', dept_name, spec_name, 'PhD in CS'],
+        ['Jane', 'Smith', 'jane.smith@example.com', 'Secure789', '9123456780', '456 Academic Way', dept_name, '', 'M.Tech IT']
+    ]
+    
+    df = pd.DataFrame(data, columns=columns)
+    
+    import io
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Sheet1')
+    
+    output.seek(0)
+    response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=teacher_import_template.xlsx'
+    return response
+
+@login_required
+def import_teachers_excel(request):
+    if request.user.role != 'COLLEGE_ADMIN': return redirect('dashboard')
+    if request.method == 'POST':
+        form = ExcelImportForm(request.POST, request.FILES)
+        if form.is_valid():
+            file = request.FILES['excel_file']
+            try:
+                df = pd.read_excel(file)
+                df.columns = [str(c).strip().lower() for c in df.columns]
+                
+                # Column mapping
+                fname_col = next((c for c in df.columns if 'first' in c), None)
+                lname_col = next((c for c in df.columns if 'last' in c), None)
+                email_col = next((c for c in df.columns if 'email' in c), None)
+                pass_col = next((c for c in df.columns if 'pass' in c), None)
+                phone_col = next((c for c in df.columns if 'phone' in c), None)
+                addr_col = next((c for c in df.columns if 'address' in c), None)
+                dept_col = next((c for c in df.columns if 'dept' in c or 'department' in c), None)
+                spec_col = next((c for c in df.columns if 'spec' in c or 'subject' in c or 'course' in c), None)
+                qual_col = next((c for c in df.columns if 'qual' in c), None)
+
+                if not all([fname_col, email_col, pass_col]):
+                    messages.error(request, "Excel must contain First Name, Email, and Password columns.")
+                    return redirect('teacher_list')
+                
+                created_count = 0
+                errors = []
+                for index, row in df.iterrows():
+                    try:
+                        email = str(row[email_col]).strip().lower()
+                        if not email or CustomUser.objects.filter(email=email).exists():
+                            continue
+                        
+                        fname = str(row[fname_col]).strip()
+                        lname = str(row[lname_col]).strip() if lname_col and pd.notna(row[lname_col]) else ""
+                        password = str(row[pass_col]).strip() or 'Default@123'
+                        
+                        dept_name = str(row[dept_col]).strip() if dept_col and pd.notna(row[dept_col]) else ""
+                        spec_name = str(row[spec_col]).strip() if spec_col and pd.notna(row[spec_col]) else ""
+                        
+                        phone = str(row[phone_col]).strip() if phone_col and pd.notna(row[phone_col]) else ""
+                        address = str(row[addr_col]).strip() if addr_col and pd.notna(row[addr_col]) else ""
+                        qualification = str(row[qual_col]).strip() if qual_col and pd.notna(row[qual_col]) else "Degree"
+
+                        # Resolve Department & Specialization
+                        department = None
+                        if dept_name:
+                            department = Department.objects.filter(college=request.college, name__iexact=dept_name).first()
+                        
+                        specialization = None
+                        if department and spec_name:
+                            specialization = Specialization.objects.filter(department=department, name__iexact=spec_name).first()
+
+                        # Create User
+                        user = CustomUser.objects.create_user(
+                            email=email, password=password,
+                            first_name=fname, last_name=lname,
+                            role='TEACHER', college=request.college
+                        )
+                        
+                        # Create Profile
+                        TeacherProfile.objects.create(
+                            user=user, college=request.college,
+                            department=department,
+                            specialization=specialization,
+                            phone_number=phone,
+                            address=address,
+                            qualification=qualification
+                        )
+                        created_count += 1
+                    except Exception as row_error:
+                        errors.append(f"Row {index+2}: {str(row_error)}")
+                
+                if errors:
+                    messages.warning(request, f"Processed {created_count} teachers. Errors in {len(errors)} rows.")
+                    # In a real app we might log these errors
+                else:
+                    messages.success(request, f"Successfully imported {created_count} faculty members.")
+            except Exception as e:
+                messages.error(request, f"Error processing file: {str(e)}")
+            return redirect('teacher_list')
+    return redirect('teacher_list')
+
 
 @login_required
 def add_specialization(request):
