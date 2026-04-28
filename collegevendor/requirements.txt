@@ -1,4 +1,4 @@
-django
-pillow
-pandas
-openpyxl
+django # For web development
+pillow # For image processing
+pandas # For data manipulation and analysis
+openpyxl # For Excel file handling

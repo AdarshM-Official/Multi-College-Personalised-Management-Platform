@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,12 +11,27 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <!-- Google Fonts: Outfit & Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap"
+        rel="stylesheet">
+
     <style>
         :root {
-            --primary-color: {{ request.college.theme_color|default:"#6366f1" }};
-            --primary-soft: {{ request.college.theme_color|default:"#6366f1" }}20;
+            --primary-color: {
+                    {
+                    request.college.theme_color|default: "#6366f1"
+                }
+            }
+
+            ;
+
+            --primary-soft: {
+                    {
+                    request.college.theme_color|default: "#6366f1"
+                }
+            }
+
+            20;
             --bg-body: #f8fafc;
             --sidebar-width: 260px;
         }
@@ -27,14 +43,27 @@
             overflow-x: hidden;
         }
 
-        h1, h2, h3, h4, .navbar-brand {
+        h1,
+        h2,
+        h3,
+        h4,
+        .navbar-brand {
             font-family: 'Outfit', sans-serif;
         }
 
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
 
         /* Sidebar Styling */
         .sidebar {
@@ -67,7 +96,8 @@
             font-weight: 500;
         }
 
-        .nav-link-custom:hover, .nav-link-custom.active {
+        .nav-link-custom:hover,
+        .nav-link-custom.active {
             background: var(--primary-soft);
             color: var(--primary-color);
         }
@@ -120,55 +150,70 @@
         }
 
         @media (max-width: 991px) {
-            .sidebar { transform: translateX(-100%); }
-            .main-content { margin-left: 0; }
-            .sidebar.active { transform: translateX(0); }
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
+
 <body>
     {% if user.is_authenticated %}
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="p-4 mb-3 d-flex align-items-center">
             {% if request.college.logo %}
-                <img src="{{ request.college.logo.url }}" alt="Logo" height="35" class="me-2 rounded shadow-sm">
+            <img src="{{ request.college.logo.url }}" alt="Logo" height="35" class="me-2 rounded shadow-sm">
             {% else %}
-                <div class="bg-primary rounded p-1 me-2"><i class="bi bi-mortarboard-fill text-white"></i></div>
+            <div class="bg-primary rounded p-1 me-2"><i class="bi bi-mortarboard-fill text-white"></i></div>
             {% endif %}
             <span class="fs-5 fw-bold text-dark">{{ request.college.name|default:"Panel" }}</span>
         </div>
 
         <nav class="mt-2">
             {% if user.role == 'SUPER_ADMIN' %}
-            <a href="{% url 'college_approval_queue' %}" class="nav-link-custom {% if request.resolver_match.url_name == 'college_approval_queue' %}active{% endif %}">
+            <a href="{% url 'college_approval_queue' %}"
+                class="nav-link-custom {% if request.resolver_match.url_name == 'college_approval_queue' %}active{% endif %}">
                 <i class="bi bi-speedometer2"></i> Management Console
             </a>
             {% else %}
-            <a href="{% url 'dashboard' %}" class="nav-link-custom {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <a href="{% url 'dashboard' %}"
+                class="nav-link-custom {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                 <i class="bi bi-grid-1x2-fill"></i> Dashboard
             </a>
             {% endif %}
-            
+
             {% if user.role == 'COLLEGE_ADMIN' %}
-            <div class="px-4 mt-4 mb-2 text-uppercase small fw-bold text-muted" style="letter-spacing: 1px;">Management</div>
+            <div class="px-4 mt-4 mb-2 text-uppercase small fw-bold text-muted" style="letter-spacing: 1px;">Management
+            </div>
             <a href="{% url 'student_list' %}" class="nav-link-custom">
                 <i class="bi bi-people-fill"></i> Students
             </a>
             <a href="{% url 'teacher_list' %}" class="nav-link-custom">
                 <i class="bi bi-mortarboard-fill"></i> Teachers
             </a>
-            <a href="{% url 'department_list' %}" class="nav-link-custom {% if request.resolver_match.url_name == 'department_list' %}active{% endif %}">
+            <a href="{% url 'department_list' %}"
+                class="nav-link-custom {% if request.resolver_match.url_name == 'department_list' %}active{% endif %}">
                 <i class="bi bi-building-fill"></i> Departments
             </a>
-            <a href="{% url 'college_settings' %}" class="nav-link-custom {% if request.resolver_match.url_name == 'college_settings' %}active{% endif %}">
+            <a href="{% url 'college_settings' %}"
+                class="nav-link-custom {% if request.resolver_match.url_name == 'college_settings' %}active{% endif %}">
                 <i class="bi bi-gear-fill"></i> College Settings
             </a>
             {% endif %}
 
             {% if user.role == 'TEACHER' %}
-            <div class="px-4 mt-4 mb-2 text-uppercase small fw-bold text-muted" style="letter-spacing: 1px;">Academic</div>
+            <div class="px-4 mt-4 mb-2 text-uppercase small fw-bold text-muted" style="letter-spacing: 1px;">Academic
+            </div>
             <a href="{% url 'mark_attendance' %}" class="nav-link-custom">
                 <i class="bi bi-calendar-check-fill"></i> Attendance
             </a>
@@ -178,7 +223,8 @@
             {% endif %}
 
             {% if user.role == 'STUDENT' %}
-            <div class="px-4 mt-4 mb-2 text-uppercase small fw-bold text-muted" style="letter-spacing: 1px;">Learning</div>
+            <div class="px-4 mt-4 mb-2 text-uppercase small fw-bold text-muted" style="letter-spacing: 1px;">Learning
+            </div>
             <a href="#" class="nav-link-custom">
                 <i class="bi bi-book-fill"></i> My Courses
             </a>
@@ -187,8 +233,28 @@
             </a>
             {% endif %}
 
-            <div class="px-4 mt-4 mb-2 text-uppercase small fw-bold text-muted" style="letter-spacing: 1px;">System</div>
-            <a href="#" class="nav-link-custom">
+            {% if user.role == 'HOD' %}
+            <div class="px-4 mt-4 mb-2 text-uppercase small fw-bold text-muted" style="letter-spacing: 1px;">Department</div>
+            <a href="{% url 'student_list' %}" class="nav-link-custom">
+                <i class="bi bi-people-fill"></i> Students
+            </a>
+            <a href="{% url 'teacher_list' %}" class="nav-link-custom">
+                <i class="bi bi-person-badge-fill"></i> Faculty Desk
+            </a>
+            <a href="{% url 'mark_attendance' %}" class="nav-link-custom">
+                <i class="bi bi-calendar-check-fill"></i> Attendance
+            </a>
+            <a href="{% url 'create_timetable' %}" class="nav-link-custom">
+                <i class="bi bi-calendar-week-fill"></i> Timetables
+            </a>
+            <a href="{% url 'create_exam_notification' %}" class="nav-link-custom">
+                <i class="bi bi-megaphone-fill"></i> Exam Notices
+            </a>
+            {% endif %}
+
+            <div class="px-4 mt-4 mb-2 text-uppercase small fw-bold text-muted" style="letter-spacing: 1px;">System
+            </div>
+            <a href="{% if user.role == 'HOD' %}{% url 'edit_profile' %}{% else %}#{% endif %}" class="nav-link-custom">
                 <i class="bi bi-person-fill"></i> Profile
             </a>
             <form action="{% url 'logout' %}" method="post" class="m-0">
@@ -211,9 +277,11 @@
             <div class="d-flex align-items-center">
                 <div class="position-relative me-3">
                     <i class="bi bi-bell-fill fs-5 text-muted"></i>
-                    <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
+                    <span
+                        class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
                 </div>
-                <div class="bg-primary-soft p-2 rounded-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                <div class="bg-primary-soft p-2 rounded-circle"
+                    style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                     <span class="fw-bold text-primary">{{ user.first_name|first }}</span>
                 </div>
             </div>
@@ -221,12 +289,13 @@
         {% endif %}
 
         {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-4 border-0 shadow-sm" role="alert">
-                    <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-4 border-0 shadow-sm"
+            role="alert">
+            <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
         {% endif %}
 
         <div class="container-fluid p-0">
@@ -237,4 +306,5 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>

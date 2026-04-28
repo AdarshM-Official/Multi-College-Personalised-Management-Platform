@@ -1,5 +1,5 @@
 from django import forms
-from .models import StudentProfile, TeacherProfile, Department, Specialization, Assignment, Attendance
+from .models import StudentProfile, TeacherProfile, Department, Specialization, Assignment, Attendance, HODProfile, TimeTable, ExamNotification
 from accounts.models import CustomUser
 from colleges.models import College
 
@@ -9,81 +9,87 @@ DISTRICT_CHOICES = [
     ('Kannur', 'Kannur'), ('Kasaragod', 'Kasaragod'), ('Kollam', 'Kollam'),
     ('Kottayam', 'Kottayam'), ('Kozhikode', 'Kozhikode'), ('Malappuram', 'Malappuram'),
     ('Palakkad', 'Palakkad'), ('Pathanamthitta', 'Pathanamthitta'), ('Thiruvananthapuram', 'Thiruvananthapuram'),
-    ('Thrissur', 'Thrissur'), ('Wayanad', 'Wayanad')
-]
-
-UNIVERSITY_CHOICES = [
-    ('Kerala University', 'University of Kerala'),
-    ('MG University', 'Mahatma Gandhi University'),
-    ('Calicut University', 'University of Calicut'),
-    ('Kannur University', 'Kannur University'),
-    ('KTU', 'APJ Abdul Kalam Technological University (KTU)'),
-    ('KUFOS', 'Kerala University of Fisheries and Ocean Studies'),
-    ('KAU', 'Kerala Agricultural University'),
-    ('KVASU', 'Kerala Veterinary and Animal Sciences University'),
-    ('KHSU', 'Kerala University of Health Sciences'),
-    ('CUSAT', 'Cochin University of Science and Technology'),
-    ('NUALS', 'The National University of Advanced Legal Studies (NUALS)'),
-    ('Other', 'Other Academic Body')
+    ('Thrissur', 'Thrissur'), ('Wayanad', 'Wayanad'),
 ]
 
 class CollegeSettingsForm(forms.ModelForm):
     university_affiliation = forms.MultipleChoiceField(
-        choices=UNIVERSITY_CHOICES, 
-        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'})
+        choices=[
+            ('University of Kerala', 'University of Kerala'),
+            ('MG University', 'MG University'),
+            ('Calicut University', 'Calicut University'),
+            ('Kannur University', 'Kannur University'),
+            ('KTU', 'KTU'),
+            ('CUSAT', 'CUSAT'),
+        ],
+        widget=forms.CheckboxSelectMultiple,
+        required=False
     )
 
     class Meta:
         model = College
-        fields = ['name', 'logo', 'district', 'university_affiliation', 'contact_email', 'phone_number', 'address', 'website', 'established_year', 'description']
+        fields = ['logo', 'address', 'district', 'website', 'theme_color', 'university_affiliation']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'logo': forms.FileInput(attrs={'class': 'form-control'}),
-            'district': forms.Select(choices=DISTRICT_CHOICES, attrs={'class': 'form-select'}),
-            'contact_email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'address': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'district': forms.Select(attrs={'class': 'form-select'}),
             'website': forms.URLInput(attrs={'class': 'form-control'}),
-            'established_year': forms.NumberInput(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'theme_color': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'}),
+            'logo': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.university_affiliation:
-            # Convert comma-separated string back to list for MultipleChoiceField
             self.initial['university_affiliation'] = [x.strip() for x in self.instance.university_affiliation.split(',')]
 
 class StudentForm(forms.Form):
-    first_name = forms.CharField(max_length=100)
-    last_name = forms.CharField(max_length=100)
-    email = forms.EmailField()
-    password = forms.CharField(widget=forms.PasswordInput)
-    roll_number = forms.CharField(max_length=50)
-    department = forms.ModelChoiceField(queryset=Department.objects.none())
-    specialization = forms.ModelChoiceField(queryset=Specialization.objects.none(), required=False)
+    first_name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    last_name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    profile_photo = forms.ImageField(required=False, widget=forms.FileInput(attrs={'class': 'form-control'}))
+    
+    university_reg_number = forms.CharField(max_length=50, required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'University Reg. No'}))
+    roll_number = forms.CharField(max_length=50, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Class Roll No'}))
+    phone_number = forms.CharField(max_length=15, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    father_name = forms.CharField(max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    mother_name = forms.CharField(max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    address = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}))
+    date_of_birth = forms.DateField(required=False, widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
+    
+    ug_marklist = forms.FileField(required=False, widget=forms.FileInput(attrs={'class': 'form-control'}))
+    plus_two_marklist = forms.FileField(required=False, widget=forms.FileInput(attrs={'class': 'form-control'}))
+    last_passout_year = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Year of last completion'}))
+
+    department = forms.ModelChoiceField(queryset=Department.objects.none(), widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_department'}))
+    specialization = forms.ModelChoiceField(queryset=Specialization.objects.none(), required=False, label="Class", widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_specialization'}))
 
     def __init__(self, *args, **kwargs):
         college = kwargs.pop('college', None)
+        user_role = kwargs.pop('user_role', None)
+        user_dept = kwargs.pop('user_dept', None)
         super().__init__(*args, **kwargs)
         if college:
-            self.fields['department'].queryset = Department.objects.filter(college=college)
-            self.fields['specialization'].queryset = Specialization.objects.filter(college=college)
+            if user_role == 'HOD' and user_dept:
+                self.fields['department'].queryset = Department.objects.filter(id=user_dept.id)
+                self.fields['department'].initial = user_dept
+                self.fields['specialization'].queryset = Specialization.objects.filter(department=user_dept)
+            else:
+                self.fields['department'].queryset = Department.objects.filter(college=college)
+                self.fields['specialization'].queryset = Specialization.objects.filter(college=college)
+
+class StudentEditForm(StudentForm):
+    password = forms.CharField(required=False, widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Leave blank to keep current'}))
 
 class TeacherForm(forms.Form):
     first_name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}))
     last_name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}))
     email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
-    role = forms.CharField(initial='TEACHER', widget=forms.HiddenInput)
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
-    
-    profile_photo = forms.ImageField(required=False, widget=forms.FileInput(attrs={'class': 'form-control'}))
-    phone_number = forms.CharField(max_length=15, required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. +91 9876543210'}))
-    address = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Residential Address'}))
-
-    department = forms.ModelChoiceField(queryset=Department.objects.none(), widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_department'}))
-    specialization = forms.ModelChoiceField(queryset=Specialization.objects.none(), required=False, widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_specialization'}))
-    qualification = forms.CharField(max_length=255, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. PhD, M.Tech'}))
+    phone_number = forms.CharField(max_length=15, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    qualification = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    department = forms.ModelChoiceField(queryset=Department.objects.none(), widget=forms.Select(attrs={'class': 'form-select'}))
+    specialization = forms.ModelChoiceField(queryset=Specialization.objects.none(), required=False, widget=forms.Select(attrs={'class': 'form-select'}))
 
     def __init__(self, *args, **kwargs):
         college = kwargs.pop('college', None)
@@ -92,52 +98,54 @@ class TeacherForm(forms.Form):
             self.fields['department'].queryset = Department.objects.filter(college=college)
             self.fields['specialization'].queryset = Specialization.objects.filter(college=college)
 
-class TeacherEditForm(forms.Form):
+class TeacherEditForm(forms.ModelForm):
     first_name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}))
     last_name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}))
-    email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
     
-    profile_photo = forms.ImageField(required=False, widget=forms.FileInput(attrs={'class': 'form-control'}))
-    phone_number = forms.CharField(max_length=15, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
-    address = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}))
-
-    department = forms.ModelChoiceField(queryset=Department.objects.none(), widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_department'}))
-    specialization = forms.ModelChoiceField(queryset=Specialization.objects.none(), required=False, widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_specialization'}))
-    qualification = forms.CharField(max_length=255, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. PhD, M.Tech'}))
+    class Meta:
+        model = TeacherProfile
+        fields = ['phone_number', 'address', 'qualification', 'profile_photo']
+        widgets = {
+            'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'qualification': forms.TextInput(attrs={'class': 'form-control'}),
+            'profile_photo': forms.FileInput(attrs={'class': 'form-control'}),
+        }
 
     def __init__(self, *args, **kwargs):
-        college = kwargs.pop('college', None)
         super().__init__(*args, **kwargs)
-        if college:
-            self.fields['department'].queryset = Department.objects.filter(college=college)
-            self.fields['specialization'].queryset = Specialization.objects.filter(college=college)
+        if self.instance and self.instance.user:
+            self.fields['first_name'].initial = self.instance.user.first_name
+            self.fields['last_name'].initial = self.instance.user.last_name
 
 class AssignmentForm(forms.ModelForm):
     class Meta:
         model = Assignment
-        fields = ['title', 'description', 'file', 'deadline']
+        fields = ['title', 'description', 'deadline', 'file']
         widgets = {
-            'deadline': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'deadline': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'file': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
 class DepartmentForm(forms.ModelForm):
     DEGREE_CHOICES = [
-        ('Bachelor of Arts (BA)', 'Bachelor of Arts (BA) – humanities, languages, social sciences'),
-        ('Bachelor of Science (BSc)', 'Bachelor of Science (BSc) – science & research subjects'),
-        ('Bachelor of Commerce (BCom)', 'Bachelor of Commerce (BCom) – finance, accounting, business'),
-        ('Bachelor of Business Administration (BBA)', 'Bachelor of Business Administration (BBA) – management & business'),
-        ('Bachelor of Computer Applications (BCA)', 'Bachelor of Computer Applications (BCA) – computer & IT'),
-        ('Bachelor of Physical Education (BPEd / BPES)', 'Bachelor of Physical Education (BPEd / BPES) – sports'),
-        ('Bachelor of Architecture (BArch)', 'Bachelor of Architecture (BArch) – architecture'),
-        ('Bachelor of Agriculture (BSc Agriculture)', 'Bachelor of Agriculture (BSc Agriculture) – agriculture'),
-        ('Bachelor of Veterinary Science (BVSc)', 'Bachelor of Veterinary Science (BVSc) – veterinary'),
-        ('Master of Arts (MA)', 'Master of Arts (MA) – humanities, languages, social sciences'),
-        ('Master of Science (MSc)', 'Master of Science (MSc) – science & research subjects'),
-        ('Master of Commerce (MCom)', 'Master of Commerce (MCom) – finance, accounting, business'),
-        ('Master of Business Administration (MBA)', 'Master of Business Administration (MBA) – management & business'),
-        ('Master of Computer Applications (MCA)', 'Master of Computer Applications (MCA) – computer & IT'),
-        ('Master of Architecture (MArch)', 'Master of Architecture (MArch) – architecture'),
-        ('Master of Agriculture (MSc Agriculture)', 'Master of Agriculture (MSc Agriculture) – agriculture'),
+        ('BA', 'Bachelor of Arts (BA) – humanities, languages, social sciences'),
+        ('BSc', 'Bachelor of Science (BSc) – science subjects'),
+        ('BCom', 'Bachelor of Commerce (BCom) – accounting, finance, commerce'),
+        ('BBA', 'Bachelor of Business Administration (BBA) – management & business'),
+        ('BCA', 'Bachelor of Computer Applications (BCA) – computer science & IT'),
+        ('BArch', 'Bachelor of Architecture (BArch) – architecture'),
+        ('BSc Agriculture', 'Bachelor of Agriculture (BSc Agriculture) – agriculture'),
+        ('BVSc', 'Bachelor of Veterinary Science (BVSc) – veterinary'),
+        ('MA', 'Master of Arts (MA) – humanities, languages, social sciences'),
+        ('MSc', 'Master of Science (MSc) – science & research subjects'),
+        ('MCom', 'Master of Commerce (MCom) – finance, accounting, business'),
+        ('MBA', 'Master of Business Administration (MBA) – management & business'),
+        ('MCA', 'Master of Computer Applications (MCA) – computer & IT'),
+        ('MArch', 'Master of Architecture (MArch) – architecture'),
+        ('MSc Agriculture', 'Master of Agriculture (MSc Agriculture) – agriculture'),
         ('Other', 'Other (Custom Degree Type)'),
     ]
     
@@ -152,38 +160,19 @@ class DepartmentForm(forms.ModelForm):
 
     class Meta:
         model = Department
-        fields = ['name', 'category', 'description']
+        fields = ['category', 'description']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Brief overview...', 'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-select'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
 
 class SpecializationForm(forms.ModelForm):
-    # This will be handled dynamically in JS for better UX, 
-    # but we provide common options here as fallback.
-    COURSE_CATALOGUE = {
-        'BA': [
-            'English', 'Malayalam', 'Hindi', 'Arabic', 'Economics', 'History', 'Political Science', 
-            'Sociology', 'English Literature', 'Malayalam Literature', 'Hindi Literature', 
-            'Sanskrit', 'Tamil', 'French', 'German', 'Psychology', 'Journalism & Mass Communication'
-        ],
-        'BSc': [
-            'Physics', 'Chemistry', 'Mathematics', 'Botany', 'Zoology', 'Computer Science', 
-            'Statistics', 'Electronics', 'Environmental Science', 'Psychology', 
-            'Biotechnology', 'Microbiology', 'Biochemistry', 'Mathematics with Computer Science'
-        ],
-        'BCom': ['Finance', 'Accounting', 'Computer Applications', 'Taxation', 'Banking'],
-        'BBA': ['Marketing', 'Finance', 'Human Resources', 'Supply Chain', 'International Business'],
-        'BCA': ['Software Development', 'Web Technologies', 'Networking', 'Cloud Computing'],
-    }
-    
-    name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'id': 'spec-name-input'}))
-
     class Meta:
         model = Specialization
         fields = ['department', 'name']
         widgets = {
-            'department': forms.Select(attrs={'class': 'form-select', 'id': 'spec-dept-select'}),
+            'department': forms.Select(attrs={'class': 'form-select'}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -195,3 +184,54 @@ class SpecializationForm(forms.ModelForm):
 class ExcelImportForm(forms.Form):
     excel_file = forms.FileField(label="Select Excel File", widget=forms.FileInput(attrs={'class': 'form-control', 'accept': '.xlsx, .xls'}))
 
+class HODForm(forms.Form):
+    first_name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    last_name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+    profile_photo = forms.ImageField(required=False, widget=forms.FileInput(attrs={'class': 'form-control'}))
+    phone_number = forms.CharField(max_length=15, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    department = forms.ModelChoiceField(queryset=Department.objects.none(), widget=forms.Select(attrs={'class': 'form-select'}))
+
+    def __init__(self, *args, **kwargs):
+        college = kwargs.pop('college', None)
+        super().__init__(*args, **kwargs)
+        if college:
+            self.fields['department'].queryset = Department.objects.filter(college=college)
+
+class HODEditForm(forms.ModelForm):
+    first_name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    last_name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    
+    class Meta:
+        model = HODProfile
+        fields = ['profile_photo', 'phone_number']
+        widgets = {
+            'profile_photo': forms.FileInput(attrs={'class': 'form-control'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.user:
+            self.fields['first_name'].initial = self.instance.user.first_name
+            self.fields['last_name'].initial = self.instance.user.last_name
+
+class TimeTableForm(forms.ModelForm):
+    class Meta:
+        model = TimeTable
+        fields = ['title', 'file']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'file': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+
+class ExamNotificationForm(forms.ModelForm):
+    class Meta:
+        model = ExamNotification
+        fields = ['title', 'description', 'exam_date']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'exam_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        }

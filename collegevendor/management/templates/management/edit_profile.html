@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Profile | {{ request.college.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card glass-card border-0 shadow-lg overflow-hidden">
+                <div class="card-header bg-primary text-white p-4 border-0">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-white bg-opacity-20 p-3 rounded-circle">
+                            <i class="bi bi-person-gear fs-3"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold mb-0 text-white">Profile Settings</h3>
+                            <p class="mb-0 opacity-75">Keep your personal and professional information up to date.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body p-4 p-lg-5 bg-white">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row g-4">
+                            <!-- Basic Information -->
+                            <div class="col-12">
+                                <h5 class="fw-bold text-primary mb-3 border-bottom pb-2">Basic Information</h5>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted">First Name</label>
+                                {{ form.first_name }}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted">Last Name</label>
+                                {{ form.last_name }}
+                            </div>
+                            
+                            <!-- Contact & Media -->
+                            <div class="col-12 mt-5">
+                                <h5 class="fw-bold text-primary mb-3 border-bottom pb-2">Contact & Professional</h5>
+                            </div>
+                            
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label fw-bold small text-muted">Profile Photograph</label>
+                                <div class="d-flex align-items-center gap-4 p-3 border rounded-4 bg-light">
+                                    {% if user.hod_profile.profile_photo %}
+                                        <img src="{{ user.hod_profile.profile_photo.url }}" class="rounded-4 object-fit-cover shadow-sm" style="width: 80px; height: 80px;" alt="Current Profile">
+                                    {% else %}
+                                        <div class="rounded-4 bg-white d-flex align-items-center justify-content-center shadow-sm" style="width: 80px; height: 80px;">
+                                            <i class="bi bi-person fs-1 text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div class="flex-grow-1">
+                                        {{ form.profile_photo }}
+                                        <small class="text-muted d-block mt-2">Upload a professional headshot. Max 2MB.</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-12">
+                                <label class="form-label fw-bold small text-muted">Phone Number</label>
+                                {{ form.phone_number }}
+                                <div class="form-text x-small">Used for critical departmental communications.</div>
+                            </div>
+                        </div>
+
+                        <div class="mt-5 pt-4 border-top d-flex gap-3">
+                            <button type="submit" class="btn btn-primary px-5 py-3 rounded-3 fw-bold">Save Profile Changes</button>
+                            <a href="{% url 'dashboard' %}" class="btn btn-light px-5 py-3 rounded-3 text-dark">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

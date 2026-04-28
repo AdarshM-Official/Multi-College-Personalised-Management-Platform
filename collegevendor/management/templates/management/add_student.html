@@ -1,62 +1,162 @@
 {% extends 'base.html' %}
 
-{% block title %}Add New Student | {{ request.college.name }}{% endblock %}
+{% block title %}{% if is_edit %}Edit Student | {{ student.user.get_full_name }}{% else %}Add Student | {{ request.college.name }}{% endif %}{% endblock %}
 
 {% block content %}
-<div class="col-md-8 offset-md-2">
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'student_list' %}">Students</a></li>
-            <li class="breadcrumb-item active">Add Student</li>
-        </ol>
-    </nav>
-    <div class="card shadow-sm border-0">
-        <div class="card-body p-4">
-            <h3 class="fw-bold mb-4">Register New Student</h3>
-            <form method="post">
-                {% csrf_token %}
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">First Name</label>
-                        {{ form.first_name.errors }}
-                        <input type="text" name="first_name" class="form-control" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Last Name</label>
-                        {{ form.last_name.errors }}
-                        <input type="text" name="last_name" class="form-control" required>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card card-premium border-0 shadow-sm overflow-hidden">
+                <div class="card-header bg-primary text-white p-4 border-0">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-white bg-opacity-20 p-3 rounded-circle">
+                            <i class="bi bi-person-plus-fill fs-3"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold mb-0 text-white">{% if is_edit %}Edit Student Record{% else %}Student Onboarding{% endif %}</h3>
+                            <p class="mb-0 opacity-75">{% if is_edit %}Update details for {{ student.user.get_full_name }}{% else %}Create a new academic record and login credentials.{% endif %}</p>
+                        </div>
                     </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" name="email" class="form-control" placeholder="student@example.com" required>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Roll Number</label>
-                        <input type="text" name="roll_number" class="form-control" required>
+                
+                <form method="post" enctype="multipart/form-data" class="p-4 p-lg-5 bg-white">
+                    {% csrf_token %}
+                    
+                    <div class="row g-4">
+                        <!-- Account Information -->
+                        <div class="col-12">
+                            <h5 class="fw-bold text-primary mb-3 border-bottom pb-2">1. Account Information</h5>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">First Name</label>
+                            {{ form.first_name }}
+                            {{ form.first_name.errors }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Last Name</label>
+                            {{ form.last_name }}
+                            {{ form.last_name.errors }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Email Address</label>
+                            {{ form.email }}
+                            {{ form.email.errors }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Password</label>
+                            {{ form.password }}
+                            <div class="form-text x-small text-muted">Temporary password for the student's first login.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Phone Number</label>
+                            {{ form.phone_number }}
+                        </div>
+
+                        <!-- Academic Details -->
+                        <div class="col-12 mt-5">
+                            <h5 class="fw-bold text-primary mb-3 border-bottom pb-2">2. Academic Information</h5>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">University Reg. No</label>
+                            {{ form.university_reg_number }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Class Roll Number</label>
+                            {{ form.roll_number }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Last Passout Year</label>
+                            {{ form.last_passout_year }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Department</label>
+                            {{ form.department }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">{{ form.specialization.label }}</label>
+                            {{ form.specialization }}
+                        </div>
+
+                        <!-- Personal Details -->
+                        <div class="col-12 mt-5">
+                            <h5 class="fw-bold text-primary mb-3 border-bottom pb-2">3. Personal Profile</h5>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Date of Birth</label>
+                            {{ form.date_of_birth }}
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold small">Student Photograph</label>
+                            {{ form.profile_photo }}
+                            <div class="form-text x-small">Upload a professional headshot.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Father's Name</label>
+                            {{ form.father_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Mother's Name</label>
+                            {{ form.mother_name }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold small">Residential Address</label>
+                            {{ form.address }}
+                        </div>
+
+                        <!-- Marklists -->
+                        <div class="col-12 mt-5">
+                            <h5 class="fw-bold text-primary mb-3 border-bottom pb-2">4. Document Uploads</h5>
+                        </div>
+                        <div class="col-md-6" id="ug_marks_container">
+                            <label class="form-label fw-bold small">UG Marklist (For PG Students)</label>
+                            {{ form.ug_marklist }}
+                        </div>
+                        <div class="col-md-6" id="plus_two_marks_container">
+                            <label class="form-label fw-bold small">Plus Two Marklist (For UG Students)</label>
+                            {{ form.plus_two_marklist }}
+                        </div>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Department</label>
-                        <select name="department" class="form-select" required>
-                            {% for dept in form.department.field.queryset %}
-                                <option value="{{ dept.id }}">{{ dept.name }}</option>
-                            {% endfor %}
-                        </select>
+
+                    <div class="mt-5 pt-4 border-top d-flex gap-3 mb-5">
+                        <button type="submit" class="btn btn-primary btn-lg px-5 shadow-sm">Finalize Enrollment</button>
+                        <a href="{% url 'student_list' %}" class="btn btn-outline-secondary btn-lg px-5">Cancel</a>
                     </div>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <input type="password" name="password" class="form-control" required>
-                    <small class="text-muted">Password for student login.</small>
-                </div>
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-primary px-4 py-2">Create Student Account</button>
-                    <a href="{% url 'student_list' %}" class="btn btn-link">Cancel</a>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const deptSelect = document.getElementById('id_department');
+        const ugContainer = document.getElementById('ug_marks_container');
+        const plusTwoContainer = document.getElementById('plus_two_marks_container');
+
+        const depts = {
+            {% for dept in form.department.field.queryset %}
+                "{{ dept.id }}": "{{ dept.category }}",
+            {% endfor %}
+        };
+
+        function toggleMarklists() {
+            const selectedDept = deptSelect.value;
+            const category = depts[selectedDept];
+
+            if (category === 'PG') {
+                ugContainer.style.display = 'block';
+                plusTwoContainer.style.display = 'none';
+            } else if (category === 'UG') {
+                ugContainer.style.display = 'none';
+                plusTwoContainer.style.display = 'block';
+            } else {
+                ugContainer.style.display = 'block';
+                plusTwoContainer.style.display = 'block';
+            }
+        }
+
+        deptSelect.addEventListener('change', toggleMarklists);
+        toggleMarklists(); // Initial run
+    });
+</script>
 {% endblock %}

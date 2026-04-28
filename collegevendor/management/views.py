@@ -3,9 +3,9 @@ from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 import pandas as pd
-from .models import StudentProfile, TeacherProfile, Department, Specialization, Assignment, Submission, Attendance
+from .models import StudentProfile, TeacherProfile, Department, Specialization, Assignment, Submission, Attendance, HODProfile, TimeTable, ExamNotification
 from accounts.models import CustomUser
-from .forms import StudentForm, TeacherForm, TeacherEditForm, AssignmentForm, DepartmentForm, SpecializationForm, CollegeSettingsForm, ExcelImportForm
+from .forms import StudentForm, StudentEditForm, TeacherForm, TeacherEditForm, AssignmentForm, DepartmentForm, SpecializationForm, CollegeSettingsForm, ExcelImportForm, HODForm, TimeTableForm, ExamNotificationForm, HODEditForm
 from colleges.models import College, CollegeImage, CollegeAchievement
 
 @login_required
@@ -16,12 +16,10 @@ def college_settings(request):
         form = CollegeSettingsForm(request.POST, request.FILES, instance=college)
         if form.is_valid():
             college = form.save(commit=False)
-            # Handle university affiliation list -> string
             universities = form.cleaned_data.get('university_affiliation', [])
             college.university_affiliation = ", ".join(universities)
             college.save()
             
-            # Handle Achievement addition
             ach_title = request.POST.get('achievement_title')
             if ach_title:
                 CollegeAchievement.objects.create(
@@ -31,7 +29,6 @@ def college_settings(request):
                     date=request.POST.get('achievement_date') or None
                 )
             
-            # Handle Gallery Images
             gallery_images = request.FILES.getlist('gallery_images')
             for img in gallery_images:
                 CollegeImage.objects.create(college=college, image=img)
@@ -43,18 +40,43 @@ def college_settings(request):
     return render(request, 'management/college_settings.html', {'form': form, 'college': college})
 
 @login_required
+def delete_gallery_image(request, image_id):
+    if request.user.role != 'COLLEGE_ADMIN': return redirect('dashboard')
+    image = get_object_or_404(CollegeImage, id=image_id, college=request.college)
+    image.delete()
+    messages.warning(request, "Gallery image removed.")
+    return redirect('college_settings')
+
+@login_required
 def student_list(request):
     students = StudentProfile.objects.filter(college=request.college)
-    return render(request, 'management/student_list.html', {'students': students})
+    specializations = None
+    if request.user.role == 'HOD':
+        dept = request.user.hod_profile.department
+        students = students.filter(department=dept)
+        specializations = Specialization.objects.filter(department=dept)
+    
+    # Optional: Filter by specialization if provided in GET
+    spec_id = request.GET.get('specialization')
+    if spec_id:
+        students = students.filter(specialization_id=spec_id)
+        
+    return render(request, 'management/student_list.html', {
+        'students': students,
+        'specializations': specializations,
+        'selected_spec': spec_id
+    })
 
 @login_required
 def add_student(request):
-    # Admission management is restricted from College Admin per current policy
-    if request.user.role != 'SUPER_ADMIN': 
-        messages.error(request, "Permission Denied: Student onboarding is managed by platform administration.")
+    if request.user.role not in ['COLLEGE_ADMIN', 'HOD', 'SUPER_ADMIN']: 
+        messages.error(request, "Permission Denied.")
         return redirect('student_list')
+    
+    spec_id = request.GET.get('specialization')
+    
     if request.method == 'POST':
-        form = StudentForm(request.POST, college=request.college)
+        form = StudentForm(request.POST, request.FILES, college=request.college, user_role=request.user.role, user_dept=getattr(request.user, 'hod_profile', None).department if request.user.role == 'HOD' else None)
         if form.is_valid():
             user = CustomUser.objects.create_user(
                 email=form.cleaned_data['email'], password=form.cleaned_data['password'],
@@ -62,22 +84,116 @@ def add_student(request):
                 role='STUDENT', college=request.college
             )
             StudentProfile.objects.create(
-                user=user, college=request.college, roll_number=form.cleaned_data['roll_number'],
-                department=form.cleaned_data['department'], specialization=form.cleaned_data['specialization']
+                user=user, college=request.college,
+                profile_photo=form.cleaned_data.get('profile_photo'),
+                university_reg_number=form.cleaned_data.get('university_reg_number'),
+                roll_number=form.cleaned_data['roll_number'],
+                phone_number=form.cleaned_data.get('phone_number'),
+                father_name=form.cleaned_data.get('father_name'),
+                mother_name=form.cleaned_data.get('mother_name'),
+                address=form.cleaned_data.get('address'),
+                date_of_birth=form.cleaned_data.get('date_of_birth'),
+                ug_marklist=form.cleaned_data.get('ug_marklist'),
+                plus_two_marklist=form.cleaned_data.get('plus_two_marklist'),
+                last_passout_year=form.cleaned_data.get('last_passout_year'),
+                department=form.cleaned_data['department'], 
+                specialization=form.cleaned_data['specialization']
             )
-            messages.success(request, "Student added.")
+            messages.success(request, f"Student {user.get_full_name()} added successfully.")
             return redirect('student_list')
     else:
-        form = StudentForm(college=request.college)
+        initial = {}
+        if spec_id:
+            initial['specialization'] = spec_id
+            spec = Specialization.objects.filter(id=spec_id).first()
+            if spec: initial['department'] = spec.department
+            
+        form = StudentForm(
+            college=request.college, 
+            user_role=request.user.role, 
+            user_dept=getattr(request.user, 'hod_profile', None).department if request.user.role == 'HOD' else None,
+            initial=initial
+        )
     return render(request, 'management/add_student.html', {'form': form})
 
 @login_required
-def teacher_list(request):
-    # Hierarchical grouping: Departments -> Specializations -> Teachers
-    # We fetch all departments for the college
-    departments = Department.objects.filter(college=request.college).prefetch_related('specializations')
+def student_detail(request, student_id):
+    student = get_object_or_404(StudentProfile, id=student_id, college=request.college)
+    if request.user.role == 'HOD' and student.department != request.user.hod_profile.department:
+        return redirect('student_list')
+    return render(request, 'management/student_detail.html', {'student': student})
+
+@login_required
+def edit_student(request, student_id):
+    student = get_object_or_404(StudentProfile, id=student_id, college=request.college)
+    if request.user.role == 'HOD' and student.department != request.user.hod_profile.department:
+        return redirect('student_list')
     
-    # We'll build a structure: {dept: {spec: [teachers]}}
+    if request.method == 'POST':
+        form = StudentEditForm(request.POST, request.FILES, college=request.college, user_role=request.user.role, user_dept=getattr(request.user, 'hod_profile', None).department if request.user.role == 'HOD' else None)
+        if form.is_valid():
+            user = student.user
+            user.first_name = form.cleaned_data['first_name']
+            user.last_name = form.cleaned_data['last_name']
+            user.email = form.cleaned_data['email']
+            if form.cleaned_data.get('password'):
+                user.set_password(form.cleaned_data['password'])
+            user.save()
+            
+            # Update profile fields
+            if form.cleaned_data.get('profile_photo'):
+                student.profile_photo = form.cleaned_data['profile_photo']
+            
+            student.university_reg_number = form.cleaned_data.get('university_reg_number')
+            student.roll_number = form.cleaned_data['roll_number']
+            student.phone_number = form.cleaned_data.get('phone_number')
+            student.father_name = form.cleaned_data.get('father_name')
+            student.mother_name = form.cleaned_data.get('mother_name')
+            student.address = form.cleaned_data.get('address')
+            student.last_passout_year = form.cleaned_data.get('last_passout_year')
+            student.department = form.cleaned_data['department']
+            student.specialization = form.cleaned_data['specialization']
+            student.save()
+            
+            messages.success(request, "Student record updated.")
+            return redirect('student_list')
+    else:
+        initial = {
+            'first_name': student.user.first_name,
+            'last_name': student.user.last_name,
+            'email': student.user.email,
+            'university_reg_number': student.university_reg_number,
+            'roll_number': student.roll_number,
+            'phone_number': student.phone_number,
+            'father_name': student.father_name,
+            'mother_name': student.mother_name,
+            'address': student.address,
+            'last_passout_year': student.last_passout_year,
+            'department': student.department,
+            'specialization': student.specialization,
+        }
+        form = StudentEditForm(college=request.college, user_role=request.user.role, user_dept=getattr(request.user, 'hod_profile', None).department if request.user.role == 'HOD' else None, initial=initial)
+    
+    return render(request, 'management/add_student.html', {'form': form, 'student': student, 'is_edit': True})
+
+@login_required
+def delete_student(request, student_id):
+    student = get_object_or_404(StudentProfile, id=student_id, college=request.college)
+    if request.user.role == 'HOD' and student.department != request.user.hod_profile.department:
+        return redirect('student_list')
+    
+    user = student.user
+    student.delete()
+    user.delete()
+    messages.warning(request, "Student record deleted.")
+    return redirect('student_list')
+
+@login_required
+def teacher_list(request):
+    departments = Department.objects.filter(college=request.college).prefetch_related('specializations')
+    if request.user.role == 'HOD':
+        departments = departments.filter(id=request.user.hod_profile.department.id)
+    
     hierarchy = []
     for dept in departments:
         specs_list = []
@@ -86,7 +202,6 @@ def teacher_list(request):
             if teachers.exists():
                 specs_list.append({'spec': spec, 'teachers': teachers})
         
-        # Also catch teachers assigned to dept but NO spec
         unassigned_teachers = TeacherProfile.objects.filter(department=dept, specialization__isnull=True)
         if unassigned_teachers.exists():
             specs_list.append({'spec': None, 'teachers': unassigned_teachers})
@@ -94,13 +209,16 @@ def teacher_list(request):
         if specs_list:
             hierarchy.append({'dept': dept, 'specs': specs_list})
 
-    return render(request, 'management/teacher_list.html', {'hierarchy': hierarchy, 'total_count': TeacherProfile.objects.filter(college=request.college).count()})
+    return render(request, 'management/teacher_list.html', {
+        'hierarchy': hierarchy, 
+        'total_count': TeacherProfile.objects.filter(department__in=departments).count()
+    })
 
 @login_required
 def add_teacher(request):
-    if request.user.role != 'COLLEGE_ADMIN': return redirect('dashboard')
+    if request.user.role not in ['COLLEGE_ADMIN', 'HOD']: return redirect('teacher_list')
     if request.method == 'POST':
-        form = TeacherForm(request.POST, request.FILES, college=request.college)
+        form = TeacherForm(request.POST, college=request.college)
         if form.is_valid():
             user = CustomUser.objects.create_user(
                 email=form.cleaned_data['email'], password=form.cleaned_data['password'],
@@ -108,83 +226,57 @@ def add_teacher(request):
                 role='TEACHER', college=request.college
             )
             TeacherProfile.objects.create(
-                user=user, college=request.college, 
-                department=form.cleaned_data['department'], 
-                specialization=form.cleaned_data['specialization'],
+                user=user, college=request.college,
                 qualification=form.cleaned_data['qualification'],
-                profile_photo=form.cleaned_data.get('profile_photo'),
-                phone_number=form.cleaned_data.get('phone_number', ''),
-                address=form.cleaned_data.get('address', '')
+                phone_number=form.cleaned_data['phone_number'],
+                department=form.cleaned_data['department'],
+                specialization=form.cleaned_data['specialization']
             )
-            messages.success(request, f"Teacher {user.get_full_name()} added.")
+            messages.success(request, "Teacher added.")
             return redirect('teacher_list')
     else:
-        form = TeacherForm(college=request.college)
+        initial = {}
+        if request.user.role == 'HOD': initial['department'] = request.user.hod_profile.department
+        form = TeacherForm(college=request.college, initial=initial)
     return render(request, 'management/add_teacher.html', {'form': form})
 
 @login_required
 def teacher_detail(request, teacher_id):
-    if request.user.role != 'COLLEGE_ADMIN': return redirect('dashboard')
     teacher = get_object_or_404(TeacherProfile, id=teacher_id, college=request.college)
     return render(request, 'management/teacher_detail.html', {'teacher': teacher})
 
 @login_required
 def edit_teacher(request, teacher_id):
-    if request.user.role != 'COLLEGE_ADMIN': return redirect('dashboard')
+    if request.user.role != 'COLLEGE_ADMIN': return redirect('teacher_list')
     teacher = get_object_or_404(TeacherProfile, id=teacher_id, college=request.college)
     if request.method == 'POST':
-        form = TeacherEditForm(request.POST, request.FILES, college=request.college)
+        form = TeacherEditForm(request.POST, request.FILES, instance=teacher)
         if form.is_valid():
             user = teacher.user
             user.first_name = form.cleaned_data['first_name']
             user.last_name = form.cleaned_data['last_name']
-            user.email = form.cleaned_data['email']
             user.save()
-            
-            teacher.department = form.cleaned_data['department']
-            teacher.specialization = form.cleaned_data['specialization']
-            teacher.qualification = form.cleaned_data['qualification']
-            teacher.phone_number = form.cleaned_data.get('phone_number', '')
-            teacher.address = form.cleaned_data.get('address', '')
-            if form.cleaned_data.get('profile_photo'):
-                teacher.profile_photo = form.cleaned_data['profile_photo']
-            teacher.save()
-            
-            messages.success(request, f"Profile for {user.get_full_name()} updated.")
+            form.save()
+            messages.success(request, "Teacher profile updated.")
             return redirect('teacher_list')
     else:
-        initial = {
-            'first_name': teacher.user.first_name,
-            'last_name': teacher.user.last_name,
-            'email': teacher.user.email,
-            'department': teacher.department,
-            'specialization': teacher.specialization,
-            'qualification': teacher.qualification,
-            'phone_number': teacher.phone_number,
-            'address': teacher.address,
-        }
-        form = TeacherEditForm(initial=initial, college=request.college)
-    return render(request, 'management/add_teacher.html', {'form': form, 'title': 'Edit Faculty Profile'})
+        form = TeacherEditForm(instance=teacher)
+    return render(request, 'management/edit_teacher.html', {'form': form, 'teacher': teacher})
 
 @login_required
 def delete_teacher(request, teacher_id):
-    if request.user.role != 'COLLEGE_ADMIN': return redirect('dashboard')
+    if request.user.role != 'COLLEGE_ADMIN': return redirect('teacher_list')
     teacher = get_object_or_404(TeacherProfile, id=teacher_id, college=request.college)
     user = teacher.user
-    name = user.get_full_name()
-    user.delete() # Also deletes profile due to Cascade
-    messages.warning(request, f"Faculty account for {name} has been removed.")
+    teacher.delete(); user.delete()
+    messages.warning(request, "Teacher record and account removed.")
     return redirect('teacher_list')
 
 @login_required
 def department_list(request):
-    depts = Department.objects.filter(college=request.college)
-    context = {
-        'departments': depts,
-        'ug_departments': depts.filter(category='UG'),
-        'pg_departments': depts.filter(category='PG'),
-    }
-    return render(request, 'management/department_list.html', context)
+    if request.user.role != 'COLLEGE_ADMIN': return redirect('dashboard')
+    departments = Department.objects.filter(college=request.college).prefetch_related('specializations')
+    return render(request, 'management/department_list.html', {'departments': departments})
 
 @login_required
 def add_department(request):
@@ -192,32 +284,16 @@ def add_department(request):
     if request.method == 'POST':
         form = DepartmentForm(request.POST)
         if form.is_valid():
-            dept = form.save(commit=False)
-            dept.college = request.college
-            
-            # Handle "Other" custom degree type
-            if form.cleaned_data['name'] == 'Other':
-                dept.name = form.cleaned_data['custom_name']
-            else:
-                dept.name = form.cleaned_data['name']
-                
-            dept.save()
-            
-            # Bulk Create Specializations
-            specs_raw = form.cleaned_data.get('specializations_list', '')
-            if specs_raw:
-                specs = [s.strip() for s in specs_raw.split(',') if s.strip()]
-                for s_name in specs:
-                    Specialization.objects.create(
-                        department=dept,
-                        name=s_name,
-                        college=request.college
-                    )
-            
-            messages.success(request, f"Department '{dept.name}' created with {len(specs) if specs_raw else 0} courses.")
-            return redirect('department_list')
+            name = form.cleaned_data['name']
+            if name == 'Other': name = form.cleaned_data['custom_name']
+            dept = form.save(commit=False); dept.college = request.college; dept.name = name; dept.save()
+            specs_text = form.cleaned_data.get('specializations_list')
+            if specs_text:
+                for s_name in [s.strip() for s in specs_text.split(',') if s.strip()]:
+                    Specialization.objects.create(department=dept, name=s_name, college=request.college)
+            messages.success(request, f"Department '{name}' created."); return redirect('department_list')
     else: form = DepartmentForm()
-    return render(request, 'management/add_department.html', {'form': form, 'title': 'Create New Department'})
+    return render(request, 'management/add_department.html', {'form': form, 'title': 'Add New Department'})
 
 @login_required
 def edit_department(request, dept_id):
@@ -226,8 +302,14 @@ def edit_department(request, dept_id):
     if request.method == 'POST':
         form = DepartmentForm(request.POST, instance=dept)
         if form.is_valid():
-            form.save(); messages.success(request, "Department updated."); return redirect('department_list')
-    else: form = DepartmentForm(instance=dept)
+            name = form.cleaned_data['name']
+            if name == 'Other': name = form.cleaned_data['custom_name']
+            dept = form.save(commit=False); dept.name = name; dept.save()
+            messages.success(request, "Department updated."); return redirect('department_list')
+    else:
+        form = DepartmentForm(instance=dept)
+        if dept.name not in [c[0] for c in DepartmentForm.DEGREE_CHOICES]:
+            form.initial['name'] = 'Other'; form.initial['custom_name'] = dept.name
     return render(request, 'management/add_department.html', {'form': form, 'title': 'Edit Department'})
 
 @login_required
@@ -242,123 +324,31 @@ def import_departments_excel(request):
     if request.method == 'POST':
         form = ExcelImportForm(request.POST, request.FILES)
         if form.is_valid():
-            file = request.FILES['excel_file']
             try:
-                # Load Excel file
-                df = pd.read_excel(file)
-                
-                # Normalize column names to lowercase and strip spaces
-                df.columns = [str(c).strip().lower() for c in df.columns]
-                
-                # Check for mandatory columns (Department Name and Category are essential)
-                # We also support optional 'Description' and 'Specializations'
-                name_col = next((c for c in df.columns if 'name' in c or 'department' in c), None)
-                cat_col = next((c for c in df.columns if 'category' in c or 'type' in c), None)
-                desc_col = next((c for c in df.columns if 'desc' in c), None)
-                spec_col = next((c for c in df.columns if 'spec' in c or 'course' in c), None)
-
-                if not name_col or not cat_col:
-                    messages.error(request, "Excel must contain 'Department Name' and 'Category' (UG/PG) columns.")
-                    return redirect('department_list')
-                
+                df = pd.read_excel(request.FILES['excel_file'])
                 created_count = 0
                 for _, row in df.iterrows():
-                    name = str(row[name_col]).strip()
-                    category = str(row[cat_col]).strip().upper()
-                    description = str(row[desc_col]).strip() if desc_col and pd.notna(row[desc_col]) else ""
-                    specializations = str(row[spec_col]).strip() if spec_col and pd.notna(row[spec_col]) else ""
-                    
-                    if not name or category not in ['UG', 'PG']:
-                        continue
-                    
-                    # Create or update department
-                    dept, created = Department.objects.get_or_create(
-                        college=request.college,
-                        name=name,
-                        category=category,
-                        defaults={'description': description}
-                    )
-                    
-                    # Process specializations if provided
-                    if specializations:
-                        specs = [s.strip() for s in specializations.split(',') if s.strip()]
-                        for s_name in specs:
-                            Specialization.objects.get_or_create(
-                                department=dept,
-                                name=s_name,
-                                college=request.college
-                            )
-                    created_count += 1
-                
-                messages.success(request, f"Successfully processed {created_count} departments from Excel.")
-            except Exception as e:
-                import traceback
-                print(traceback.format_exc())
-                messages.error(request, f"Error processing file: {str(e)}")
+                    dept_name = row.get('Department Name')
+                    category = row.get('Category', 'UG')
+                    if dept_name:
+                        dept, created = Department.objects.get_or_create(college=request.college, name=dept_name, defaults={'category': category})
+                        if created: created_count += 1
+                        specs = row.get('Specializations')
+                        if pd.notna(specs):
+                            for s_name in [s.strip() for s in str(specs).split(',')]:
+                                Specialization.objects.get_or_create(department=dept, name=s_name, college=request.college)
+                messages.success(request, f"Successfully imported {created_count} new departments.")
+            except Exception as e: messages.error(request, f"Error processing file: {str(e)}")
             return redirect('department_list')
     return redirect('department_list')
 
 @login_required
 def download_department_template(request):
-    if request.user.role != 'COLLEGE_ADMIN': return redirect('dashboard')
-    
-    # Define columns
-    columns = ['Department Name', 'Category', 'Description', 'Specializations']
-    # Example data
-    data = [
-        ['Bachelor of Computer Applications (BCA)', 'UG', 'IT and Computer Science department', 'Software Engineering, Web Development, Cyber Security'],
-        ['Master of Science (MSc)', 'PG', 'Postgraduate Science Research', 'Applied Physics, Organic Chemistry']
-    ]
-    
-    df = pd.DataFrame(data, columns=columns)
-    
-    # Create the Excel file in memory
-    import io
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False, sheet_name='Sheet1')
-    
-    output.seek(0)
-    
-    response = HttpResponse(
-        output.read(),
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
+    df = pd.DataFrame(columns=['Department Name', 'Category', 'Specializations'])
+    df.loc[0] = ['BSc Computer Science', 'UG', 'Data Science, AI, Networking']
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = 'attachment; filename=department_import_template.xlsx'
-    return response
-
-@login_required
-def download_teacher_template(request):
-    if request.user.role != 'COLLEGE_ADMIN': return redirect('dashboard')
-    
-    columns = [
-        'First Name', 'Last Name', 'Email', 'Password', 
-        'Phone Number', 'Address', 'Department', 'Specialization', 'Qualification'
-    ]
-    
-    # Get some departments and specializations for example data
-    dept = Department.objects.filter(college=request.college).first()
-    spec = Specialization.objects.filter(department=dept).first() if dept else None
-    
-    dept_name = dept.name if dept else "Computer Science"
-    spec_name = spec.name if spec else "Software Engineering"
-    
-    data = [
-        ['John', 'Doe', 'john.doe@example.com', 'Pass1234', '9876543210', '123 Tech Lane', dept_name, spec_name, 'PhD in CS'],
-        ['Jane', 'Smith', 'jane.smith@example.com', 'Secure789', '9123456780', '456 Academic Way', dept_name, '', 'M.Tech IT']
-    ]
-    
-    df = pd.DataFrame(data, columns=columns)
-    
-    import io
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False, sheet_name='Sheet1')
-    
-    output.seek(0)
-    response = HttpResponse(output.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename=teacher_import_template.xlsx'
-    return response
+    df.to_excel(response, index=False); return response
 
 @login_required
 def import_teachers_excel(request):
@@ -366,84 +356,32 @@ def import_teachers_excel(request):
     if request.method == 'POST':
         form = ExcelImportForm(request.POST, request.FILES)
         if form.is_valid():
-            file = request.FILES['excel_file']
             try:
-                df = pd.read_excel(file)
-                df.columns = [str(c).strip().lower() for c in df.columns]
-                
-                # Column mapping
-                fname_col = next((c for c in df.columns if 'first' in c), None)
-                lname_col = next((c for c in df.columns if 'last' in c), None)
-                email_col = next((c for c in df.columns if 'email' in c), None)
-                pass_col = next((c for c in df.columns if 'pass' in c), None)
-                phone_col = next((c for c in df.columns if 'phone' in c), None)
-                addr_col = next((c for c in df.columns if 'address' in c), None)
-                dept_col = next((c for c in df.columns if 'dept' in c or 'department' in c), None)
-                spec_col = next((c for c in df.columns if 'spec' in c or 'subject' in c or 'course' in c), None)
-                qual_col = next((c for c in df.columns if 'qual' in c), None)
-
-                if not all([fname_col, email_col, pass_col]):
-                    messages.error(request, "Excel must contain First Name, Email, and Password columns.")
-                    return redirect('teacher_list')
-                
-                created_count = 0
-                errors = []
-                for index, row in df.iterrows():
-                    try:
-                        email = str(row[email_col]).strip().lower()
-                        if not email or CustomUser.objects.filter(email=email).exists():
-                            continue
-                        
-                        fname = str(row[fname_col]).strip()
-                        lname = str(row[lname_col]).strip() if lname_col and pd.notna(row[lname_col]) else ""
-                        password = str(row[pass_col]).strip() or 'Default@123'
-                        
-                        dept_name = str(row[dept_col]).strip() if dept_col and pd.notna(row[dept_col]) else ""
-                        spec_name = str(row[spec_col]).strip() if spec_col and pd.notna(row[spec_col]) else ""
-                        
-                        phone = str(row[phone_col]).strip() if phone_col and pd.notna(row[phone_col]) else ""
-                        address = str(row[addr_col]).strip() if addr_col and pd.notna(row[addr_col]) else ""
-                        qualification = str(row[qual_col]).strip() if qual_col and pd.notna(row[qual_col]) else "Degree"
-
-                        # Resolve Department & Specialization
-                        department = None
-                        if dept_name:
-                            department = Department.objects.filter(college=request.college, name__iexact=dept_name).first()
-                        
-                        specialization = None
-                        if department and spec_name:
-                            specialization = Specialization.objects.filter(department=department, name__iexact=spec_name).first()
-
-                        # Create User
-                        user = CustomUser.objects.create_user(
-                            email=email, password=password,
-                            first_name=fname, last_name=lname,
-                            role='TEACHER', college=request.college
-                        )
-                        
-                        # Create Profile
-                        TeacherProfile.objects.create(
-                            user=user, college=request.college,
-                            department=department,
-                            specialization=specialization,
-                            phone_number=phone,
-                            address=address,
-                            qualification=qualification
-                        )
-                        created_count += 1
-                    except Exception as row_error:
-                        errors.append(f"Row {index+2}: {str(row_error)}")
-                
-                if errors:
-                    messages.warning(request, f"Processed {created_count} teachers. Errors in {len(errors)} rows.")
-                    # In a real app we might log these errors
-                else:
-                    messages.success(request, f"Successfully imported {created_count} faculty members.")
-            except Exception as e:
-                messages.error(request, f"Error processing file: {str(e)}")
+                df = pd.read_excel(request.FILES['excel_file'])
+                for _, row in df.iterrows():
+                    email = row.get('Email'); dept_name = row.get('Department')
+                    if email and dept_name:
+                        dept = Department.objects.filter(college=request.college, name=dept_name).first()
+                        if dept:
+                            user, created = CustomUser.objects.get_or_create(
+                                email=email, college=request.college,
+                                defaults={'first_name': row.get('First Name', ''), 'last_name': row.get('Last Name', ''), 'role': 'TEACHER'}
+                            )
+                            if created: user.set_password('teacher123'); user.save()
+                            spec = Specialization.objects.filter(department=dept, name=row.get('Specialization')).first()
+                            TeacherProfile.objects.update_or_create(user=user, college=request.college, defaults={'department': dept, 'specialization': spec, 'qualification': row.get('Qualification', 'NA')})
+                messages.success(request, "Faculty import completed.")
+            except Exception as e: messages.error(request, f"Error: {str(e)}")
             return redirect('teacher_list')
     return redirect('teacher_list')
 
+@login_required
+def download_teacher_template(request):
+    df = pd.DataFrame(columns=['First Name', 'Last Name', 'Email', 'Department', 'Specialization', 'Qualification'])
+    df.loc[0] = ['John', 'Doe', 'john@example.com', 'BSc Computer Science', 'Data Science', 'PhD CS']
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=teacher_import_template.xlsx'
+    df.to_excel(response, index=False); return response
 
 @login_required
 def add_specialization(request):
@@ -493,15 +431,18 @@ def create_assignment(request):
 
 @login_required
 def mark_attendance(request):
-    if request.user.role != 'TEACHER': return redirect('dashboard')
+    if request.user.role not in ['TEACHER', 'HOD']: return redirect('dashboard')
     students = StudentProfile.objects.filter(college=request.college)
+    if request.user.role == 'HOD':
+        students = students.filter(department=request.user.hod_profile.department)
+    
     if request.method == 'POST':
         date = request.POST.get('date')
         for student in students:
             status = request.POST.get(f'status_{student.id}')
             Attendance.objects.update_or_create(
                 student=student, date=date, college=request.college,
-                defaults={'status': status, 'marked_by': request.user.teacher_profile}
+                defaults={'status': status, 'marked_by': request.user}
             )
         messages.success(request, "Attendance marked."); return redirect('dashboard')
     return render(request, 'management/mark_attendance.html', {'students': students})
@@ -515,3 +456,98 @@ def generate_sample_data(request):
         Department.objects.get_or_create(name=d_name, college=college)
     messages.success(request, "Sample Data setup completed.")
     return redirect('department_list')
+
+@login_required
+def add_hod(request):
+    if request.user.role != 'COLLEGE_ADMIN': return redirect('dashboard')
+    dept_id = request.GET.get('department')
+    if request.method == 'POST':
+        form = HODForm(request.POST, request.FILES, college=request.college)
+        if form.is_valid():
+            user = CustomUser.objects.create_user(
+                email=form.cleaned_data['email'], password=form.cleaned_data['password'],
+                first_name=form.cleaned_data['first_name'], last_name=form.cleaned_data['last_name'],
+                role='HOD', college=request.college
+            )
+            HODProfile.objects.create(
+                user=user, college=request.college,
+                department=form.cleaned_data['department'],
+                profile_photo=form.cleaned_data.get('profile_photo'),
+                phone_number=form.cleaned_data.get('phone_number', '')
+            )
+            TeacherProfile.objects.create(
+                user=user, college=request.college,
+                department=form.cleaned_data['department'],
+                phone_number=form.cleaned_data.get('phone_number', ''),
+                profile_photo=form.cleaned_data.get('profile_photo'),
+                qualification="Head of Department"
+            )
+            messages.success(request, f"HOD {user.get_full_name()} added and enrolled as Faculty.")
+            return redirect('hod_list')
+    else:
+        initial = {}
+        if dept_id: initial['department'] = dept_id
+        form = HODForm(college=request.college, initial=initial)
+    return render(request, 'management/add_hod.html', {'form': form})
+
+@login_required
+def hod_list(request):
+    if request.user.role != 'COLLEGE_ADMIN': return redirect('dashboard')
+    departments = Department.objects.filter(college=request.college).prefetch_related('hod_profile__user')
+    return render(request, 'management/hod_list.html', {'departments': departments})
+
+@login_required
+def create_timetable(request):
+    if request.user.role != 'HOD': return redirect('dashboard')
+    if request.method == 'POST':
+        form = TimeTableForm(request.POST, request.FILES)
+        if form.is_valid():
+            tt = form.save(commit=False); tt.college = request.college
+            tt.department = request.user.hod_profile.department
+            tt.uploaded_by = request.user.hod_profile; tt.save()
+            messages.success(request, "Time table created."); return redirect('dashboard')
+    else: form = TimeTableForm()
+    return render(request, 'management/create_timetable.html', {'form': form, 'title': 'Upload Timetable'})
+
+@login_required
+def edit_timetable(request, tt_id):
+    if request.user.role != 'HOD': return redirect('dashboard')
+    tt = get_object_or_404(TimeTable, id=tt_id, department=request.user.hod_profile.department)
+    if request.method == 'POST':
+        form = TimeTableForm(request.POST, request.FILES, instance=tt)
+        if form.is_valid():
+            form.save(); messages.success(request, "Timetable updated."); return redirect('dashboard')
+    else: form = TimeTableForm(instance=tt)
+    return render(request, 'management/create_timetable.html', {'form': form, 'title': 'Edit Timetable'})
+
+@login_required
+def delete_timetable(request, tt_id):
+    if request.user.role != 'HOD': return redirect('dashboard')
+    tt = get_object_or_404(TimeTable, id=tt_id, department=request.user.hod_profile.department)
+    tt.delete(); messages.warning(request, "Timetable deleted."); return redirect('dashboard')
+
+@login_required
+def create_exam_notification(request):
+    if request.user.role != 'HOD': return redirect('dashboard')
+    if request.method == 'POST':
+        form = ExamNotificationForm(request.POST)
+        if form.is_valid():
+            en = form.save(commit=False); en.college = request.college
+            en.department = request.user.hod_profile.department
+            en.posted_by = request.user.hod_profile; en.save()
+            messages.success(request, "Exam notification created."); return redirect('dashboard')
+    else: form = ExamNotificationForm()
+    return render(request, 'management/create_exam_notification.html', {'form': form})
+
+@login_required
+def edit_profile(request):
+    if request.user.role != 'HOD': return redirect('dashboard')
+    profile = request.user.hod_profile
+    if request.method == 'POST':
+        form = HODEditForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            user = request.user; user.first_name = form.cleaned_data['first_name']
+            user.last_name = form.cleaned_data['last_name']; user.save(); form.save()
+            messages.success(request, "Profile updated successfully."); return redirect('dashboard')
+    else: form = HODEditForm(instance=profile)
+    return render(request, 'management/edit_profile.html', {'form': form})

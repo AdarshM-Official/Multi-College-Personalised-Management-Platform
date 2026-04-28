@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Department Heads (HODs) | {{ request.college.name }}{% endblock %}
+
+{% block content %}
+<div class="card card-premium border-0 mb-4">
+    <div class="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-bold mb-1 text-primary">Department Leadership</h5>
+            <p class="small text-muted mb-0">List of Heads of Departments across institution wings.</p>
+        </div>
+        <a href="{% url 'add_hod' %}" class="btn btn-premium btn-sm">
+            <i class="bi bi-person-plus-fill me-1"></i> Add HOD
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    {% for dept in departments %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-4 text-center">
+                <div class="mb-3">
+                    <span class="badge {% if dept.category == 'UG' %}bg-info-soft text-info{% else %}bg-purple-soft text-purple{% endif %} rounded-pill px-3">
+                        {{ dept.category }}
+                    </span>
+                </div>
+                <h6 class="fw-bold mb-3">{{ dept.name }}</h6>
+                
+                {% if dept.hod_profile %}
+                    <div class="mb-3">
+                        {% if dept.hod_profile.profile_photo %}
+                            <img src="{{ dept.hod_profile.profile_photo.url }}" class="rounded-circle object-fit-cover shadow-sm mb-3" style="width: 80px; height: 80px;" alt="HOD">
+                        {% else %}
+                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-3 shadow-sm" style="width: 80px; height: 80px;">
+                                <i class="bi bi-person-fill display-6 text-muted"></i>
+                            </div>
+                        {% endif %}
+                        <h5 class="fw-bold text-dark mb-1">{{ dept.hod_profile.user.get_full_name }}</h5>
+                        <p class="small text-muted mb-3">{{ dept.hod_profile.user.email }}</p>
+                        
+                        <div class="d-flex justify-content-center gap-2 mt-2">
+                            <span class="badge bg-light text-dark border"><i class="bi bi-telephone me-1"></i> {{ dept.hod_profile.phone_number|default:"N/A" }}</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="py-4">
+                        <i class="bi bi-person-dash text-muted display-6 mb-2"></i>
+                        <p class="small text-muted mb-0">No HOD assigned to this department yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-white border-0 p-4 pt-0">
+                {% if not dept.hod_profile %}
+                    <a href="{% url 'add_hod' %}?dept={{ dept.id }}" class="btn btn-outline-primary btn-sm w-100 rounded-pill">Assign HOD</a>
+                {% else %}
+                     <button class="btn btn-light btn-sm w-100 rounded-pill disabled">Assigned</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <p class="text-muted">No departments found. Please create departments first.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -25,8 +25,15 @@ class College(models.Model):
     website = models.URLField(null=True, blank=True)
     verification_document = models.FileField(upload_to='verification_docs/', null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    rejection_reason = models.TextField(blank=True, null=True, help_text="Reason for rejection, shown to the institution.")
+    slug_updated = models.BooleanField(default=False)
     
     created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def get_subdomain_url(self):
+        # Assuming we are on localhost:8000 for development
+        return f"http://{self.slug}.localhost:8000"
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -37,8 +44,16 @@ class College(models.Model):
         return self.name
 
 class CollegeImage(models.Model):
+    CATEGORY_CHOICES = (
+        ('CAMPUS', 'Campus Infrastructure'),
+        ('AMENITY', 'Amenities & Life'),
+        ('FACILITY', 'Academic Facilities'),
+        ('EVENT', 'Events & Activity'),
+        ('OTHER', 'Other'),
+    )
     college = models.ForeignKey(College, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='college_gallery/')
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='OTHER')
     caption = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

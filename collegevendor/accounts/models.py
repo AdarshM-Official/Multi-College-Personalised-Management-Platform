@@ -22,6 +22,7 @@ class CustomUser(AbstractUser):
     ROLES = (
         ('SUPER_ADMIN', 'Super Admin'),
         ('COLLEGE_ADMIN', 'College Admin'),
+        ('HOD', 'Head of Department'),
         ('TEACHER', 'Teacher'),
         ('STUDENT', 'Student'),
     )

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Add HOD{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0 py-3">
+                    <h4 class="mb-0 text-primary"><i class="fas fa-user-tie me-2"></i>Add Head of Department</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            {% for field in form %}
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.errors %}
+                                <div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="mt-4 text-end">
+                            <a href="{% url 'dashboard' %}" class="btn btn-light me-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary px-4">Save HOD</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

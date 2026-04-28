@@ -1,210 +1,391 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ college.name }} | Institution Profile{% endblock %}
+{% block title %}{{ college.name }} | Institutional Details{% endblock %}
 
 {% block content %}
-<!-- Institutional Header -->
-<div class="bg-premium py-5 pt-5 mb-0 overflow-hidden position-relative">
-    <div class="container py-4 position-relative z-1">
-        <div class="row align-items-center">
-            <div class="col-auto">
-                <div class="shadow-lg p-3 bg-white rounded-5 mb-3 mb-md-0">
+<style>
+    /* Professional Corporate Style Enhancements */
+    :root {
+        --inst-theme: {{ college.theme_color|default:'#0f172a' }};
+        --inst-theme-10: color-mix(in srgb, var(--inst-theme) 10%, white);
+        --inst-theme-5: color-mix(in srgb, var(--inst-theme) 5%, white);
+    }
+    
+    body {
+        background-color: #f8fafc;
+    }
+
+    .inst-header {
+        background-color: #ffffff;
+        border-top: 6px solid var(--inst-theme);
+        padding: 4rem 0 3rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    }
+
+    .logo-container {
+        width: 160px;
+        height: 160px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+    }
+
+    .inst-title {
+        font-family: "Georgia", serif; /* Professional serif */
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: -0.5px;
+    }
+
+    .section-heading {
+        font-family: inherit;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .section-heading::after {
+        content: "";
+        flex-grow: 1;
+        height: 1px;
+        background: #e2e8f0;
+        margin-left: 1rem;
+    }
+
+    .info-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    }
+
+    .fact-row {
+        display: flex;
+        align-items: flex-start;
+        padding: 1rem 0;
+        border-bottom: 1px dashed #e2e8f0;
+    }
+    .fact-row:last-child {
+        border-bottom: none;
+    }
+    .fact-icon {
+        width: 32px;
+        color: var(--inst-theme);
+        font-size: 1.1rem;
+        margin-top: 2px;
+    }
+    .fact-content {
+        flex: 1;
+    }
+    .fact-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #64748b;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.2rem;
+    }
+    .fact-value {
+        font-size: 0.95rem;
+        color: #0f172a;
+        font-weight: 500;
+    }
+
+    /* Timeline */
+    .timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 5px;
+        top: 10px;
+        bottom: 0;
+        width: 2px;
+        background: #cbd5e1;
+    }
+    .timeline-item {
+        position: relative;
+        padding-bottom: 2rem;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -32.5px;
+        top: 2px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--inst-theme);
+        border: 3px solid #ffffff;
+        box-shadow: 0 0 0 2px var(--inst-theme);
+    }
+    .timeline-date {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--inst-theme);
+        margin-bottom: 0.25rem;
+    }
+
+    /* Grid Gallery */
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    .gallery-img-wrapper {
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        position: relative;
+        aspect-ratio: 4/3;
+    }
+    .gallery-img-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    .gallery-img-wrapper:hover img {
+        transform: scale(1.05);
+    }
+    .gallery-caption {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(15, 23, 42, 0.8);
+        color: white;
+        padding: 0.5rem;
+        font-size: 0.75rem;
+        backdrop-filter: blur(4px);
+    }
+
+    .program-card {
+        border: 1px solid #e2e8f0;
+        border-left: 4px solid var(--inst-theme);
+        background: #ffffff;
+        transition: box-shadow 0.2s;
+    }
+    .program-card:hover {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+</style>
+
+<!-- Profile Header Section -->
+<header class="inst-header">
+    <div class="container">
+        <div class="row align-items-center mb-4">
+            <div class="col-md-auto mb-4 mb-md-0 d-flex justify-content-center">
+                <div class="logo-container">
                     {% if college.logo %}
-                        <img src="{{ college.logo.url }}" alt="Logo" class="rounded" style="width: 120px; height: 120px; object-fit: contain;">
+                        <img src="{{ college.logo.url }}" alt="{{ college.name }} Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">
                     {% else %}
-                        <div class="display-1 text-primary"><i class="bi bi-mortarboard-fill"></i></div>
+                        <i class="bi bi-bank display-3" style="color: var(--inst-theme)"></i>
                     {% endif %}
                 </div>
             </div>
-            <div class="col text-white ms-md-4">
-                <div class="hero-badge bg-white-soft text-white border border-white-opaque mb-3">
-                    Est. {% if college.established_year %}{{ college.established_year }}{% else %}Registry 2024{% endif %}
+            <div class="col-md text-center text-md-start">
+                <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-start gap-2 mb-2">
+                    <span class="badge" style="background-color: var(--inst-theme-10); color: var(--inst-theme); border: 1px solid var(--inst-theme);">
+                        <i class="bi bi-clock-history me-1"></i> Established {{ college.established_year|default:"N/A" }}
+                    </span>
+                    {% if college.university_affiliation %}
+                    <span class="badge bg-light text-dark border">
+                        <i class="bi bi-diagram-3 me-1"></i> {{ college.university_affiliation }}
+                    </span>
+                    {% endif %}
                 </div>
-                <h1 class="display-4 fw-bold mb-2">{{ college.name }}</h1>
-                <p class="lead opacity-75 mb-0"><i class="bi bi-geo-alt-fill me-2"></i> {{ college.address }}</p>
+                <h1 class="inst-title mb-3">{{ college.name }}</h1>
+                <p class="text-secondary fs-5 mb-0 d-flex align-items-start justify-content-center justify-content-md-start gap-2">
+                    <i class="bi bi-geo-alt mt-1"></i> 
+                    <span>{{ college.address }}{% if college.district %}, <br class="d-md-none">{{ college.district }}{% endif %}</span>
+                </p>
+            </div>
+            <div class="col-md-auto mt-4 mt-md-0 text-center text-md-end">
+                {% if college.website %}
+                <a href="{{ college.website }}" target="_blank" class="btn fw-bold px-4 py-2" style="background-color: var(--inst-theme); color: white;">
+                    Visit Official Website <i class="bi bi-box-arrow-up-right ms-2 fs-6"></i>
+                </a>
+                {% endif %}
             </div>
         </div>
     </div>
-    <!-- Abstract Shapes -->
-    <div class="decoration-circle-1"></div>
-    <div class="decoration-circle-2"></div>
-</div>
+</header>
 
-<div class="container mt-n5 position-relative z-2">
-    <div class="row g-4">
-        <!-- Main Content -->
-        <div class="col-lg-8">
-            
-            <!-- Gallery Slider / Grid -->
-            {% if college.images.exists %}
-            <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
-                <div id="collegeGallery" class="carousel slide" data-bs-ride="carousel">
-                    <div class="carousel-inner">
-                        {% for img in college.images.all %}
-                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                            <img src="{{ img.image.url }}" class="d-block w-100 object-fit-cover" style="height: 450px;" alt="...">
-                            {% if img.caption %}
-                            <div class="carousel-caption d-none d-md-block bg-dark-soft rounded-pill px-4 mx-auto" style="width: fit-content;">
-                                <p class="mb-0 small fw-bold">{{ img.caption }}</p>
-                            </div>
+<main class="container py-5">
+    <div class="row g-5">
+        
+        <!-- Left Sidebar: Comprehensive Info -->
+        <div class="col-lg-4 order-2 order-lg-1">
+            <div class="info-card p-4 sticky-top" style="top: 2rem;">
+                <h5 class="fw-bold mb-4 border-bottom pb-3 text-dark">Institutional Synopsis</h5>
+                
+                <div class="fact-row">
+                    <div class="fact-icon"><i class="bi bi-envelope"></i></div>
+                    <div class="fact-content">
+                        <div class="fact-label">Official Contact Email</div>
+                        <div class="fact-value">
+                            {% if college.contact_email %}
+                                <a href="mailto:{{ college.contact_email }}" class="text-decoration-none" style="color: var(--inst-theme);">{{ college.contact_email }}</a>
+                            {% else %}
+                                <span class="text-muted">Not Provided</span>
                             {% endif %}
                         </div>
-                        {% endfor %}
-                    </div>
-                    {% if college.images.count > 1 %}
-                    <button class="carousel-control-prev" type="button" data-bs-target="#collegeGallery" data-bs-slide="prev">
-                        <span class="carousel-control-prev-icon rounded-circle bg-dark p-3" aria-hidden="true"></span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#collegeGallery" data-bs-slide="next">
-                        <span class="carousel-control-next-icon rounded-circle bg-dark p-3" aria-hidden="true"></span>
-                    </button>
-                    {% endif %}
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- About Section -->
-            <div class="card border-0 shadow-sm rounded-4 mb-4 p-4 p-md-5">
-                <h4 class="fw-bold mb-4">About Our Institution</h4>
-                <div class="fs-5 text-muted mb-4" style="line-height: 1.8;">
-                    {{ college.description|linebreaks|default:"This institution is dedicated to academic excellence, fostering a community of research, innovation, and holistic development. We provide a state-of-the-art learning environment supported by experienced faculty and modern infrastructure." }}
-                </div>
-
-                <div class="row g-4 mt-2">
-                    <div class="col-md-6 border-start border-4 border-primary ps-4">
-                        <div class="x-small text-uppercase text-muted fw-bold mb-1">Contact Email</div>
-                        <div class="fw-bold text-dark">{{ college.contact_email }}</div>
-                    </div>
-                    <div class="col-md-6 border-start border-4 border-primary ps-4">
-                        <div class="x-small text-uppercase text-muted fw-bold mb-1">Official Website</div>
-                        <div class="fw-bold"><a href="{{ college.website }}" class="text-primary text-decoration-none">{{ college.website|default:"mgt-panel.edu" }}</a></div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Achievements -->
-            {% if college.achievements.exists %}
-            <div class="card border-0 shadow-sm rounded-4 mb-4 p-4 p-md-5">
-                <h4 class="fw-bold mb-4">Milestones & Excellence</h4>
-                <div class="list-group list-group-flush">
-                    {% for ach in college.achievements.all|dictsortreversed:"date" %}
-                    <div class="list-group-item px-0 py-4 border-light">
-                        <div class="d-flex align-items-start gap-3">
-                            <div class="bg-primary-soft p-3 rounded-4 mt-1">
-                                <i class="bi bi-trophy-fill text-primary"></i>
-                            </div>
-                            <div>
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h5 class="fw-bold mb-0 text-dark">{{ ach.title }}</h5>
-                                    <span class="badge bg-light text-muted rounded-pill px-3 py-2 small fw-normal">{% if ach.date %}{{ ach.date|date:"Y" }}{% else %}Registry{% endif %}</span>
-                                </div>
-                                <p class="text-muted mb-0 lh-lg">{{ ach.description }}</p>
-                            </div>
+                <div class="fact-row">
+                    <div class="fact-icon"><i class="bi bi-telephone"></i></div>
+                    <div class="fact-content">
+                        <div class="fact-label">Phone Directory</div>
+                        <div class="fact-value">{{ college.phone_number|default:"Not Provided" }}</div>
+                    </div>
+                </div>
+
+                <div class="fact-row">
+                    <div class="fact-icon"><i class="bi bi-link-45deg"></i></div>
+                    <div class="fact-content">
+                        <div class="fact-label">Primary Domain</div>
+                        <div class="fact-value">
+                            {% if college.website %}
+                                <a href="{{ college.website }}" target="_blank" class="text-decoration-none" style="color: var(--inst-theme);">{{ college.website|urlize }}</a>
+                            {% else %}
+                                <span class="text-muted">Not Provided</span>
+                            {% endif %}
                         </div>
+                    </div>
+                </div>
+                
+                <div class="fact-row">
+                    <div class="fact-icon"><i class="bi bi-building"></i></div>
+                    <div class="fact-content">
+                        <div class="fact-label">District / Region</div>
+                        <div class="fact-value">{{ college.district|default:"Not Provided" }}</div>
+                    </div>
+                </div>
+
+                <div class="fact-row">
+                    <div class="fact-icon"><i class="bi bi-shield-check"></i></div>
+                    <div class="fact-content">
+                        <div class="fact-label">Registry Identifier</div>
+                        <div class="fact-value font-monospace">{{ college.registration_number|default:"N/A" }}</div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 p-3 rounded" style="background-color: var(--inst-theme-5);">
+                    <div class="row text-center g-2">
+                        <div class="col-6 border-end border-light">
+                            <h3 class="fw-bold mb-0" style="color: var(--inst-theme);">{{ departments.count }}</h3>
+                            <span class="fact-label text-dark">Degree Wings</span>
+                        </div>
+                        <div class="col-6">
+                            <h3 class="fw-bold mb-0" style="color: var(--inst-theme);">{% if total_specs %}{{ total_specs }}{% else %}0{% endif %}</h3>
+                            <span class="fact-label text-dark">Disciplines</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Main Content -->
+        <div class="col-lg-8 order-1 order-lg-2">
+            
+            <!-- Executive Summary (About) -->
+            <section class="mb-5">
+                <h3 class="section-heading">Executive Summary</h3>
+                <div class="info-card p-4 p-md-5">
+                    <p class="fs-5 text-secondary mb-0" style="line-height: 1.8;">
+                        {{ college.description|linebreaksbr|default:"This institution is a registered entity on the platform. Detailed prospectus and historical backgrounds are currently being updated by the administration. Expect comprehensive data detailing the institution's commitment to quality education, research, and holistic development." }}
+                    </p>
+                </div>
+            </section>
+
+            <!-- Campus Gallery -->
+            {% if college.images.exists %}
+            <section class="mb-5">
+                <h3 class="section-heading">Campus & Infrastructure</h3>
+                {% regroup college.images.all|dictsort:"category" by get_category_display as categorized_images %}
+                {% for group in categorized_images %}
+                <h5 class="fw-bold text-dark mt-4 mb-3"><i class="bi bi-bookmark-fill me-2" style="color: var(--inst-theme);"></i>{{ group.grouper }}</h5>
+                <div class="gallery-grid mb-4">
+                    {% for img in group.list %}
+                    <div class="gallery-img-wrapper shadow-sm">
+                        <img src="{{ img.image.url }}" alt="{{ img.caption|default:'Campus visual' }}">
+                        {% if img.caption %}
+                        <div class="gallery-caption">{{ img.caption }}</div>
+                        {% endif %}
                     </div>
                     {% endfor %}
                 </div>
-            </div>
+                {% endfor %}
+            </section>
             {% endif %}
 
             <!-- Academic Offerings -->
-            <div class="card border-0 shadow-sm rounded-4 mb-4 p-4 p-md-5">
-                <h4 class="fw-bold mb-4">Academic Offerings</h4>
-                <p class="text-muted small mb-4">Browse our currently established degree wings and specialized course subjects.</p>
+            <section class="mb-5">
+                <h3 class="section-heading">Academic Index</h3>
+                <p class="text-secondary mb-4">The following academic wings and disciplines are currently offered by the institution.</p>
                 
-                <div class="accordion accordion-flush" id="academicAccordion">
+                <div class="row g-3">
                     {% for dept in departments %}
-                    <div class="accordion-item border rounded-3 mb-3 overflow-hidden">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed fw-bold py-3" type="button" data-bs-toggle="collapse" data-bs-target="#dept-{{ dept.id }}">
-                                <i class="bi bi-mortarboard-fill text-primary me-2"></i> {{ dept.name }}
-                                <span class="badge bg-light text-muted ms-auto me-3 small fw-normal">{{ dept.category }}</span>
-                            </button>
-                        </h2>
-                        <div id="dept-{{ dept.id }}" class="accordion-collapse collapse" data-bs-parent="#academicAccordion">
-                            <div class="accordion-body bg-light">
-                                <ul class="list-group list-group-flush small rounded-3 overflow-hidden">
-                                    {% for spec in dept.specializations.all %}
-                                    <li class="list-group-item d-flex align-items-center justify-content-between">
-                                        <span><i class="bi bi-journal-check text-success me-2"></i> {{ spec.name }}</span>
-                                        <span class="x-small text-muted">Active</span>
-                                    </li>
-                                    {% empty %}
-                                    <li class="list-group-item text-muted x-small">No specializations mapped for this degree yet.</li>
-                                    {% endfor %}
-                                </ul>
+                    <div class="col-md-6">
+                        <div class="program-card rounded p-4 h-100 relative">
+                            <div class="d-flex justify-content-between mb-2">
+                                <h5 class="fw-bold text-dark mb-0"><i class="bi bi-mortarboard me-2 text-secondary"></i>{{ dept.name }}</h5>
                             </div>
+                            <span class="badge bg-light text-secondary border mb-3">{{ dept.category }}</span>
+                            
+                            {% if dept.specializations.all %}
+                            <ul class="list-unstyled mb-0 small text-secondary">
+                                {% for spec in dept.specializations.all %}
+                                <li class="mb-1"><i class="bi bi-dot" style="color: var(--inst-theme);"></i> {{ spec.name }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="text-muted small mb-0"><i class="bi bi-exclamation-circle me-1"></i> Subjects catalog being updated.</p>
+                            {% endif %}
                         </div>
                     </div>
                     {% empty %}
-                    <div class="text-center py-4 bg-light rounded-4">
-                        <i class="bi bi-building-dash display-5 text-muted mb-3 opacity-25"></i>
-                        <p class="text-muted small">Academic structure details are being updated.</p>
+                    <div class="col-12">
+                        <div class="info-card p-5 text-center text-muted">
+                            <i class="bi bi-journal-x display-4 mb-3 opacity-25"></i>
+                            <p>Academic structures have not been thoroughly listed by the administration yet.</p>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
-            </div>
-        </div>
+            </section>
 
-        <!-- Sidebar / Actions -->
-        <div class="col-lg-4">
-            <div class="sticky-top" style="top: 2rem;">
-                <div class="card border-0 shadow-sm rounded-4 p-4">
-                    <h6 class="fw-bold mb-3">Institutional Overview</h6>
-                    <ul class="list-group list-group-flush small">
-                        <li class="list-group-item px-0 border-0 d-flex justify-content-between">
-                            <span class="text-muted">Status</span>
-                            <span class="badge bg-success-soft text-success rounded-pill px-3">Verified Member</span>
-                        </li>
-                        <li class="list-group-item px-0 border-0 d-flex justify-content-between">
-                            <span class="text-muted">Degree Wings</span>
-                            <span class="fw-bold text-dark">{{ departments.count }}</span>
-                        </li>
-                        <li class="list-group-item px-0 border-0 d-flex justify-content-between">
-                            <span class="text-muted">Public Subjects</span>
-                            <span class="fw-bold text-dark">{% if total_specs %}{{ total_specs }}{% else %}Catalogued{% endif %}</span>
-                        </li>
-                    </ul>
+            <!-- Historical Milestones -->
+            {% if college.achievements.exists %}
+            <section class="mb-5">
+                <h3 class="section-heading">Historical Milestones</h3>
+                <div class="info-card p-4 p-md-5">
+                    <div class="timeline">
+                        {% for ach in college.achievements.all|dictsortreversed:"date" %}
+                        <div class="timeline-item">
+                            <div class="timeline-date">{% if ach.date %}{{ ach.date|date:"F Y" }}{% else %}Historical{% endif %}</div>
+                            <h5 class="fw-bold mb-2">{{ ach.title }}</h5>
+                            <p class="text-secondary mb-0">{{ ach.description }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
-            </div>
+            </section>
+            {% endif %}
+
         </div>
     </div>
-</div>
-
-<style>
-.bg-premium {
-    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-}
-.bg-white-soft { background: rgba(255,255,255,0.15); }
-.border-white-opaque { border-color: rgba(255,255,255,0.2) !important; }
-.mt-n5 { margin-top: -3rem !important; }
-.hero-badge {
-    padding: 6px 16px;
-    border-radius: 100px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    display: inline-block;
-}
-.bg-dark-soft { background: rgba(0,0,0,0.6); }
-.btn-white { background: white; border: none; }
-.decoration-circle-1 {
-    position: absolute;
-    top: -10%;
-    right: -10%;
-    width: 350px;
-    height: 350px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 50%;
-}
-.decoration-circle-2 {
-    position: absolute;
-    bottom: -15%;
-    left: 15%;
-    width: 150px;
-    height: 150px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 50%;
-}
-.bg-success-soft { background-color: rgba(16, 185, 129, 0.1); }
-</style>
+</main>
 {% endblock %}

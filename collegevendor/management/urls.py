@@ -1,21 +1,24 @@
 from django.urls import path
 from . import views
 
-# URL patterns for management app - Triggered Reload
 urlpatterns = [
     path('teachers/import/', views.import_teachers_excel, name='import_teachers_excel'),
     path('teachers/template/', views.download_teacher_template, name='download_teacher_template'),
     path('settings/', views.college_settings, name='college_settings'),
+    path('gallery/delete/<int:image_id>/', views.delete_gallery_image, name='delete_gallery_image'),
+    
     # Students
     path('students/', views.student_list, name='student_list'),
     path('students/add/', views.add_student, name='add_student'),
+    path('students/view/<int:student_id>/', views.student_detail, name='student_detail'),
+    path('students/edit/<int:student_id>/', views.edit_student, name='edit_student'),
+    path('students/delete/<int:student_id>/', views.delete_student, name='delete_student'),
     
     # Teachers
     path('teachers/', views.teacher_list, name='teacher_list'),
     path('teachers/add/', views.add_teacher, name='add_teacher'),
     path('teachers/view/<int:teacher_id>/', views.teacher_detail, name='teacher_detail'),
     path('teachers/edit/<int:teacher_id>/', views.edit_teacher, name='edit_teacher'),
-    path('teachers/delete/<int:teacher_id>/', views.delete_teacher, name='delete_teacher'),
     path('teachers/delete/<int:teacher_id>/', views.delete_teacher, name='delete_teacher'),
     
     # Departments
@@ -40,4 +43,13 @@ urlpatterns = [
     
     # Utilities
     path('setup-data/', views.generate_sample_data, name='generate_sample_data'),
+    
+    # HOD
+    path('hods/', views.hod_list, name='hod_list'),
+    path('hods/add/', views.add_hod, name='add_hod'),
+    path('profile/edit/', views.edit_profile, name='edit_profile'),
+    path('timetable/create/', views.create_timetable, name='create_timetable'),
+    path('timetable/edit/<int:tt_id>/', views.edit_timetable, name='edit_timetable'),
+    path('timetable/delete/<int:tt_id>/', views.delete_timetable, name='delete_timetable'),
+    path('exam-notification/create/', views.create_exam_notification, name='create_exam_notification'),
 ]

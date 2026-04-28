@@ -29,6 +29,11 @@ UNIVERSITY_CHOICES = [
 class CollegeRegistrationForm(forms.Form):
     # College details
     college_name = forms.CharField(max_length=255, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    subdomain_alias = forms.CharField(
+        max_length=50, 
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. chmm'}),
+        help_text="Choose a short, unique name for your portal. Only lowercase letters, numbers, and hyphens."
+    )
     registration_number = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. REG-2024-001'}))
     
     district = forms.ChoiceField(choices=DISTRICT_CHOICES, widget=forms.Select(attrs={'class': 'form-select'}))
@@ -54,3 +59,14 @@ class CollegeRegistrationForm(forms.Form):
         if CustomUser.objects.filter(email=email).exists():
             raise forms.ValidationError("User with this email already exists.")
         return email
+
+    def clean_subdomain_alias(self):
+        alias = self.cleaned_data.get('subdomain_alias')
+        if alias:
+            alias = alias.lower().strip()
+            import re
+            if not re.match(r'^[a-z0-9-]+$', alias):
+                raise forms.ValidationError("Subdomain can only contain lowercase letters, numbers, and hyphens.")
+            if College.objects.filter(slug=alias).exists():
+                raise forms.ValidationError("This portal name is already taken. Please choose another one.")
+        return alias

@@ -6,24 +6,40 @@
 <div class="row justify-content-center mt-5">
     <div class="col-md-6 text-center">
         <div class="card card-premium p-5 border-0 shadow-lg">
-            <div class="mb-4">
-                <div class="bg-warning-soft p-4 rounded-circle d-inline-block shadow-sm">
-                    <i class="bi bi-hourglass-split display-4 text-warning"></i>
+            {% if request.college.status == 'REJECTED' %}
+                <div class="mb-4">
+                    <div class="bg-danger-soft p-4 rounded-circle d-inline-block shadow-sm">
+                        <i class="bi bi-x-circle-fill display-4 text-danger"></i>
+                    </div>
                 </div>
-            </div>
-            <h2 class="fw-bold mb-3">Verification in Progress</h2>
-            <p class="text-muted lead mb-4">
-                Thank you for registering <strong>{{ request.college.name }}</strong>. 
-                Our team is currently reviewing your registration details (Reg No: {{ request.college.registration_number }}).
-            </p>
-            <div class="alert alert-info border-0 rounded-4 p-4 text-start small">
-                <h6 class="fw-bold"><i class="bi bi-info-circle-fill me-2"></i>What's next?</h6>
-                <ul class="mb-0">
-                    <li>Our agents will cross-check your accreditation documents.</li>
-                    <li>You will receive an email once your portal is activated.</li>
-                    <li>This process typically takes 12-24 business hours.</li>
-                </ul>
-            </div>
+                <h2 class="fw-bold mb-3">Registration Not Approved</h2>
+                <p class="text-muted lead mb-4">
+                    We regret to inform you that the registration for <strong>{{ request.college.name }}</strong> could not be approved at this time.
+                </p>
+                <div class="alert alert-danger border-0 rounded-4 p-4 text-start small">
+                    <h6 class="fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Reason for Rejection:</h6>
+                    <p class="mb-0">{{ request.college.rejection_reason }}</p>
+                </div>
+            {% else %}
+                <div class="mb-4">
+                    <div class="bg-warning-soft p-4 rounded-circle d-inline-block shadow-sm">
+                        <i class="bi bi-hourglass-split display-4 text-warning"></i>
+                    </div>
+                </div>
+                <h2 class="fw-bold mb-3">Verification in Progress</h2>
+                <p class="text-muted lead mb-4">
+                    Thank you for registering <strong>{{ request.college.name }}</strong>. 
+                    Our team is currently reviewing your registration details (Reg No: {{ request.college.registration_number }}).
+                </p>
+                <div class="alert alert-info border-0 rounded-4 p-4 text-start small">
+                    <h6 class="fw-bold"><i class="bi bi-info-circle-fill me-2"></i>What's next?</h6>
+                    <ul class="mb-0">
+                        <li>Our agents will cross-check your accreditation documents.</li>
+                        <li>You will receive an email once your portal is activated.</li>
+                        <li>This process typically takes 12-24 business hours.</li>
+                    </ul>
+                </div>
+            {% endif %}
             <div class="mt-4">
                 <form action="{% url 'logout' %}" method="post">
                     {% csrf_token %}

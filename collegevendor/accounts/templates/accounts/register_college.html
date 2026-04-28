@@ -197,6 +197,15 @@
                                     {{ form.registration_number }}
                                 </div>
                                 <div class="col-md-12">
+                                    <label class="form-label small fw-bold text-dark opacity-75">Platform Subdomain Alias</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-0 fw-bold text-muted">https://</span>
+                                        {{ form.subdomain_alias }}
+                                        <span class="input-group-text bg-light border-0 fw-bold text-muted">.managecampus.com</span>
+                                    </div>
+                                    <div class="form-text x-small text-muted">{{ form.subdomain_alias.help_text }}</div>
+                                </div>
+                                <div class="col-md-12">
                                     <label class="form-label small fw-bold text-dark opacity-75">District (Kerala)</label>
                                     {{ form.district }}
                                 </div>
