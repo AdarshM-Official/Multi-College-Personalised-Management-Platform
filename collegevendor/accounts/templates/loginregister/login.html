@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Professional Portal | Sign In</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
         :root {
             --brand: #4f46e5; /* Indigo 600 */
@@ -235,7 +236,7 @@
                     <label for="password">Password</label>
                     <div class="password-wrapper">
                         <input type="password" id="password" name="password" class="input-field" placeholder="••••••••" required>
-                        <span class="toggle-password" onclick="togglePass()">SHOW</span>
+                        <span class="toggle-password" onclick="togglePass()"><i class="bi bi-eye"></i></span>
                     </div>
                 </div>
 
@@ -243,7 +244,7 @@
                     <label class="remember-me">
                         <input type="checkbox"> Remember me
                     </label>
-                    <a href="#" class="forgot-password">Forgot password?</a>
+                    <a href="{% url 'password_reset' %}" class="forgot-password">Forgot password?</a>
                 </div>
 
                 <button type="submit" class="btn-submit">Continue</button>
@@ -258,13 +259,13 @@
     <script>
         function togglePass() {
             const passInput = document.getElementById('password');
-            const toggleBtn = document.querySelector('.toggle-password');
+            const toggleIcon = document.querySelector('.toggle-password i');
             if (passInput.type === 'password') {
                 passInput.type = 'text';
-                toggleBtn.textContent = 'HIDE';
+                toggleIcon.classList.replace('bi-eye', 'bi-eye-slash');
             } else {
                 passInput.type = 'password';
-                toggleBtn.textContent = 'SHOW';
+                toggleIcon.classList.replace('bi-eye-slash', 'bi-eye');
             }
         }
     </script>

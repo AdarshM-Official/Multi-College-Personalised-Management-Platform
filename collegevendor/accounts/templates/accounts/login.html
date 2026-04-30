@@ -2,6 +2,22 @@
 
 {% block title %}Login | Campus Manager{% endblock %}
 
+{% block extra_js %}
+<script>
+    function togglePassword(fieldId, btn) {
+        const input = document.getElementById(fieldId);
+        const icon = btn.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('bi-eye', 'bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('bi-eye-slash', 'bi-eye');
+        }
+    }
+</script>
+{% endblock %}
+
 {% block content %}
 <style>
     /* Force viewport lock - No Scrolling */
@@ -165,14 +181,17 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <div class="input-group-custom">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <label class="form-label mb-0">Password</label>
-                            <a href="{% url 'password_reset' %}" class="small text-primary text-decoration-none fw-bold">Forgot Password?</a>
-                        </div>
-                        <i class="bi bi-shield-lock"></i>
-                        <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                <div class="form-group mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label mb-0">Password</label>
+                        <a href="{% url 'password_reset' %}" class="small text-primary text-decoration-none fw-bold">Forgot Password?</a>
+                    </div>
+                    <div class="position-relative">
+                        <i class="bi bi-shield-lock position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" style="z-index: 10;"></i>
+                        <input type="password" name="password" id="passwordField" class="form-control ps-5" placeholder="••••••••" required>
+                        <button type="button" class="btn border-0 position-absolute top-50 end-0 translate-middle-y me-2 text-muted" onclick="togglePassword('passwordField', this)" style="z-index: 10;">
+                            <i class="bi bi-eye"></i>
+                        </button>
                     </div>
                 </div>
 

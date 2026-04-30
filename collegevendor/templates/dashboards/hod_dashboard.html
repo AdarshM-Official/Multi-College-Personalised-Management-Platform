@@ -5,8 +5,8 @@
 {% block extra_css %}
 <style>
     :root {
-        --glass-bg: rgba(255, 255, 255, 0.95);
-        --glass-border: rgba(255, 255, 255, 0.2);
+        --glass-bg: var(--surface);
+        --glass-border: var(--border);
     }
 
     .dashboard-container {
@@ -69,7 +69,7 @@
     .faculty-avatar {
         width: 42px;
         height: 42px;
-        border: 2px solid white;
+        border: 2px solid var(--surface);
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
 
@@ -103,7 +103,7 @@
     }
 
     .bg-light-soft {
-        background-color: #f8fafc;
+        background-color: var(--surface-2);
     }
     
     .shadow-xs {
@@ -129,7 +129,7 @@
                     <span class="position-absolute bottom-0 end-0 p-2 bg-success border border-white border-3 rounded-circle"></span>
                 </div>
                 <div>
-                    <h1 class="fw-bold text-dark mb-1 h3">Head of Department Panel</h1>
+                    <h1 class="fw-bold text-main mb-1 h3">Head of Department Panel</h1>
                     <p class="text-muted mb-0 d-flex align-items-center gap-2">
                         <span class="fw-bold text-primary">{{ stats.dept }}</span>
                         <i class="bi bi-dot"></i>
@@ -141,14 +141,14 @@
             </div>
         </div>
         <div class="col-lg-5 text-lg-end mt-4 mt-lg-0">
-            <div class="d-inline-flex gap-2 p-2 bg-white rounded-4 shadow-sm border">
+            <div class="d-inline-flex gap-2 p-2 bg-card rounded-4 shadow-sm border border-custom">
                 <a href="{% url 'add_teacher' %}" class="btn btn-primary rounded-3 px-4 fw-bold">
                     <i class="bi bi-person-plus-fill me-2"></i>New Faculty
                 </a>
-                <a href="{% url 'create_timetable' %}" class="btn btn-outline-dark rounded-3 px-3" title="Update Timetable">
+                <a href="{% url 'create_timetable' %}" class="btn btn-outline-dark rounded-3 px-3 border-custom text-main" title="Update Timetable">
                     <i class="bi bi-calendar3"></i>
                 </a>
-                <a href="{% url 'create_exam_notification' %}" class="btn btn-outline-dark rounded-3 px-3" title="New Notice">
+                <a href="{% url 'create_exam_notification' %}" class="btn btn-outline-dark rounded-3 px-3 border-custom text-main" title="New Notice">
                     <i class="bi bi-megaphone"></i>
                 </a>
             </div>
@@ -213,7 +213,7 @@
                         <i class="bi bi-person-badge-fill fs-3"></i>
                     </div>
                     <div>
-                        <h6 class="fw-bold mb-1 text-dark">Faculty Desk</h6>
+                        <h6 class="fw-bold mb-1 text-main">Faculty Desk</h6>
                         <a href="{% url 'teacher_list' %}" class="small text-primary fw-bold text-decoration-none">Manage Team <i class="bi bi-chevron-right ms-1"></i></a>
                     </div>
                 </div>
@@ -226,7 +226,7 @@
                         <i class="bi bi-people-fill fs-3"></i>
                     </div>
                     <div>
-                        <h6 class="fw-bold mb-1 text-dark">Student Base</h6>
+                        <h6 class="fw-bold mb-1 text-main">Student Base</h6>
                         <a href="{% url 'student_list' %}" class="small text-success fw-bold text-decoration-none">Enrollments <i class="bi bi-chevron-right ms-1"></i></a>
                     </div>
                 </div>
@@ -239,7 +239,7 @@
                         <i class="bi bi-calendar2-check-fill fs-3"></i>
                     </div>
                     <div>
-                        <h6 class="fw-bold mb-1 text-dark">Attendance</h6>
+                        <h6 class="fw-bold mb-1 text-main">Attendance</h6>
                         <a href="{% url 'mark_attendance' %}" class="small text-info fw-bold text-decoration-none">Daily Register <i class="bi bi-chevron-right ms-1"></i></a>
                     </div>
                 </div>
@@ -267,7 +267,7 @@
                                 {% if teacher.profile_photo %}
                                     <img src="{{ teacher.profile_photo.url }}" class="faculty-avatar rounded-circle object-fit-cover" alt="Photo">
                                 {% else %}
-                                    <div class="faculty-avatar rounded-circle bg-white d-flex align-items-center justify-content-center fw-bold text-primary small border">
+                                    <div class="faculty-avatar rounded-circle bg-card d-flex align-items-center justify-content-center fw-bold text-primary small border border-custom">
                                         {{ teacher.user.first_name|first }}
                                     </div>
                                 {% endif %}
@@ -315,10 +315,10 @@
                                         </div>
                                     </td>
                                     <td class="border-light py-3 small text-muted">{{ tt.created_at|date:"M d, Y" }}</td>
-                                    <td class="border-light py-3 text-end">
-                                        <div class="btn-group shadow-sm rounded-pill bg-white border p-1">
-                                            <a href="{{ tt.file.url }}" class="btn btn-sm btn-icon border-0" title="View Document" target="_blank"><i class="bi bi-eye"></i></a>
-                                            <a href="{% url 'edit_timetable' tt.id %}" class="btn btn-sm btn-icon border-0" title="Edit Title"><i class="bi bi-pencil"></i></a>
+                                    <td class="border-custom py-3 text-end">
+                                        <div class="btn-group shadow-sm rounded-pill bg-card border border-custom p-1">
+                                            <a href="{{ tt.file.url }}" class="btn btn-sm btn-icon border-0 text-main" title="View Document" target="_blank"><i class="bi bi-eye"></i></a>
+                                            <a href="{% url 'edit_timetable' tt.id %}" class="btn btn-sm btn-icon border-0 text-main" title="Edit Title"><i class="bi bi-pencil"></i></a>
                                             <a href="{% url 'delete_timetable' tt.id %}" class="btn btn-sm btn-icon border-0 text-danger" title="Delete Schedule" onclick="return confirm('Permanent delete this timetable?')"><i class="bi bi-trash"></i></a>
                                         </div>
                                     </td>
@@ -340,21 +340,21 @@
             <!-- Exam Notifications -->
             <div class="card glass-card border-0 shadow-sm mb-4 h-100">
                 <div class="card-header bg-transparent border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0">Exam Bulletins</h5>
+                    <h5 class="fw-bold mb-0 text-main">Exam Bulletins</h5>
                     <span class="badge bg-warning text-dark pulse-badge rounded-pill px-3 x-small">Live</span>
                 </div>
                 <div class="card-body p-4">
                     {% if exam_notifications %}
                         {% for en in exam_notifications %}
-                        <div class="p-4 bg-light rounded-4 mb-4 border-start border-warning border-4 shadow-xs">
+                        <div class="p-4 bg-body-custom rounded-4 mb-4 border-start border-warning border-4 shadow-xs">
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h6 class="fw-bold mb-0 small pe-3">{{ en.title }}</h6>
+                                <h6 class="fw-bold mb-0 small pe-3 text-main">{{ en.title }}</h6>
                                 <i class="bi bi-pin-angle-fill text-warning"></i>
                             </div>
-                            <p class="x-small text-muted mb-3 lh-base">{{ en.description|truncatewords:25 }}</p>
-                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                                <span class="x-small fw-bold text-dark"><i class="bi bi-calendar-event me-1"></i> {{ en.exam_date|date:"M d, Y" }}</span>
-                                <span class="x-small text-muted">{{ en.created_at|timesince }} ago</span>
+                            <p class="x-small text-muted-custom mb-3 lh-base">{{ en.description|truncatewords:25 }}</p>
+                            <div class="d-flex justify-content-between align-items-center pt-2 border-top border-custom">
+                                <span class="x-small fw-bold text-main"><i class="bi bi-calendar-event me-1"></i> {{ en.exam_date|date:"M d, Y" }}</span>
+                                <span class="x-small text-muted-custom">{{ en.created_at|timesince }} ago</span>
                             </div>
                         </div>
                         {% endfor %}

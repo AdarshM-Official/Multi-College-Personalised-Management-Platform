@@ -16,6 +16,7 @@ urlpatterns = [
     path('register/', register_college, name='register_college'),
     path('login/', user_login, name='login'),
     path('logout/', user_logout, name='logout'),
+    path('', include('accounts.urls')),
     path('pending-approval/', include([
         path('', include('core.urls')), # We'll put them in core.urls for cleanliness
     ])),

@@ -8,6 +8,7 @@ urlpatterns = [
     path('', tenant_home, name='tenant_home'),
     path('login/', user_login, name='login'),
     path('logout/', user_logout, name='logout'),
+    path('', include('accounts.urls')),
     path('dashboard/', dashboard, name='dashboard'),
     
     # We include management routes inside the tenant URLs

@@ -2,10 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
 import pandas as pd
 from .models import StudentProfile, TeacherProfile, Department, Specialization, Assignment, Submission, Attendance, HODProfile, TimeTable, ExamNotification
 from accounts.models import CustomUser
-from .forms import StudentForm, StudentEditForm, TeacherForm, TeacherEditForm, AssignmentForm, DepartmentForm, SpecializationForm, CollegeSettingsForm, ExcelImportForm, HODForm, TimeTableForm, ExamNotificationForm, HODEditForm
+from .forms import StudentForm, StudentEditForm, TeacherForm, TeacherEditForm, AssignmentForm, DepartmentForm, SpecializationForm, CollegeSettingsForm, ExcelImportForm, HODForm, TimeTableForm, ExamNotificationForm, HODEditForm, UserEditForm
 from colleges.models import College, CollegeImage, CollegeAchievement
 
 @login_required
@@ -274,13 +276,19 @@ def delete_teacher(request, teacher_id):
 
 @login_required
 def department_list(request):
-    if request.user.role != 'COLLEGE_ADMIN': return redirect('dashboard')
+    if request.user.role not in ['COLLEGE_ADMIN', 'HOD']: return redirect('dashboard')
+    
     departments = Department.objects.filter(college=request.college).prefetch_related('specializations')
-    return render(request, 'management/department_list.html', {'departments': departments})
+    
+    # If HOD, they can see all depts in directory, but template handles specific actions
+    return render(request, 'management/department_list.html', {
+        'ug_departments': departments.filter(category='UG'),
+        'pg_departments': departments.filter(category='PG'),
+    })
 
 @login_required
 def add_department(request):
-    if request.user.role != 'COLLEGE_ADMIN': return redirect('dashboard')
+    if request.user.role not in ['COLLEGE_ADMIN', 'HOD']: return redirect('dashboard')
     if request.method == 'POST':
         form = DepartmentForm(request.POST)
         if form.is_valid():
@@ -320,7 +328,7 @@ def delete_department(request, dept_id):
 
 @login_required
 def import_departments_excel(request):
-    if request.user.role != 'COLLEGE_ADMIN': return redirect('dashboard')
+    if request.user.role not in ['COLLEGE_ADMIN', 'HOD']: return redirect('dashboard')
     if request.method == 'POST':
         form = ExcelImportForm(request.POST, request.FILES)
         if form.is_valid():
@@ -541,13 +549,63 @@ def create_exam_notification(request):
 
 @login_required
 def edit_profile(request):
-    if request.user.role != 'HOD': return redirect('dashboard')
-    profile = request.user.hod_profile
+    user = request.user
+    form_class = None
+    instance = None
+    
+    if user.role == 'HOD':
+        form_class = HODEditForm
+        instance = getattr(user, 'hod_profile', None)
+    elif user.role == 'TEACHER':
+        form_class = TeacherEditForm
+        instance = getattr(user, 'teacher_profile', None)
+    elif user.role == 'STUDENT':
+        form_class = StudentEditForm
+        instance = getattr(user, 'student_profile', None)
+    else:
+        # College Admin or Super Admin
+        form_class = UserEditForm
+        instance = user
+
     if request.method == 'POST':
-        form = HODEditForm(request.POST, request.FILES, instance=profile)
+        form = form_class(request.POST, request.FILES, instance=instance)
         if form.is_valid():
-            user = request.user; user.first_name = form.cleaned_data['first_name']
-            user.last_name = form.cleaned_data['last_name']; user.save(); form.save()
-            messages.success(request, "Profile updated successfully."); return redirect('dashboard')
-    else: form = HODEditForm(instance=profile)
-    return render(request, 'management/edit_profile.html', {'form': form})
+            # Sync CustomUser fields if the form has them
+            new_email = form.cleaned_data.get('email')
+            if new_email and new_email != user.email:
+                if CustomUser.objects.filter(email=new_email).exclude(id=user.id).exists():
+                    messages.error(request, "This email is already in use.")
+                    return render(request, 'management/edit_profile.html', {'form': form})
+                user.email = new_email
+                
+            user.first_name = form.cleaned_data.get('first_name', user.first_name)
+            user.last_name = form.cleaned_data.get('last_name', user.last_name)
+            user.save()
+            
+            form.save()
+            messages.success(request, "Profile updated successfully.")
+            return redirect('dashboard')
+    else:
+        form = form_class(instance=instance)
+            
+    return render(request, 'management/edit_profile.html', {
+        'form': form,
+        'profile': instance if user.role in ['HOD', 'TEACHER', 'STUDENT'] else None
+    })
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)  # Important!
+            messages.success(request, 'Your password was successfully updated!')
+            return redirect('dashboard')
+        else:
+            messages.error(request, 'Please correct the error below.')
+    else:
+        form = PasswordChangeForm(request.user)
+    return render(request, 'management/change_password.html', {
+        'form': form
+    })

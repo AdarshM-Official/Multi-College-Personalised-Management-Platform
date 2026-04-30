@@ -277,7 +277,12 @@
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label small fw-bold text-dark opacity-75">Secure Administrative Password</label>
-                                    {{ form.admin_password }}
+                                    <div class="position-relative">
+                                        {{ form.admin_password }}
+                                        <button type="button" class="btn border-0 position-absolute top-50 end-0 translate-middle-y me-2 text-muted" onclick="togglePassword('id_admin_password', this)">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -294,4 +299,20 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function togglePassword(fieldId, btn) {
+        const input = document.getElementById(fieldId);
+        const icon = btn.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('bi-eye', 'bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('bi-eye-slash', 'bi-eye');
+        }
+    }
+</script>
 {% endblock %}

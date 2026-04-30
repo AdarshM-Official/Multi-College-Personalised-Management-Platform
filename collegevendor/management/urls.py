@@ -48,6 +48,7 @@ urlpatterns = [
     path('hods/', views.hod_list, name='hod_list'),
     path('hods/add/', views.add_hod, name='add_hod'),
     path('profile/edit/', views.edit_profile, name='edit_profile'),
+    path('profile/change-password/', views.change_password, name='change_password'),
     path('timetable/create/', views.create_timetable, name='create_timetable'),
     path('timetable/edit/<int:tt_id>/', views.edit_timetable, name='edit_timetable'),
     path('timetable/delete/<int:tt_id>/', views.delete_timetable, name='delete_timetable'),
