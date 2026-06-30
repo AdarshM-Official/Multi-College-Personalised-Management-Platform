@@ -68,13 +68,17 @@
                             <label class="form-label fw-bold small">Last Passout Year</label>
                             {{ form.last_passout_year }}
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-bold small">Department</label>
                             {{ form.department }}
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-bold small">{{ form.specialization.label }}</label>
                             {{ form.specialization }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">{{ form.academic_class.label }}</label>
+                            {{ form.academic_class }}
                         </div>
 
                         <!-- Personal Details -->

@@ -9,7 +9,7 @@
             <div class="avatar-sm mx-auto mb-3 bg-primary-soft p-3 rounded-circle" style="width: 60px; height: 60px;">
                 <i class="bi bi-percent fs-3 text-primary"></i>
             </div>
-            <h4 class="fw-bold mb-1 text-main">88%</h4>
+            <h4 class="fw-bold mb-1 text-main">{{ stats.attendance }}%</h4>
             <p class="text-muted-custom small mb-0">Total Attendance</p>
         </div>
     </div>
@@ -18,7 +18,7 @@
             <div class="avatar-sm mx-auto mb-3 bg-success-soft p-3 rounded-circle" style="width: 60px; height: 60px;">
                 <i class="bi bi-trophy-fill fs-3 text-success"></i>
             </div>
-            <h4 class="fw-bold mb-1 text-main">A+</h4>
+            <h4 class="fw-bold mb-1 text-main">{{ stats.grade }}</h4>
             <p class="text-muted-custom small mb-0">Overall Grade</p>
         </div>
     </div>
@@ -27,7 +27,7 @@
             <div class="avatar-sm mx-auto mb-3 bg-warning-soft p-3 rounded-circle" style="width: 60px; height: 60px;">
                 <i class="bi bi-clock-history fs-3 text-warning"></i>
             </div>
-            <h4 class="fw-bold mb-1 text-main">03</h4>
+            <h4 class="fw-bold mb-1 text-main">{{ stats.missing_assignments|stringformat:"02d" }}</h4>
             <p class="text-muted-custom small mb-0">Missing Assignments</p>
         </div>
     </div>
@@ -36,7 +36,7 @@
             <div class="avatar-sm mx-auto mb-3 bg-info-soft p-3 rounded-circle" style="width: 60px; height: 60px;">
                 <i class="bi bi-stars fs-3 text-info"></i>
             </div>
-            <h4 class="fw-bold mb-1 text-main">Top 5%</h4>
+            <h4 class="fw-bold mb-1 text-main">{{ stats.ranking }}</h4>
             <p class="text-muted-custom small mb-0">Class Ranking</p>
         </div>
     </div>
@@ -50,6 +50,7 @@
             </div>
             <div class="card-body p-4 pt-0">
                 <div class="list-group list-group-flush">
+                    {% for assignment in active_assignments %}
                     <div class="list-group-item px-0 py-3 border-0 border-bottom">
                         <div class="d-flex align-items-center">
                             <div class="flex-shrink-0">
@@ -57,16 +58,21 @@
                             </div>
                             <div class="ms-3 flex-grow-1">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <h6 class="fw-bold mb-1 text-main">Computer Graphics Proj</h6>
-                                    <span class="badge bg-danger-soft text-danger">Due: 2h 40m</span>
+                                    <h6 class="fw-bold mb-1 text-main">{{ assignment.title }}</h6>
+                                    <span class="badge bg-danger-soft text-danger">Due: {{ assignment.deadline|timeuntil }}</span>
                                 </div>
-                                <p class="small text-muted-custom mb-0">Implementation of Bresenham's algorithm and circle generation.</p>
+                                <p class="small text-muted-custom mb-0 text-truncate" style="max-width: 300px;">{{ assignment.description }}</p>
                             </div>
                             <div class="ms-3">
-                                <a href="{% url 'assignment_list' %}" class="btn btn-premium btn-sm rounded-pill px-3">Upload</a>
+                                <a href="{% url 'student_assignments' %}" class="btn btn-premium btn-sm rounded-pill px-3">View</a>
                             </div>
                         </div>
                     </div>
+                    {% empty %}
+                    <div class="text-center py-4">
+                        <p class="text-muted-custom small mb-0">No active assignments. Great job!</p>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -78,23 +84,35 @@
                 <h5 class="fw-bold mb-0 text-main">Faculty Alerts</h5>
             </div>
             <div class="card-body p-4 pt-0">
+                {% for alert in platform_alerts %}
                 <div class="mb-4">
                     <div class="d-flex align-items-center mb-2">
                         <span class="badge bg-primary me-2">Global</span>
-                        <span class="small text-muted-custom">2 hours ago</span>
+                        <span class="small text-muted-custom">{{ alert.created_at|timesince }} ago</span>
                     </div>
-                    <h6 class="fw-bold text-main">Virtual Library Access</h6>
-                    <p class="small text-muted-custom">Credentials for the IEEE digital library are now available on your portal profile.</p>
+                    <h6 class="fw-bold text-main">{{ alert.title }}</h6>
+                    <p class="small text-muted-custom">{{ alert.message }}</p>
                 </div>
-                <hr>
-                <div class="mb-0">
+                {% if not forloop.last or exam_alerts %}<hr>{% endif %}
+                {% endfor %}
+
+                {% for exam in exam_alerts %}
+                <div class="mb-4">
                     <div class="d-flex align-items-center mb-2">
                         <span class="badge bg-warning text-dark me-2">Exam</span>
-                        <span class="small text-muted-custom">Yesterday</span>
+                        <span class="small text-muted-custom">{{ exam.date_posted|timesince }} ago</span>
                     </div>
-                    <h6 class="fw-bold text-main">Midterm Schedule Released</h6>
-                    <p class="small text-muted-custom">Please check the academics section for the updated examination timetable.</p>
+                    <h6 class="fw-bold text-main">{{ exam.title }}</h6>
+                    <p class="small text-muted-custom">{{ exam.description }}</p>
                 </div>
+                {% if not forloop.last %}<hr>{% endif %}
+                {% endfor %}
+
+                {% if not platform_alerts and not exam_alerts %}
+                <div class="text-center py-3">
+                    <p class="text-muted-custom small mb-0">No new alerts.</p>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>

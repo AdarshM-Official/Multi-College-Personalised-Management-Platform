@@ -2,60 +2,306 @@
 
 {% block title %}Mark Attendance | {{ request.college.name }}{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Professional & Mobile-Friendly Styling */
+    .glass-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+        color: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(79, 70, 229, 0.15);
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .glass-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        transform: translate(30%, -30%);
+        pointer-events: none;
+    }
+    .glass-header .form-label {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.85rem;
+    }
+    .glass-header .form-select, .glass-header .form-control {
+        background: white;
+        border: none;
+        color: #333;
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    .glass-header input[readonly] {
+        background: rgba(255, 255, 255, 0.8) !important;
+        color: #555;
+    }
+    
+    /* Period Bubbles */
+    .period-bubble {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 2px solid rgba(255,255,255,0.4);
+        color: white;
+        font-weight: bold;
+    }
+    .btn-check:checked + .period-bubble {
+        background: white;
+        color: var(--primary);
+        border-color: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: scale(1.05);
+    }
+    .period-bubble:hover {
+        background: rgba(255,255,255,0.2);
+    }
+
+    /* Roster Cards */
+    .roster-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-radius: 16px;
+    }
+    .roster-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.06) !important;
+    }
+    
+    .student-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+    
+    .attendance-seg-btn {
+        border-radius: 10px !important;
+        transition: all 0.2s ease;
+        padding: 8px 0;
+        font-size: 0.9rem;
+    }
+    
+    .btn-check[value="PRESENT"]:checked + .attendance-seg-btn {
+        background: #10b981 !important;
+        color: white !important;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+    }
+    .btn-check[value="ABSENT"]:checked + .attendance-seg-btn {
+        background: #ef4444 !important;
+        color: white !important;
+        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+    }
+    .btn-check[value="LATE"]:checked + .attendance-seg-btn {
+        background: #f59e0b !important;
+        color: white !important;
+        box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
+    }
+    
+    /* Mobile Adjustments */
+    @media (max-width: 768px) {
+        .glass-header {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="card card-premium border-0">
-    <div class="card-header bg-white border-0 p-4">
-        <h5 class="fw-bold mb-1">Mark Student Attendance</h5>
-        <p class="small text-muted mb-0">Select the status for each student for the current session.</p>
-    </div>
-    <div class="card-body p-4 pt-0">
-        <form method="post">
-            {% csrf_token %}
-            <div class="row mb-4">
-                <div class="col-md-4">
-                    <label class="form-label small fw-bold">Session Date</label>
-                    <input type="date" name="date" class="form-control" value="{% now 'Y-m-d' %}" required>
+<div class="row g-4">
+    <!-- Session Filter Card -->
+    <div class="col-12">
+        <div class="glass-header mb-2">
+            <div class="d-flex align-items-center mb-4 position-relative z-1">
+                <div class="bg-white rounded-3 p-2 shadow-sm me-3 text-primary">
+                    <i class="bi bi-calendar-check fs-4"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold mb-0 text-white">Session Setup</h4>
                 </div>
             </div>
             
-            <div class="table-responsive rounded-4 border">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
-                        <tr class="small text-muted fw-bold">
-                            <th class="ps-4">Student</th>
-                            <th>Roll Number</th>
-                            <th class="text-center">Present</th>
-                            <th class="text-center">Absent</th>
-                            <th class="text-center">Late</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for student in students %}
-                        <tr>
-                            <td class="ps-4 fw-bold">{{ student.user.get_full_name }}</td>
-                            <td>{{ student.roll_number }}</td>
-                            <td class="text-center">
-                                <input type="radio" class="btn-check" name="status_{{ student.id }}" id="pres_{{ student.id }}" value="PRESENT" checked>
-                                <label class="btn btn-outline-success btn-sm rounded-circle p-1" for="pres_{{ student.id }}" style="width: 30px; height: 30px;"><i class="bi bi-check"></i></label>
-                            </td>
-                            <td class="text-center">
-                                <input type="radio" class="btn-check" name="status_{{ student.id }}" id="abs_{{ student.id }}" value="ABSENT">
-                                <label class="btn btn-outline-danger btn-sm rounded-circle p-1" for="abs_{{ student.id }}" style="width: 30px; height: 30px;"><i class="bi bi-x"></i></label>
-                            </td>
-                            <td class="text-center">
-                                <input type="radio" class="btn-check" name="status_{{ student.id }}" id="late_{{ student.id }}" value="LATE">
-                                <label class="btn btn-outline-warning btn-sm rounded-circle p-1" for="late_{{ student.id }}" style="width: 30px; height: 30px;"><i class="bi bi-clock"></i></label>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <form method="get" class="position-relative z-1">
+                <div class="row g-4 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Academic Class</label>
+                        <select name="class_id" class="form-select" id="classSelect" required>
+                            <option value="">-- Select Class --</option>
+                            {% for c in academic_classes %}
+                                <option value="{{ c.id }}" data-periods="{{ c.number_of_periods|default:8 }}" {% if selected_class and selected_class.id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Date <i class="bi bi-lock-fill ms-1 opacity-50 small"></i></label>
+                        <input type="text" class="form-control" value="{% now 'Y-m-d' %}" readonly disabled>
+                    </div>
+                    
+                    <div class="col-md-5">
+                        <label class="form-label fw-bold d-block">Period</label>
+                        <div class="d-flex flex-wrap gap-2" id="period-bubbles-container">
+                            <!-- Bubbles will be injected by Javascript based on selected class -->
+                            <p class="text-white text-opacity-50 small mb-0 mt-2">Select a class first...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12 mt-4">
+                        <button type="submit" class="btn btn-light text-primary fw-bold px-4 py-2 rounded-pill shadow-sm">
+                            <i class="bi bi-arrow-right-circle-fill me-2"></i> Load Roster
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Attendance Roster -->
+    {% if selected_class %}
+    <div class="col-12 fade-in">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-4 px-2 gap-2">
+            <div>
+                <h5 class="fw-bold text-main mb-1">Attendance Roster</h5>
+                <p class="text-muted small mb-0"><span class="badge bg-primary-soft text-primary me-2">{{ selected_class.name }}</span> Period {{ selected_period }} • {% now "M j, Y" %}</p>
+            </div>
+            <div>
+                <span class="badge bg-light text-dark border px-3 py-2 rounded-pill shadow-sm"><i class="bi bi-people-fill me-1 text-primary"></i> {{ students.count }} Enrolled</span>
+            </div>
+        </div>
+        
+        {% if students %}
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="class_id" value="{{ selected_class.id }}">
+            <input type="hidden" name="period" value="{{ selected_period }}">
+            
+            <div class="roster-list pb-5 mb-5 mt-2">
+                {% for student in students %}
+                <div class="card border-0 mb-3 roster-card" style="border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+                    <div class="card-body p-0">
+                        <div class="d-flex flex-column">
+                            
+                            <!-- Student Info Section -->
+                            <div class="p-3 pb-2 d-flex align-items-center bg-white">
+                                <div class="student-avatar me-3 flex-shrink-0" style="width: 44px; height: 44px; border-radius: 12px; font-size: 1rem;">
+                                    {{ student.user.first_name|first }}{{ student.user.last_name|first }}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-bold text-dark mb-0" style="font-size: 1.05rem; letter-spacing: -0.2px;">{{ student.user.get_full_name }}</h6>
+                                    <span class="text-muted" style="font-size: 0.8rem; font-weight: 500;">Roll: {{ student.roll_number }}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Action Segment Control -->
+                            <div class="px-3 pb-3 pt-1 bg-white">
+                                <div class="d-flex w-100 bg-light p-1" style="border-radius: 14px;">
+                                    
+                                    <input type="radio" class="btn-check" name="status_{{ student.id }}" id="pres_{{ student.id }}" value="PRESENT" {% if student.existing_status == 'PRESENT' %}checked{% endif %}>
+                                    <label class="btn flex-fill m-0 fw-bold border-0 attendance-seg-btn text-muted" for="pres_{{ student.id }}">
+                                        <i class="bi bi-check-circle me-1"></i>Present
+                                    </label>
+                                    
+                                    <input type="radio" class="btn-check" name="status_{{ student.id }}" id="abs_{{ student.id }}" value="ABSENT" {% if student.existing_status == 'ABSENT' %}checked{% endif %}>
+                                    <label class="btn flex-fill m-0 fw-bold border-0 attendance-seg-btn text-muted" for="abs_{{ student.id }}">
+                                        <i class="bi bi-x-circle me-1"></i>Absent
+                                    </label>
+                                    
+                                    <input type="radio" class="btn-check" name="status_{{ student.id }}" id="late_{{ student.id }}" value="LATE" {% if student.existing_status == 'LATE' %}checked{% endif %}>
+                                    <label class="btn flex-fill m-0 fw-bold border-0 attendance-seg-btn text-muted" for="late_{{ student.id }}">
+                                        <i class="bi bi-clock-history me-1"></i>Late
+                                    </label>
+                                    
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
             
-            <div class="mt-4 text-end">
-                <button type="submit" class="btn btn-premium px-5">Submit Attendance</button>
+            <!-- Floating Action Bar -->
+            <div class="position-fixed bottom-0 start-0 end-0 p-3 pointer-events-none" style="z-index: 1000; background: linear-gradient(to top, rgba(255,255,255,0.95) 40%, transparent);">
+                <div class="container-fluid d-flex justify-content-center pointer-events-auto">
+                    <button type="submit" class="btn btn-primary w-100 max-w-sm py-3 fw-bold shadow-lg" style="border-radius: 18px; font-size: 1.1rem; max-width: 400px;">
+                        <i class="bi bi-save2-fill me-2"></i> Save Attendance
+                    </button>
+                </div>
             </div>
         </form>
+        {% else %}
+        <div class="card border-0 bg-white shadow-sm rounded-4 text-center py-5">
+            <div class="py-5">
+                <div class="bg-light rounded-circle d-inline-flex p-4 mb-4">
+                    <i class="bi bi-people text-muted opacity-50" style="font-size: 3rem;"></i>
+                </div>
+                <h4 class="fw-bold text-main">No Students Enrolled</h4>
+                <p class="text-muted">There are no students assigned to this academic class yet.</p>
+            </div>
+        </div>
+        {% endif %}
     </div>
+    {% endif %}
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const classSelect = document.getElementById('classSelect');
+    const periodContainer = document.getElementById('period-bubbles-container');
+    const selectedPeriod = "{{ selected_period|default:'1' }}";
+
+    function renderPeriods() {
+        const selectedOption = classSelect.options[classSelect.selectedIndex];
+        periodContainer.innerHTML = ''; 
+        
+        if (selectedOption && selectedOption.value) {
+            const numPeriods = parseInt(selectedOption.getAttribute('data-periods')) || 8;
+            
+            for (let i = 1; i <= numPeriods; i++) {
+                // If a period was previously selected, check it, else default to period 1
+                const isChecked = (i.toString() === selectedPeriod) || (i === 1 && !selectedPeriod);
+                const inputId = `period_${i}`;
+                
+                const input = document.createElement('input');
+                input.type = 'radio';
+                input.className = 'btn-check';
+                input.name = 'period';
+                input.id = inputId;
+                input.value = i;
+                input.required = true;
+                if (isChecked) input.checked = true;
+                
+                const label = document.createElement('label');
+                label.className = 'period-bubble';
+                label.setAttribute('for', inputId);
+                label.textContent = i;
+                
+                periodContainer.appendChild(input);
+                periodContainer.appendChild(label);
+            }
+        } else {
+            periodContainer.innerHTML = '<p class="text-white text-opacity-50 small mb-0 mt-2"><i class="bi bi-info-circle me-1"></i>Select a class first to view available periods.</p>';
+        }
+    }
+
+    classSelect.addEventListener('change', renderPeriods);
+    // Initial render in case a class is already selected
+    renderPeriods();
+});
+</script>
 {% endblock %}

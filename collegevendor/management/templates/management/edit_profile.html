@@ -1,84 +1,257 @@
 {% extends 'base.html' %}
 
-{% block title %}Edit Profile | {{ request.college.name }}{% endblock %}
+{% block title %}Profile Settings | {{ request.college.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Profile Settings Styles */
+    .profile-sidebar {
+        position: sticky;
+        top: 90px;
+        z-index: 10;
+    }
+
+    .avatar-preview-container {
+        position: relative;
+        width: 140px;
+        height: 140px;
+        margin: 0 auto;
+        border-radius: 50%;
+        border: 4px solid var(--surface);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        overflow: hidden;
+        background-color: var(--surface-2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .avatar-preview-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .avatar-preview-container i {
+        font-size: 4rem;
+        color: var(--text-muted);
+    }
+
+    .avatar-upload-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 40%;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        padding-top: 10px;
+    }
+
+    .avatar-preview-container:hover .avatar-upload-overlay {
+        opacity: 1;
+    }
+    
+    .file-input-hidden {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 2;
+    }
+
+    .form-panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        margin-bottom: 2rem;
+        overflow: hidden;
+    }
+
+    .form-panel-header {
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface-2);
+        display: flex;
+        align-items: center;
+    }
+
+    .form-panel-body {
+        padding: 2rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border);
+        background-color: var(--surface-2);
+        transition: all 0.2s;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px var(--primary-soft);
+        background-color: var(--surface);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card glass-card border-0 shadow-lg overflow-hidden">
-                <div class="card-header bg-primary text-white p-4 border-0">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="bg-white bg-opacity-20 p-3 rounded-circle">
-                            <i class="bi bi-person-gear fs-3"></i>
+<div class="container py-4">
+    
+    <!-- Header -->
+    <div class="mb-5 text-center text-md-start">
+        <h2 class="fw-bold mb-2">Account Settings</h2>
+        <p class="text-muted">Manage your profile information and security preferences.</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row g-5">
+            
+            <!-- Left Column: Sticky Avatar Card -->
+            <div class="col-lg-4">
+                <div class="card form-panel profile-sidebar text-center">
+                    <div class="card-body p-5">
+                        
+                        <!-- The profile photo input from the form, hidden but interactive -->
+                        {% for field in form %}
+                            {% if field.name == 'profile_photo' %}
+                            <div class="avatar-preview-container mb-4 mx-auto" id="avatarPreviewContainer">
+                                {% if profile and profile.profile_photo %}
+                                    <img src="{{ profile.profile_photo.url }}" id="avatarPreview" alt="Profile Photo">
+                                {% else %}
+                                    <i class="bi bi-person-fill" id="avatarIconFallback"></i>
+                                    <img src="" id="avatarPreview" alt="Profile Photo" style="display: none;">
+                                {% endif %}
+                                <div class="avatar-upload-overlay">
+                                    <i class="bi bi-camera me-2"></i> Edit
+                                </div>
+                                <!-- Bind the Django file input visually over the container -->
+                                <input type="file" name="{{ field.name }}" id="{{ field.id_for_label }}" class="file-input-hidden" accept="image/*" onchange="previewImage(event)">
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+
+                        <h4 class="fw-bold mb-1">{{ user.get_full_name }}</h4>
+                        <p class="text-primary fw-medium small mb-3 text-uppercase" style="letter-spacing: 1px;">{{ user.get_role_display }}</p>
+                        
+                        <div class="d-flex justify-content-center gap-2 mb-4">
+                            <span class="badge bg-light text-dark border"><i class="bi bi-building me-1 text-muted"></i> {{ request.college.name }}</span>
                         </div>
-                        <div>
-                            <h3 class="fw-bold mb-0 text-white">Profile Settings</h3>
-                            <p class="mb-0 opacity-75">Keep your personal and professional information up to date.</p>
-                        </div>
+
+                        <p class="text-muted small">
+                            Update your profile photo by clicking the image above. Max file size: 5MB.
+                        </p>
                     </div>
                 </div>
+            </div>
+
+            <!-- Right Column: Sectioned Form Panels -->
+            <div class="col-lg-8">
                 
-                <div class="card-body p-4 p-lg-5 bg-card">
-                    <form method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        
+                <!-- Personal Details Panel -->
+                <div class="form-panel">
+                    <div class="form-panel-header">
+                        <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-circle me-3 d-flex align-items-center justify-content-center">
+                            <i class="bi bi-person-lines-fill fs-5"></i>
+                        </div>
+                        <h5 class="fw-bold mb-0">Personal Information</h5>
+                    </div>
+                    <div class="form-panel-body">
                         <div class="row g-4">
                             {% for field in form %}
-                                {% if field.name == 'profile_photo' %}
-                                    <div class="col-12">
-                                        <label class="form-label fw-bold small text-muted">{{ field.label }}</label>
-                                        <div class="d-flex align-items-center gap-4 p-3 border rounded-4 bg-body-custom">
-                                            {% if profile and profile.profile_photo %}
-                                                <img src="{{ profile.profile_photo.url }}" class="rounded-4 object-fit-cover shadow-sm" style="width: 80px; height: 80px;" alt="Current Profile">
-                                            {% else %}
-                                                <div class="rounded-4 bg-card d-flex align-items-center justify-content-center shadow-sm" style="width: 80px; height: 80px;">
-                                                    <i class="bi bi-person fs-1 text-muted-custom"></i>
-                                                </div>
-                                            {% endif %}
-                                            <div class="flex-grow-1">
-                                                {{ field }}
-                                                {% if field.help_text %}
-                                                    <small class="text-muted d-block mt-2">{{ field.help_text }}</small>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                {% else %}
+                                {% if field.name != 'profile_photo' %}
                                     <div class="{% if field.name == 'first_name' or field.name == 'last_name' %}col-md-6{% else %}col-12{% endif %}">
-                                        <label class="form-label fw-bold small text-muted">{{ field.label }}</label>
+                                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
                                         {{ field }}
                                         {% if field.help_text %}
-                                            <div class="form-text x-small">{{ field.help_text }}</div>
+                                            <div class="form-text mt-2 small text-muted"><i class="bi bi-info-circle me-1"></i>{{ field.help_text }}</div>
                                         {% endif %}
                                         {% if field.errors %}
-                                            <div class="text-danger x-small">{{ field.errors }}</div>
+                                            <div class="text-danger small mt-2 fw-medium"><i class="bi bi-exclamation-triangle-fill me-1"></i>{{ field.errors.0 }}</div>
                                         {% endif %}
                                     </div>
                                 {% endif %}
                             {% endfor %}
                         </div>
-
-                        <div class="mt-4 pt-3 border-top">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="fw-bold mb-0">Security</h6>
-                                    <p class="small text-muted mb-0">Manage your account password.</p>
-                                </div>
-                                <a href="{% url 'change_password' %}" class="btn btn-outline-primary btn-sm rounded-pill px-4">
-                                    <i class="bi bi-key-fill me-1"></i> Change Password
-                                </a>
-                            </div>
-                        </div>
-
-                        <div class="mt-5 pt-4 border-top d-flex gap-3">
-                            <button type="submit" class="btn btn-primary px-5 py-3 rounded-3 fw-bold">Save Changes</button>
-                            <a href="{% url 'dashboard' %}" class="btn btn-light px-5 py-3 rounded-3 text-dark">Cancel</a>
-                        </div>
-                    </form>
+                    </div>
                 </div>
+
+                <!-- Security Panel -->
+                <div class="form-panel">
+                    <div class="form-panel-header">
+                        <div class="bg-warning bg-opacity-10 text-warning p-2 rounded-circle me-3 d-flex align-items-center justify-content-center">
+                            <i class="bi bi-shield-lock-fill fs-5"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h5 class="fw-bold mb-0">Security Settings</h5>
+                        </div>
+                    </div>
+                    <div class="form-panel-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                        <div>
+                            <p class="fw-medium text-main mb-1">Account Password</p>
+                            <p class="small text-muted mb-0">Regularly updating your password helps keep your account secure.</p>
+                        </div>
+                        <div>
+                            <a href="{% url 'change_password' %}" class="btn btn-outline-dark fw-bold rounded-pill px-4 shadow-sm">
+                                <i class="bi bi-key-fill me-2"></i>Change Password
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="d-flex align-items-center justify-content-end gap-3 mt-4 pt-3 border-top">
+                    <a href="{% url 'dashboard' %}" class="btn btn-light text-dark fw-bold rounded-pill px-4 shadow-sm">Cancel</a>
+                    <button type="submit" class="btn btn-primary fw-bold rounded-pill px-5 shadow-sm hover-lift">Save Changes</button>
+                </div>
+
             </div>
         </div>
-    </div>
+    </form>
 </div>
+
+{% block extra_js %}
+<script>
+    function previewImage(event) {
+        const input = event.target;
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('avatarPreview');
+                const fallback = document.getElementById('avatarIconFallback');
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                if(fallback) {
+                    fallback.style.display = 'none';
+                }
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
+{% endblock %}
 {% endblock %}

@@ -1,141 +1,769 @@
 {% extends 'base.html' %}
 
-{% block title %}Manage Campus - Your Integrated College SaaS{% endblock %}
+{% block title %}CollegeManager - Intelligent Campus Administration{% endblock %}
 
 {% block extra_css %}
 <style>
-    .hero-section {
-        background: radial-gradient(circle at top right, var(--primary-soft), transparent),
-            radial-gradient(circle at bottom left, #f1f5f9, transparent);
-        padding: 100px 0;
-        border-radius: 0 0 50px 50px;
+    :root {
+        --cm-primary: #1e293b;
+        --cm-accent: #6366f1;
+        --cm-accent-gradient: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+        --cm-bg: #f8fafc;
+        --cm-surface: #ffffff;
+        --cm-text: #475569;
+        --cm-text-light: #94a3b8;
+        --cm-border: #e2e8f0;
+        --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    .feature-card {
-        border-radius: 24px;
-        transition: all 0.3s;
-        border: 1px solid #f1f5f9;
+    body {
+        background-color: var(--cm-bg);
+        color: var(--cm-text);
+        font-family: var(--font-main);
+        padding-top: 80px;
+        position: relative;
     }
 
-    .feature-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+    /* Subtle grid background */
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background-image: 
+            linear-gradient(to right, rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+        background-size: 60px 60px;
+        z-index: -2;
+        pointer-events: none;
     }
 
-    .hero-badge {
-        background: var(--primary-soft);
-        color: var(--primary-color);
-        padding: 8px 20px;
-        border-radius: 100px;
+    /* Right side purple/blue glow */
+    .bg-glow {
+        position: absolute;
+        top: 0; right: 0; width: 50%; height: 100%;
+        background: radial-gradient(circle at 80% 30%, rgba(99, 102, 241, 0.15) 0%, rgba(255,255,255,0) 60%);
+        z-index: -1;
+        pointer-events: none;
+    }
+
+    /* Navbar */
+    .nav-sleek {
+        background: rgba(248, 250, 252, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        transition: all 0.3s ease;
+    }
+
+    .brand-text {
+        font-weight: 900;
+        font-size: 1.5rem;
+        letter-spacing: -0.5px;
+    }
+    .brand-edu { color: #1e293b; }
+    .brand-sync { color: #6366f1; }
+
+    .nav-link-sleek {
+        font-weight: 500;
+        font-size: 0.95rem;
+        color: var(--cm-text);
+        margin: 0 0.5rem;
+        transition: color 0.2s ease;
+    }
+    .nav-link-sleek:hover { color: var(--cm-accent); }
+
+    .btn-nav-primary {
+        background: var(--cm-accent-gradient);
+        color: white;
         font-weight: 600;
-        display: inline-block;
-        margin-bottom: 20px;
+        border-radius: 8px;
+        padding: 0.6rem 1.5rem;
+        border: none;
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+        transition: all 0.2s ease;
     }
+    .btn-nav-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        color: white;
+    }
+
+    /* Hero Layout */
+    .hero-container {
+        padding: 5rem 0 8rem;
+    }
+
+    .pill-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(99, 102, 241, 0.1);
+        color: #4f46e5;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 0.4rem 1rem;
+        border-radius: 50px;
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        margin-bottom: 1.5rem;
+    }
+
+    .hero-title {
+        font-size: clamp(3rem, 5vw, 4.5rem);
+        font-weight: 900;
+        line-height: 1.1;
+        letter-spacing: -2px;
+        color: var(--cm-primary);
+        margin-bottom: 1.5rem;
+    }
+
+    .text-gradient {
+        background: var(--cm-accent-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+        font-size: 1.15rem;
+        line-height: 1.6;
+        color: var(--cm-text-light);
+        max-width: 500px;
+        margin-bottom: 2.5rem;
+    }
+
+    /* Hero Buttons */
+    .btn-primary-hero {
+        background: var(--cm-accent-gradient);
+        color: white;
+        font-weight: 600;
+        border-radius: 10px;
+        padding: 0.8rem 1.8rem;
+        border: none;
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+    }
+    .btn-primary-hero:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 25px rgba(99, 102, 241, 0.4);
+        color: white;
+    }
+
+    .btn-secondary-hero {
+        background: white;
+        color: var(--cm-primary);
+        font-weight: 600;
+        border-radius: 10px;
+        padding: 0.8rem 1.8rem;
+        border: 1px solid var(--cm-border);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+    }
+    .btn-secondary-hero:hover {
+        background: var(--cm-bg);
+        transform: translateY(-2px);
+    }
+
+    /* Widget Cards */
+    .widget-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+        border: 1px solid rgba(255,255,255,0.5);
+    }
+    
+    .widget-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+    
+    .widget-full {
+        grid-column: 1 / -1;
+    }
+
+    .w-tag {
+        font-size: 0.65rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.25rem 0.6rem;
+        border-radius: 4px;
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
+    .w-tag-blue { background: #e0e7ff; color: #4f46e5; }
+    .w-tag-green { background: #dcfce7; color: #16a34a; }
+    .w-tag-red { background: #fee2e2; color: #dc2626; margin-bottom: 0; }
+
+    .w-value {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: var(--cm-primary);
+        line-height: 1;
+        margin-bottom: 0.75rem;
+    }
+    .w-value small { font-size: 1rem; color: var(--cm-text-light); }
+
+    .w-progress-bg {
+        height: 6px;
+        background: var(--cm-bg);
+        border-radius: 10px;
+        margin-bottom: 0.5rem;
+        overflow: hidden;
+    }
+    .w-progress-fill-blue { height: 100%; width: 92%; background: linear-gradient(90deg, #8b5cf6, #6366f1); border-radius: 10px;}
+    .w-progress-fill-green { height: 100%; width: 76%; background: #0d9488; border-radius: 10px;}
+
+    .w-desc {
+        font-size: 0.75rem;
+        color: var(--cm-text-light);
+        margin: 0;
+    }
+
+    .w-icon-box {
+        width: 40px; height: 40px;
+        background: #fffbeb;
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem;
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        padding: 2rem 0;
+    }
+
+    .feat-card {
+        background: white;
+        border: 1px solid rgba(255,255,255,0.5);
+        border-radius: 16px;
+        padding: 2.5rem;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.04);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .feat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 25px 50px rgba(0,0,0,0.08);
+    }
+    .feat-icon {
+        font-size: 1.5rem;
+        color: var(--cm-accent);
+        margin-bottom: 1.5rem;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(99,102,241,0.1);
+        border-radius: 12px;
+    }
+    .feat-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--cm-primary);
+        margin-bottom: 0.75rem;
+        letter-spacing: -0.5px;
+    }
+    .feat-desc {
+        font-size: 0.95rem;
+        color: var(--cm-text-light);
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    /* Marquee */
+    .marquee-container {
+        overflow: hidden;
+        white-space: nowrap;
+        background: rgba(255,255,255,0.4);
+        padding: 3rem 0;
+        border-top: 1px solid rgba(255,255,255,0.5);
+        border-bottom: 1px solid rgba(255,255,255,0.5);
+        position: relative;
+    }
+    .marquee-content {
+        display: inline-block;
+        animation: marquee 30s linear infinite;
+    }
+    .marquee-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0 3rem;
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--cm-text-light);
+        opacity: 0.4;
+        transition: all 0.3s;
+        letter-spacing: -0.5px;
+    }
+    .marquee-item:hover { opacity: 1; color: var(--cm-accent); transform: scale(1.05); }
+    @keyframes marquee {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
+
+    /* Testimonials */
+    .testimonial-card {
+        background: white;
+        border: 1px solid rgba(255,255,255,0.5);
+        border-radius: 16px;
+        padding: 2.5rem;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.04);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.3s ease;
+    }
+    .testimonial-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.06); }
+    .quote-icon {
+        color: var(--cm-accent);
+        font-size: 2.5rem;
+        opacity: 0.15;
+        margin-bottom: 1rem;
+    }
+    .testimonial-text {
+        font-size: 1.1rem;
+        line-height: 1.7;
+        color: var(--cm-text);
+        flex-grow: 1;
+        margin-bottom: 2rem;
+        font-weight: 500;
+    }
+    .testimonial-author {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .author-avatar {
+        width: 50px; height: 50px;
+        border-radius: 12px;
+        background: var(--cm-bg);
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 900; color: var(--cm-accent);
+    }
+    .author-info h6 { margin: 0; font-weight: 800; color: var(--cm-primary); letter-spacing: -0.5px;}
+    .author-info p { margin: 0; font-size: 0.85rem; color: var(--cm-text-light); font-weight: 500;}
+
+    /* Pricing */
+    .pricing-card {
+        background: white;
+        border: 1px solid rgba(255,255,255,0.5);
+        border-radius: 24px;
+        padding: 3.5rem 2.5rem;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.04);
+    }
+    .pricing-card:hover { transform: translateY(-8px); box-shadow: 0 25px 50px rgba(0,0,0,0.08); }
+    .pricing-popular {
+        border: 2px solid transparent;
+        background-clip: padding-box;
+    }
+    .pricing-popular::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: -1;
+        margin: -2px; border-radius: inherit;
+        background: var(--cm-accent-gradient);
+    }
+    .popular-badge {
+        position: absolute; top: 1.5rem; right: 1.5rem;
+        background: var(--cm-accent-gradient); color: white;
+        font-size: 0.75rem; font-weight: 800; padding: 0.4rem 1rem; border-radius: 50px;
+        letter-spacing: 0.5px;
+    }
+    .pricing-price {
+        font-size: 3.5rem; font-weight: 900; color: var(--cm-primary);
+        margin: 1.5rem 0; letter-spacing: -2px;
+    }
+    .pricing-price span { font-size: 1.2rem; color: var(--cm-text-light); font-weight: 600; letter-spacing: 0; }
+    .pricing-list { list-style: none; padding: 0; margin: 2.5rem 0; }
+    .pricing-list li {
+        display: flex; align-items: center; gap: 1rem;
+        margin-bottom: 1.25rem; color: var(--cm-text); font-size: 1rem; font-weight: 500;
+    }
+    .pricing-list i { color: var(--cm-accent); font-size: 1.2rem;}
+
+    /* Footer */
+    .footer-clean {
+        background: var(--cm-surface);
+        border-top: 1px solid var(--cm-border);
+        padding: 4rem 0 2rem;
+        margin-top: 5rem;
+    }
+    .footer-link { color: var(--cm-text-light); text-decoration: none; transition: color 0.2s; }
+    .footer-link:hover { color: var(--cm-accent); }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="hero-section text-center">
+<div class="bg-glow"></div>
+
+<!-- Minimalist Navbar -->
+<nav class="navbar navbar-expand-lg nav-sleek position-fixed top-0 w-100">
     <div class="container">
-        <div class="hero-badge">✨ Next-Generation Education Management</div>
-        <h1 class="display-3 fw-bold mb-4">Unified Control for Modern <br><span class="text-primary">Educational
-                Institutions</span></h1>
-        <p class="lead text-muted mb-5 mx-auto" style="max-width: 750px;">
-            A cloud-native, multi-tenant platform designed to streamline every aspect of college administration—from
-            faculty coordination to student success tracking.
-        </p>
-        <div class="d-flex justify-content-center gap-3">
-            <a href="{% url 'register_college' %}" class="btn btn-premium btn-lg">Get Started Free</a>
-            <a href="{% url 'public_college_directory' %}"
-                class="btn btn-outline-primary btn-lg px-4 rounded-4 fw-bold">Explore Directory</a>
-            <a href="{% url 'login' %}" class="btn btn-outline-dark btn-lg px-4 rounded-4">Portal Login</a>
+        <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+            <span class="brand-text"><span class="brand-edu">College</span><span class="brand-sync">Manager</span></span>
+        </a>
+        <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+            <i class="bi bi-list text-primary fs-3"></i>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNav">
+            <ul class="navbar-nav ms-auto me-4">
+                <li class="nav-item"><a class="nav-link nav-link-sleek" href="#platform">Features</a></li>
+                <li class="nav-item"><a class="nav-link nav-link-sleek" href="#how-it-works">How it works</a></li>
+                <li class="nav-item"><a class="nav-link nav-link-sleek" href="{% url 'public_college_directory' %}">Directory</a></li>
+                <li class="nav-item"><a class="nav-link nav-link-sleek" href="{% url 'login' %}">Login</a></li>
+            </ul>
+            <a href="{% url 'register_college' %}" class="btn btn-nav-primary">Get Started</a>
         </div>
     </div>
-</div>
+</nav>
 
-<div class="container my-5 py-5">
-    <div class="d-flex justify-content-between align-items-end mb-5">
-        <div>
-            <h2 class="fw-bold fs-1 mb-0">Featured Institutions</h2>
-            <p class="text-muted">Discover some of the top-performing colleges in our network.</p>
-        </div>
-        <a href="{% url 'public_college_directory' %}" class="btn btn-link fw-bold text-decoration-none p-0 mb-2">View
-            Full Directory <i class="bi bi-arrow-right"></i></a>
-    </div>
+<!-- Split Hero Section -->
+<section class="hero-container">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <!-- Left Content -->
+            <div class="col-lg-6 pe-lg-5">
+                <div class="pill-badge">
+                    <i class="bi bi-stars"></i> Built for Modern Campuses
+                </div>
+                <h1 class="hero-title">
+                    One Platform for<br>
+                    <span class="text-gradient">Every Campus Role</span>
+                </h1>
+                <p class="hero-subtitle">
+                    CollegeManager is the all-in-one SaaS platform that connects admins, HODs, faculty, and students under a single intelligent operating system.
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{% url 'register_college' %}" class="btn btn-primary-hero">
+                        <i class="bi bi-rocket-takeoff-fill"></i> Start for Free
+                    </a>
+                    <a href="{% url 'public_college_directory' %}" class="btn btn-secondary-hero">
+                        <i class="bi bi-building"></i> Explore Colleges
+                    </a>
+                </div>
+            </div>
 
-    <div class="row g-4">
-        {% for college in featured_colleges %}
-        <div class="col-md-4">
-            <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
-                <div class="p-4 text-center bg-light">
-                    {% if college.logo %}
-                    <img src="{{ college.logo.url }}" alt="Logo" class="rounded shadow-sm"
-                        style="width: 70px; height: 70px; object-fit: contain;">
-                    {% else %}
-                    <div class="bg-white rounded shadow-sm d-inline-flex align-items-center justify-content-center"
-                        style="width: 70px; height: 70px;">
-                        <i class="bi bi-mortarboard text-primary fs-3"></i>
+            <!-- Right Widgets -->
+            <div class="col-lg-6">
+                <div class="widget-grid">
+                    <!-- Attendance Widget -->
+                    <div class="widget-card">
+                        <div class="w-tag w-tag-blue">ATTENDANCE</div>
+                        <div class="w-value">92%</div>
+                        <div class="w-progress-bg"><div class="w-progress-fill-blue"></div></div>
+                        <p class="w-desc">Dept. avg this semester</p>
                     </div>
-                    {% endif %}
-                </div>
-                <div class="card-body p-4 text-center">
-                    <h5 class="fw-bold mb-1">{{ college.name }}</h5>
-                    <p class="small text-muted line-clamp-2 mb-0">{{ college.description|truncatechars:80|default:"A
-                        premier institution committed to academic excellence and student success." }}</p>
+
+                    <!-- Marks Widget -->
+                    <div class="widget-card">
+                        <div class="w-tag w-tag-green">MARKS</div>
+                        <div class="w-value">38<small>/50</small></div>
+                        <div class="w-progress-bg"><div class="w-progress-fill-green"></div></div>
+                        <p class="w-desc">Internal avg — CS Dept</p>
+                    </div>
+
+                    <!-- Assignment Widget (Full Width) -->
+                    <div class="widget-card widget-full d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="w-icon-box" style="background: #fff7ed; color: #ea580c;">
+                                <i class="bi bi-clipboard-check"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-1 fw-bold" style="color: var(--cm-primary);">Assignment Due</h6>
+                                <p class="w-desc">Data Structures — Tomorrow, 11:59 PM</p>
+                            </div>
+                        </div>
+                        <div class="w-tag w-tag-red">DUE SOON</div>
+                    </div>
+
+                    <!-- Students Widget -->
+                    <div class="widget-card text-center py-4">
+                        <div class="mx-auto mb-2" style="font-size: 1.8rem;">🎓</div>
+                        <h4 class="fw-bold mb-1" style="color: var(--cm-primary);">1,240</h4>
+                        <p class="w-desc">Students Enrolled</p>
+                    </div>
+
+                    <!-- Faculty Widget -->
+                    <div class="widget-card text-center py-4">
+                        <div class="mx-auto mb-2" style="font-size: 1.8rem;">👨‍🏫</div>
+                        <h4 class="fw-bold mb-1" style="color: var(--cm-primary);">86</h4>
+                        <p class="w-desc">Faculty Members</p>
+                    </div>
                 </div>
             </div>
         </div>
-        {% empty %}
-        <div class="col-12 text-center text-muted py-4">Our registry is growing. Check back soon for featured
-            institutions.</div>
-        {% endfor %}
+    </div>
+</section>
+
+<!-- Professional Features Grid -->
+<section id="platform" class="container py-5 mt-5">
+    <div class="row mb-5 text-center">
+        <div class="col-lg-8 mx-auto">
+            <div class="pill-badge mb-3"><i class="bi bi-layers"></i> Platform Capabilities</div>
+            <h2 class="hero-title" style="font-size: 3rem;">Precision Toolset</h2>
+            <p class="hero-subtitle mx-auto">Built for scale, speed, and strict administrative compliance across your entire campus.</p>
+        </div>
+    </div>
+
+    <div class="feature-grid">
+        <div class="feat-card">
+            <div class="feat-icon" style="background: #e0e7ff; color: #4f46e5;"><i class="bi bi-hdd-network"></i></div>
+            <h4 class="feat-title">Tenant Isolation</h4>
+            <p class="feat-desc">Enterprise-grade multi-tenancy ensures your institutional data remains siloed, secure, and completely independent.</p>
+        </div>
+        <div class="feat-card">
+            <div class="feat-icon" style="background: #dcfce7; color: #16a34a;"><i class="bi bi-grid-1x2"></i></div>
+            <h4 class="feat-title">White-label UI</h4>
+            <p class="feat-desc">Deploy your workspace instantly. The interface adapts to your organizational branding, delivering a native experience.</p>
+        </div>
+        <div class="feat-card">
+            <div class="feat-icon" style="background: #fee2e2; color: #dc2626;"><i class="bi bi-shield-check"></i></div>
+            <h4 class="feat-title">Granular RBAC</h4>
+            <p class="feat-desc">Strict role-based access control out of the box. Admins, HODs, faculty, and students operate within tightly defined boundaries.</p>
+        </div>
+        <div class="feat-card">
+            <div class="feat-icon" style="background: #fef3c7; color: #d97706;"><i class="bi bi-calendar3"></i></div>
+            <h4 class="feat-title">Academic Scheduling</h4>
+            <p class="feat-desc">Construct and enforce period-wise digital timetables. Matrix-based scheduling prevents overlap.</p>
+        </div>
+        <div class="feat-card">
+            <div class="feat-icon" style="background: #f3e8ff; color: #9333ea;"><i class="bi bi-clipboard-data"></i></div>
+            <h4 class="feat-title">Continuous Assessment</h4>
+            <p class="feat-desc">Configure dynamic internal grading scales. Track student performance across customizable parameters in real-time.</p>
+        </div>
+        <div class="feat-card">
+            <div class="feat-icon" style="background: #ccfbf1; color: #0d9488;"><i class="bi bi-broadcast"></i></div>
+            <h4 class="feat-title">Unified Telemetry</h4>
+            <p class="feat-desc">Centralized communication pipelines. Broadcast critical updates, exam schedules, and alerts directly to target segments.</p>
+        </div>
+    </div>
+</section>
+
+<section id="infrastructure" class="container py-5">
+    <div class="p-5 rounded-4 widget-card" style="background: linear-gradient(135deg, white 0%, #f8fafc 100%);">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <div class="pill-badge mb-3"><i class="bi bi-cloud-arrow-up"></i> Instant Deployment</div>
+                <h3 class="hero-title" style="font-size: 2.5rem; letter-spacing:-1px;">Ready to deploy?</h3>
+                <p class="text-muted mb-0 fs-5">System provisioning takes less than 2 minutes. Start building your digital campus infrastructure immediately.</p>
+            </div>
+            <div class="col-lg-6 text-lg-end">
+                <a href="{% url 'register_college' %}" class="btn btn-primary-hero px-5 py-3 shadow-sm">Provision Workspace Now</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Trusted By Marquee -->
+<div class="marquee-container my-5">
+    <div class="marquee-content">
+        <span class="marquee-item"><i class="bi bi-shield-shaded"></i> Stanford University</span>
+        <span class="marquee-item"><i class="bi bi-building"></i> MIT Institute</span>
+        <span class="marquee-item"><i class="bi bi-award"></i> Oxford Academy</span>
+        <span class="marquee-item"><i class="bi bi-book"></i> Cambridge Tutors</span>
+        <span class="marquee-item"><i class="bi bi-globe"></i> Global Tech</span>
+        
+        <span class="marquee-item"><i class="bi bi-shield-shaded"></i> Stanford University</span>
+        <span class="marquee-item"><i class="bi bi-building"></i> MIT Institute</span>
+        <span class="marquee-item"><i class="bi bi-award"></i> Oxford Academy</span>
+        <span class="marquee-item"><i class="bi bi-book"></i> Cambridge Tutors</span>
+        <span class="marquee-item"><i class="bi bi-globe"></i> Global Tech</span>
     </div>
 </div>
 
-<div class="container my-5 py-5 border-top">
+<!-- Testimonials Section -->
+<section class="container py-5 my-5">
     <div class="text-center mb-5">
-        <h2 class="fw-bold">Intelligent Features for Smart Campuses</h2>
-        <p class="text-muted">Everything you need to manage a high-performing institution.</p>
+        <h2 class="hero-title" style="font-size: 3rem;">Trusted by Leaders</h2>
+        <p class="hero-subtitle mx-auto">See how top institutions are transforming their operations.</p>
     </div>
-
+    
     <div class="row g-4">
         <div class="col-md-4">
-            <div class="card card-premium feature-card p-4 h-100">
-                <div class="bg-primary-soft p-3 rounded-4 mb-3 d-inline-block" style="width: 60px;">
-                    <i class="bi bi-shield-lock-fill fs-3 text-primary"></i>
+            <div class="testimonial-card">
+                <i class="bi bi-quote quote-icon"></i>
+                <p class="testimonial-text">"CollegeManager completely eliminated our scheduling conflicts. The matrix timetable is a game-changer for our 15+ departments."</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar" style="background:#e0e7ff; color:#4f46e5;">JD</div>
+                    <div class="author-info">
+                        <h6>Dr. James Dean</h6>
+                        <p>Dean of Academics</p>
+                    </div>
                 </div>
-                <h4 class="fw-bold">Absolute Isolation</h4>
-                <p class="text-muted">Multi-tenant architecture ensures each college's data remains strictly private and
-                    secure.</p>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card card-premium feature-card p-4 h-100">
-                <div class="bg-primary-soft p-3 rounded-4 mb-3 d-inline-block" style="width: 60px;">
-                    <i class="bi bi-palette-fill fs-3 text-primary"></i>
+            <div class="testimonial-card">
+                <i class="bi bi-quote quote-icon"></i>
+                <p class="testimonial-text">"The real-time internal marks tracking saved our faculty hundreds of hours. Students love the instant transparency."</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar" style="background:#dcfce7; color:#16a34a;">SP</div>
+                    <div class="author-info">
+                        <h6>Sarah Parker</h6>
+                        <p>HOD Computer Science</p>
+                    </div>
                 </div>
-                <h4 class="fw-bold">Brand Identity</h4>
-                <p class="text-muted">Custom subdomains, unique logos, and color palettes that represent your college's
-                    spirit.</p>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card card-premium feature-card p-4 h-100">
-                <div class="bg-primary-soft p-3 rounded-4 mb-3 d-inline-block" style="width: 60px;">
-                    <i class="bi bi-bar-chart-fill fs-3 text-primary"></i>
+            <div class="testimonial-card">
+                <i class="bi bi-quote quote-icon"></i>
+                <p class="testimonial-text">"Having a white-labeled portal makes our institution look incredibly professional. The isolated tenant architecture gives us peace of mind."</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar" style="background:#fef3c7; color:#d97706;">MW</div>
+                    <div class="author-info">
+                        <h6>Marcus Wei</h6>
+                        <p>IT Director</p>
+                    </div>
                 </div>
-                <h4 class="fw-bold">Real-time Analytics</h4>
-                <p class="text-muted">Track attendance patterns, assignment grades, and teacher performance from a
-                    unified dashboard.</p>
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<div class="bg-dark text-white py-5 mt-5">
-    <div class="container text-center">
-        <h2 class="mb-4">Ready to modernize your institution?</h2>
-        <a href="{% url 'register_college' %}" class="btn btn-premium btn-lg">Join 50+ Colleges Today</a>
+<!-- Pricing Section -->
+<section class="container py-5 my-5">
+    <div class="text-center mb-5">
+        <div class="pill-badge mb-3"><i class="bi bi-tag"></i> Simple Plans</div>
+        <h2 class="hero-title" style="font-size: 3rem;">Transparent Pricing</h2>
+        <p class="hero-subtitle mx-auto">Plans tailored to institutions of any scale.</p>
     </div>
-</div>
+
+    <div class="row g-4 align-items-center justify-content-center">
+        <!-- Starter Plan -->
+        <div class="col-lg-4 col-md-6">
+            <div class="pricing-card">
+                <h4 class="fw-bold" style="color: var(--cm-primary); letter-spacing:-0.5px;">Starter</h4>
+                <p class="text-muted">Perfect for emerging academies</p>
+                <div class="pricing-price">$0<span> /mo</span></div>
+                <ul class="pricing-list">
+                    <li><i class="bi bi-check2-circle"></i> Up to 500 Students</li>
+                    <li><i class="bi bi-check2-circle"></i> Basic Attendance Tracking</li>
+                    <li><i class="bi bi-check2-circle"></i> Community Support</li>
+                    <li class="text-muted opacity-50"><i class="bi bi-x-circle text-muted"></i> Matrix Timetables</li>
+                </ul>
+                <a href="{% url 'register_college' %}" class="btn btn-secondary-hero w-100 justify-content-center">Start Free</a>
+            </div>
+        </div>
+        
+        <!-- Professional Plan -->
+        <div class="col-lg-4 col-md-6">
+            <div class="pricing-card pricing-popular">
+                <div class="popular-badge">MOST POPULAR</div>
+                <h4 class="fw-bold" style="color: var(--cm-primary); letter-spacing:-0.5px;">Professional</h4>
+                <p class="text-muted">For growing universities</p>
+                <div class="pricing-price">$299<span> /mo</span></div>
+                <ul class="pricing-list">
+                    <li><i class="bi bi-check2-circle"></i> Unlimited Students</li>
+                    <li><i class="bi bi-check2-circle"></i> Advanced Internal Marks</li>
+                    <li><i class="bi bi-check2-circle"></i> Matrix Timetable Engine</li>
+                    <li><i class="bi bi-check2-circle"></i> Priority Support</li>
+                </ul>
+                <a href="{% url 'register_college' %}" class="btn btn-primary-hero w-100 justify-content-center">Start 14-Day Trial</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Deep Dive FAQ Section -->
+<section class="container py-5 my-5">
+    <div class="row">
+        <div class="col-lg-4 mb-4 mb-lg-0">
+            <div class="pill-badge mb-3"><i class="bi bi-question-circle"></i> FAQ</div>
+            <h2 class="hero-title" style="font-size: 2.5rem; letter-spacing:-1px;">Got questions?</h2>
+            <p class="text-muted fs-5">Can't find the answer you're looking for? Reach out to our support team.</p>
+        </div>
+        <div class="col-lg-8">
+            <div class="accordion" id="faqAccordion">
+                <div class="accordion-item widget-card mb-3" style="border:none;">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed fs-5" type="button" data-bs-toggle="collapse" data-bs-target="#faq1" style="background:transparent; color:var(--cm-primary); font-weight:800; box-shadow:none; padding:0;">
+                            Is our institutional data completely isolated?
+                        </button>
+                    </h2>
+                    <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-muted px-0 pb-0 pt-3 fs-6">
+                            Yes. CollegeManager uses a strict multi-tenant architecture. Your schemas and databases are logically separated from all other institutions, ensuring absolute data privacy.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item widget-card mb-3" style="border:none;">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed fs-5" type="button" data-bs-toggle="collapse" data-bs-target="#faq2" style="background:transparent; color:var(--cm-primary); font-weight:800; box-shadow:none; padding:0;">
+                            Can we use our own custom domain?
+                        </button>
+                    </h2>
+                    <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-muted px-0 pb-0 pt-3 fs-6">
+                            Absolutely. The Professional tier allows you to map your portal to a custom domain (e.g., portal.youruniversity.edu) alongside full white-labeling of the interface.
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item widget-card" style="border:none;">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed fs-5" type="button" data-bs-toggle="collapse" data-bs-target="#faq3" style="background:transparent; color:var(--cm-primary); font-weight:800; box-shadow:none; padding:0;">
+                            How easy is it to onboard our faculty and students?
+                        </button>
+                    </h2>
+                    <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body text-muted px-0 pb-0 pt-3 fs-6">
+                            Very easy. We provide bulk Excel upload templates. Admins can upload thousands of records in seconds, and the system will automatically generate credentials.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Minimal Footer -->
+<footer class="footer-clean" style="background: white;">
+    <div class="container">
+        <div class="row g-4 mb-5">
+            <div class="col-lg-5 pe-lg-5">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <span class="brand-text" style="font-size: 1.5rem;"><span class="brand-edu">College</span><span class="brand-sync">Manager</span></span>
+                </div>
+                <p class="text-muted pe-4" style="font-size:1.05rem; line-height:1.6;">The intelligent operating system for modern educational institutions. Automate admin tasks, empower faculty, and drive student success.</p>
+            </div>
+            <div class="col-lg-2 col-6 offset-lg-1">
+                <h6 class="fw-bold mb-4" style="color: var(--cm-primary); font-size:1.1rem;">Platform</h6>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-3"><a href="#platform" class="footer-link fw-medium">Features</a></li>
+                    <li class="mb-3"><a href="#infrastructure" class="footer-link fw-medium">Infrastructure</a></li>
+                    <li class="mb-3"><a href="{% url 'register_college' %}" class="footer-link fw-medium">Pricing</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-2 col-6">
+                <h6 class="fw-bold mb-4" style="color: var(--cm-primary); font-size:1.1rem;">Resources</h6>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-3"><a href="{% url 'public_college_directory' %}" class="footer-link fw-medium">College Directory</a></li>
+                    <li class="mb-3"><a href="#" class="footer-link fw-medium">Documentation</a></li>
+                    <li class="mb-3"><a href="#" class="footer-link fw-medium">API Reference</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="border-top pt-4 mt-4 d-flex justify-content-between align-items-center flex-wrap" style="border-color: rgba(0,0,0,0.05) !important;">
+            <p class="text-muted mb-0 fw-medium">&copy; {% now "Y" %} CollegeManager Platform. All rights reserved.</p>
+            <div class="d-flex gap-4 text-muted fs-5">
+                <i class="bi bi-twitter" style="cursor:pointer; transition:color 0.2s;" onmouseover="this.style.color='var(--cm-accent)'" onmouseout="this.style.color=''"></i>
+                <i class="bi bi-github" style="cursor:pointer; transition:color 0.2s;" onmouseover="this.style.color='var(--cm-accent)'" onmouseout="this.style.color=''"></i>
+                <i class="bi bi-linkedin" style="cursor:pointer; transition:color 0.2s;" onmouseover="this.style.color='var(--cm-accent)'" onmouseout="this.style.color=''"></i>
+            </div>
+        </div>
+    </div>
+</footer>
+
 {% endblock %}

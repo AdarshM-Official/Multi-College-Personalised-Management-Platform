@@ -2,66 +2,281 @@
 
 {% block title %}Faculty Portal | {{ stats.dept }}{% endblock %}
 
+{% block extra_css %}
+<style>
+    :root {
+        --prof-primary: #2563eb;
+        --prof-primary-soft: #eff6ff;
+        --prof-dark: #0f172a;
+        --prof-gray-50: #f8fafc;
+        --prof-gray-100: #f1f5f9;
+        --prof-gray-200: #e2e8f0;
+        --prof-gray-600: #475569;
+        --prof-gray-800: #1e293b;
+    }
+
+    body {
+        background-color: var(--prof-gray-50);
+        font-family: 'Inter', -apple-system, sans-serif;
+    }
+
+    /* Professional Header */
+    .prof-header {
+        background: linear-gradient(to right, #ffffff, #f8fafc);
+        border: 1px solid var(--prof-gray-200);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
+    }
+
+    .prof-header-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        background: var(--prof-primary-soft);
+        color: var(--prof-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    /* Sleek Cards */
+    .prof-card {
+        background: #ffffff;
+        border: 1px solid var(--prof-gray-200);
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        transition: all 0.2s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .prof-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .prof-stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--prof-dark);
+        line-height: 1.2;
+    }
+
+    .prof-stat-label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--prof-gray-600);
+        font-weight: 600;
+        margin-top: 0.5rem;
+    }
+
+    /* Enterprise Table */
+    .prof-table-wrapper {
+        border: 1px solid var(--prof-gray-200);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .table-prof {
+        margin-bottom: 0;
+    }
+    
+    .table-prof th {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--prof-gray-600);
+        font-weight: 600;
+        border-bottom: 1px solid var(--prof-gray-200);
+        padding: 1rem 1.5rem;
+        background: var(--prof-gray-50);
+    }
+    
+    .table-prof td {
+        padding: 1rem 1.5rem;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--prof-gray-100);
+        color: var(--prof-gray-800);
+        font-size: 0.9rem;
+    }
+
+    .table-prof tbody tr {
+        transition: background-color 0.15s;
+    }
+
+    .table-prof tbody tr:hover {
+        background-color: var(--prof-gray-50);
+    }
+
+    .table-prof tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Quick Actions */
+    .prof-action-card {
+        padding: 1.25rem;
+        border-radius: 10px;
+        border: 1px solid var(--prof-gray-200);
+        background: #ffffff;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.2s ease;
+        margin-bottom: 1rem;
+    }
+
+    .prof-action-card:hover {
+        background: var(--prof-gray-50);
+        border-color: #cbd5e1;
+    }
+
+    .prof-action-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .bg-blue-soft { background: #eff6ff; color: #2563eb; }
+    .bg-indigo-soft { background: #e0e7ff; color: #4338ca; }
+    
+    .status-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        background: #ecfdf5;
+        color: #059669;
+        border: 1px solid #a7f3d0;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
+<!-- Professional Header -->
+<div class="prof-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div class="d-flex align-items-center gap-3">
+        <div class="prof-header-icon">
+            <i class="bi bi-person-workspace"></i>
+        </div>
+        <div>
+            <h4 class="fw-bold mb-1" style="color: var(--prof-dark);">{{ request.user.get_full_name }}</h4>
+            <p class="mb-0 text-muted small"><i class="bi bi-building me-1"></i> Department of {{ stats.dept|default:"Unassigned" }} &bull; {{ request.user.role|title }}</p>
+        </div>
+    </div>
+    <div>
+        <a href="{% url 'mark_attendance' %}" class="btn btn-primary btn-sm px-3 py-2 fw-medium shadow-sm" style="background: var(--prof-primary); border: none;">
+            <i class="bi bi-calendar-check me-1"></i> Quick Attendance
+        </a>
+    </div>
+</div>
+
+<!-- Key Metrics Row -->
 <div class="row g-4 mb-4">
+    <!-- Active Assignments -->
     <div class="col-md-4">
-        <div class="card card-premium p-4 border-0 bg-primary text-white">
-            <div class="d-flex justify-content-between mb-3">
-                <i class="bi bi-file-earmark-text fs-2"></i>
-                <span class="badge bg-card text-primary">Live</span>
+        <div class="prof-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="prof-action-icon bg-blue-soft">
+                    <i class="bi bi-pen"></i>
+                </div>
             </div>
-            <h3 class="fw-bold mb-1">08</h3>
-            <p class="opacity-75 small mb-0">Active Assignments</p>
+            <div>
+                <div class="prof-stat-value">{{ stats.active_assignments|stringformat:"02d" }}</div>
+                <div class="prof-stat-label">Active Assignments</div>
+            </div>
         </div>
     </div>
+    
+    <!-- Assigned Students -->
     <div class="col-md-4">
-        <div class="card card-premium p-4 border-0">
-            <div class="d-flex justify-content-between mb-3">
-                <div class="bg-primary-soft p-2 rounded-3"><i class="bi bi-people-fill text-primary"></i></div>
+        <div class="prof-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="prof-action-icon" style="background: #f3f4f6; color: #4b5563;">
+                    <i class="bi bi-people"></i>
+                </div>
             </div>
-            <h3 class="fw-bold mb-1">42</h3>
-            <p class="text-muted small mb-0">Assigned Students</p>
+            <div>
+                <div class="prof-stat-value">{{ stats.assigned_students }}</div>
+                <div class="prof-stat-label">Total Assigned Students</div>
+            </div>
         </div>
     </div>
+
+    <!-- Pending Reviews -->
     <div class="col-md-4">
-        <div class="card card-premium p-4 border-0">
-            <div class="d-flex justify-content-between mb-3">
-                <div class="bg-warning-soft p-2 rounded-3"><i class="bi bi-chat-dots-fill text-warning"></i></div>
-                <span class="badge bg-danger">3 New</span>
+        <div class="prof-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="prof-action-icon" style="background: #fef2f2; color: #dc2626;">
+                    <i class="bi bi-journal-check"></i>
+                </div>
+                {% if stats.pending_reviews > 0 %}
+                <span class="badge bg-danger rounded-pill px-2 py-1 fw-normal" style="font-size: 0.7rem;">Action Required</span>
+                {% endif %}
             </div>
-            <h3 class="fw-bold mb-1">15</h3>
-            <p class="text-muted small mb-0">Pending Reviews</p>
+            <div>
+                <div class="prof-stat-value">{{ stats.pending_reviews }}</div>
+                <div class="prof-stat-label">Pending Reviews</div>
+            </div>
         </div>
     </div>
 </div>
 
 <div class="row g-4">
-    <div class="col-md-7">
-        <div class="card card-premium border-0 h-100 bg-card">
-            <div class="card-header bg-card border-0 p-4 d-flex justify-content-between align-items-center">
-                <h5 class="fw-bold mb-0 text-main">Recent Assignments</h5>
-                <a href="{% url 'create_assignment' %}" class="btn btn-premium btn-sm rounded-pill px-3">Create New</a>
+    <!-- Left Column: Recent Assignments Table -->
+    <div class="col-lg-8">
+        <div class="prof-card">
+            <div class="p-4 border-bottom d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0" style="color: var(--prof-dark);">Recent Assignments</h6>
+                <a href="{% url 'create_assignment' %}" class="btn btn-outline-secondary btn-sm fw-medium">Create New</a>
             </div>
-            <div class="card-body p-4 pt-0">
-                <div class="table-responsive">
-                    <table class="table table-borderless align-middle">
+            <div class="p-4">
+                <div class="prof-table-wrapper">
+                    <table class="table table-prof">
                         <thead>
-                            <tr class="text-muted-custom small">
-                                <th>Assignment Title</th>
-                                <th>Submissions</th>
+                            <tr>
+                                <th>Title</th>
+                                <th>Posted</th>
+                                <th>Progress</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
+                            {% for assignment in recent_assignments %}
                             <tr>
-                                <td>
-                                    <p class="mb-0 fw-bold text-main">Intro to Quantum Physics</p>
-                                    <span class="small text-muted-custom">Posted 2 days ago</span>
+                                <td class="fw-medium" style="color: var(--prof-dark);">
+                                    <i class="bi bi-file-earmark-text text-muted me-2"></i>{{ assignment.title }}
                                 </td>
-                                <td>35/42</td>
-                                <td><span class="badge bg-success-soft text-success px-3">Marking</span></td>
+                                <td class="text-muted">{{ assignment.deadline|timesince }} ago</td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="progress flex-grow-1" style="height: 4px; background: var(--prof-gray-200);">
+                                            <div class="progress-bar bg-success" style="width: {{ assignment.progress_pct }}%;"></div>
+                                        </div>
+                                        <span class="text-muted" style="font-size: 0.8rem; min-width: 35px;">{{ assignment.submission_count }}/{{ stats.assigned_students }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge">Collecting</span>
+                                </td>
                             </tr>
-                            <!-- Add dynamic assignments here -->
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">
+                                    <p class="mb-0 small">No active assignments found.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
@@ -69,24 +284,44 @@
         </div>
     </div>
     
-    <div class="col-md-5">
-        <div class="card card-premium border-0 h-100 bg-card">
-            <div class="card-header bg-card border-0 p-4">
-                <h5 class="fw-bold mb-0 text-main">Daily Management</h5>
-            </div>
-            <div class="card-body p-4 pt-0">
-                <div class="p-4 rounded-4 border border-custom bg-primary text-white mb-3 shadow-sm">
-                    <h6 class="fw-bold mb-2"><i class="bi bi-calendar-check me-2 text-white"></i>Mark Attendance</h6>
-                    <p class="small opacity-75 mb-3">Record the presence for today's classroom sessions.</p>
-                    <a href="{% url 'mark_attendance' %}" class="btn btn-white-glass btn-sm w-100 fw-bold text-white border border-white border-opacity-25" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(5px);">Open Attendance Log</a>
+    <!-- Right Column: Daily Management Actions -->
+    <div class="col-lg-4">
+        <div class="prof-card p-4">
+            <h6 class="fw-bold mb-4" style="color: var(--prof-dark);">Quick Actions</h6>
+            
+            <a href="{% url 'mark_attendance' %}" class="prof-action-card">
+                <div class="prof-action-icon bg-blue-soft">
+                    <i class="bi bi-calendar-event"></i>
                 </div>
-                
-                <div class="p-4 rounded-4 border bg-dark text-white">
-                    <h6 class="fw-bold mb-2"><i class="bi bi-journal-text me-2"></i>Grade Book</h6>
-                    <p class="small opacity-75 mb-3">Update marks and provide feedback for submitted work.</p>
-                    <a href="#" class="btn btn-outline-light btn-sm w-100">View Grade Sheets</a>
+                <div>
+                    <h6 class="fw-bold mb-0" style="color: var(--prof-dark); font-size: 0.9rem;">Mark Attendance</h6>
+                    <p class="text-muted small mb-0">Record daily register</p>
+                </div>
+                <i class="bi bi-chevron-right ms-auto text-muted small"></i>
+            </a>
+            
+            <a href="{% url 'internal_marks_list' %}" class="prof-action-card">
+                <div class="prof-action-icon bg-indigo-soft">
+                    <i class="bi bi-award"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0" style="color: var(--prof-dark); font-size: 0.9rem;">Internal Marks</h6>
+                    <p class="text-muted small mb-0">Grade evaluations</p>
+                </div>
+                <i class="bi bi-chevron-right ms-auto text-muted small"></i>
+            </a>
+
+            <!-- Placeholder for future tools -->
+            <div class="prof-action-card" style="opacity: 0.5; cursor: not-allowed;">
+                <div class="prof-action-icon" style="background: var(--prof-gray-100); color: var(--prof-gray-600);">
+                    <i class="bi bi-file-bar-graph"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0" style="color: var(--prof-dark); font-size: 0.9rem;">Reports</h6>
+                    <p class="text-muted small mb-0">Coming soon</p>
                 </div>
             </div>
+
         </div>
     </div>
 </div>

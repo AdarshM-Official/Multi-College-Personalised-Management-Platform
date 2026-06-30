@@ -2,130 +2,191 @@
 
 {% block title %}Institution Details | {{ college.name }}{% endblock %}
 
-{% block content %}
+{% block extra_css %}
 <style>
     /* Professional Corporate Style Enhancements */
     :root {
-        --inst-theme: {{ college.theme_color|default:'#0f172a' }};
-        --inst-theme-10: color-mix(in srgb, var(--inst-theme) 10%, white);
-        --inst-theme-5: color-mix(in srgb, var(--inst-theme) 5%, white);
+        --inst-theme: {{ college.theme_color|default:'#4f46e5' }};
+        --inst-theme-soft: color-mix(in srgb, var(--inst-theme) 10%, white);
+        --inst-theme-hover: color-mix(in srgb, var(--inst-theme) 80%, black);
+    }
+
+    [data-theme="dark"] {
+        --inst-theme-soft: color-mix(in srgb, var(--inst-theme) 20%, #0f172a);
     }
     
     body {
-        background-color: #f8fafc;
+        background-color: var(--bg-body);
     }
 
-    .inst-header {
-        background-color: #ffffff;
-        border-top: 6px solid var(--inst-theme);
-        padding: 4rem 0 3rem;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    /* Frosted Glass Sticky Action Bar */
+    .admin-action-bar {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        padding: 1rem 0;
+        position: sticky;
+        top: 0;
+        z-index: 1020;
+        transition: all 0.3s ease;
+    }
+
+    [data-theme="dark"] .admin-action-bar {
+        background: rgba(15, 23, 42, 0.85);
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    /* Large Hero Card Featuring Brand Color */
+    .inst-hero-card {
+        background: linear-gradient(135deg, var(--inst-theme) 0%, var(--inst-theme-hover) 100%);
+        border-radius: 24px;
+        padding: 3rem;
+        margin-top: 2rem;
+        margin-bottom: 3rem;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .inst-hero-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 50%;
+        height: 100%;
+        background: radial-gradient(circle at top right, rgba(255,255,255,0.2) 0%, transparent 60%);
+        pointer-events: none;
     }
 
     .logo-container {
-        width: 160px;
-        height: 160px;
+        width: 140px;
+        height: 140px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
+        background: #ffffff;
+        border: 4px solid rgba(255,255,255,0.2);
+        border-radius: 24px;
         padding: 15px;
-        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        position: relative;
+        z-index: 2;
     }
 
     .inst-title {
-        font-family: "Georgia", serif; /* Professional serif */
-        font-weight: 700;
-        color: #0f172a;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 800;
         letter-spacing: -0.5px;
+        color: #ffffff;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Clean Two-Column Grid Info Cards */
+    .info-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        height: 100%;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.05);
     }
 
     .section-heading {
-        font-family: inherit;
+        font-family: 'Outfit', sans-serif;
         font-weight: 700;
-        color: #1e293b;
+        color: var(--text-main);
         margin-bottom: 1.5rem;
         display: flex;
         align-items: center;
+        font-size: 1.25rem;
     }
     
     .section-heading::after {
         content: "";
         flex-grow: 1;
         height: 1px;
-        background: #e2e8f0;
+        background: var(--border);
         margin-left: 1rem;
-    }
-
-    .info-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
     }
 
     .fact-row {
         display: flex;
         align-items: flex-start;
         padding: 1rem 0;
-        border-bottom: 1px dashed #e2e8f0;
+        border-bottom: 1px dashed var(--border);
     }
-    .fact-row:last-child {
-        border-bottom: none;
-    }
+    
+    .fact-row:last-child { border-bottom: none; }
+    
     .fact-icon {
-        width: 32px;
+        width: 40px;
+        height: 40px;
+        background: var(--surface-2);
         color: var(--inst-theme);
-        font-size: 1.1rem;
-        margin-top: 2px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        margin-right: 1rem;
+        flex-shrink: 0;
     }
-    .fact-content {
-        flex: 1;
-    }
+    
+    .fact-content { flex: 1; }
+    
     .fact-label {
         font-size: 0.75rem;
         text-transform: uppercase;
         font-weight: 700;
-        color: #64748b;
+        color: var(--text-muted);
         letter-spacing: 0.5px;
         margin-bottom: 0.2rem;
     }
+    
     .fact-value {
-        font-size: 0.95rem;
-        color: #0f172a;
+        font-size: 1rem;
+        color: var(--text-main);
         font-weight: 500;
-    }
-
-    .admin-action-bar {
-        background: #fff;
-        border-bottom: 1px solid #e2e8f0;
-        padding: 1rem 0;
-        position: sticky;
-        top: 0;
-        z-index: 1020;
+        word-break: break-word;
     }
 
 </style>
+{% endblock %}
 
-<!-- Admin Action Bar -->
+{% block content %}
+<!-- Frosted Glass Sticky Action Bar -->
 <div class="admin-action-bar shadow-sm">
     <div class="container d-flex justify-content-between align-items-center">
         <div>
-            <a href="{% url 'college_approval_queue' %}" class="btn btn-sm btn-light text-muted fw-bold border"><i class="bi bi-arrow-left me-1"></i> Return to Queue</a>
+            <a href="{% url 'college_approval_queue' %}" class="btn btn-sm btn-light text-muted fw-bold rounded-pill px-3 shadow-sm border">
+                <i class="bi bi-arrow-left me-1"></i> Return to Queue
+            </a>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 align-items-center">
             {% if college.status == 'PENDING' %}
-                <button class="btn btn-outline-danger shadow-sm fw-bold px-4" data-bs-toggle="modal" data-bs-target="#rejectModal"><i class="bi bi-x-circle me-1"></i> Reject</button>
-                <a href="{% url 'approve_college' college.id 'approve' %}" class="btn btn-success shadow-sm fw-bold px-4"><i class="bi bi-check-circle me-1"></i> Approve Institution</a>
+                <button class="btn btn-light text-danger fw-bold rounded-pill px-4 shadow-sm border border-danger border-opacity-25" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                    <i class="bi bi-x-circle-fill me-1"></i> Reject
+                </button>
+                <a href="{% url 'approve_college' college.id 'approve' %}" class="btn btn-success fw-bold rounded-pill px-4 shadow-sm">
+                    <i class="bi bi-check-circle-fill me-1"></i> Approve Institution
+                </a>
             {% else %}
-                <span class="badge {% if college.status == 'APPROVED' %}bg-success{% else %}bg-danger{% endif %} fs-6 py-2 px-4 shadow-sm">
+                <div class="badge rounded-pill px-4 py-2 fs-6 fw-bold shadow-sm d-flex align-items-center
+                    {% if college.status == 'APPROVED' %}bg-success text-white border border-success{% else %}bg-danger text-white border border-danger{% endif %}">
+                    <i class="bi {% if college.status == 'APPROVED' %}bi-check-circle-fill{% else %}bi-x-circle-fill{% endif %} me-2"></i>
                     Status: {{ college.status }}
-                </span>
+                </div>
                 {% if college.status == 'APPROVED' %}
-                <a href="{{ college.get_subdomain_url }}" target="_blank" class="btn btn-outline-primary shadow-sm fw-bold">
-                    <i class="bi bi-box-arrow-up-right me-1"></i> Preview Portal
+                <a href="{{ college.get_subdomain_url }}" target="_blank" class="btn btn-primary fw-bold rounded-pill px-4 shadow-sm">
+                    <i class="bi bi-box-arrow-up-right me-1"></i> Launch Portal
                 </a>
                 {% endif %}
             {% endif %}
@@ -133,10 +194,22 @@
     </div>
 </div>
 
-<!-- Profile Header Section -->
-<header class="inst-header">
-    <div class="container">
-        <div class="row align-items-center mb-4">
+<main class="container">
+    {% if college.status == 'REJECTED' %}
+    <div class="alert alert-danger shadow-sm border-danger border-opacity-25 rounded-4 mt-4 mb-0 d-flex align-items-center p-4">
+        <div class="bg-danger bg-opacity-10 p-3 rounded-circle me-4">
+            <i class="bi bi-exclamation-triangle-fill fs-2 text-danger"></i>
+        </div>
+        <div>
+            <h5 class="fw-bold mb-1 text-danger">Institution Has Been Rejected</h5>
+            <p class="mb-0 text-danger opacity-75"><strong>Reason logged:</strong> {{ college.rejection_reason|default:"No specific reason logged by administration." }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Large Hero Card Featuring Brand Color -->
+    <header class="inst-hero-card">
+        <div class="row align-items-center position-relative z-1">
             <div class="col-md-auto mb-4 mb-md-0 d-flex justify-content-center">
                 <div class="logo-container">
                     {% if college.logo %}
@@ -146,137 +219,131 @@
                     {% endif %}
                 </div>
             </div>
-            <div class="col-md text-center text-md-start">
-                <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-start gap-2 mb-2">
-                    <span class="badge" style="background-color: var(--inst-theme-10); color: var(--inst-theme); border: 1px solid var(--inst-theme);">
-                        <i class="bi bi-clock-history me-1"></i> Established {{ college.established_year|default:"N/A" }}
+            <div class="col-md text-center text-md-start ps-md-4">
+                <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-start gap-2 mb-3">
+                    <span class="badge bg-white text-dark rounded-pill px-3 py-2 shadow-sm fw-bold">
+                        <i class="bi bi-clock-history text-primary me-1"></i> Est. {{ college.established_year|default:"N/A" }}
                     </span>
-                    {% if college.university_affiliation %}
-                    <span class="badge bg-light text-dark border">
-                        <i class="bi bi-diagram-3 me-1"></i> {{ college.university_affiliation }}
+                    <span class="badge bg-dark bg-opacity-50 text-white rounded-pill px-3 py-2 shadow-sm border border-white border-opacity-25">
+                        <i class="bi bi-fingerprint text-light me-1"></i> Slug: {{ college.slug }}
                     </span>
-                    {% endif %}
-                    <span class="badge bg-dark fw-normal"><i class="bi bi-fingerprint me-1"></i>Slug: {{ college.slug }}</span>
                 </div>
-                <h1 class="inst-title mb-3">{{ college.name }}</h1>
-                <p class="text-secondary fs-5 mb-0 d-flex align-items-start justify-content-center justify-content-md-start gap-2">
-                    <i class="bi bi-geo-alt mt-1"></i> 
-                    <span>{{ college.address }}{% if college.district %}, <br class="d-md-none">{{ college.district }}{% endif %}</span>
+                <h1 class="inst-title mb-2">{{ college.name }}</h1>
+                <p class="fs-5 mb-0 text-white-50 d-flex align-items-center justify-content-center justify-content-md-start gap-2">
+                    <i class="bi bi-geo-alt-fill"></i> 
+                    <span>{{ college.address }}{% if college.district %}, {{ college.district }}{% endif %}</span>
                 </p>
             </div>
             <div class="col-md-auto mt-4 mt-md-0 text-center text-md-end">
                 {% if college.verification_document %}
-                    <a href="{{ college.verification_document.url }}" target="_blank" class="btn fw-bold px-4 py-2" style="background-color: #0f172a; color: white;">
-                        <i class="bi bi-file-earmark-lock me-2 fs-6"></i> Verify Document 
+                    <a href="{{ college.verification_document.url }}" target="_blank" class="btn btn-light text-dark fw-bold px-4 py-3 rounded-pill shadow-sm hover-lift">
+                        <i class="bi bi-file-earmark-text-fill me-2 text-primary"></i> View Document 
                     </a>
                 {% else %}
-                    <span class="badge bg-danger-soft text-danger border border-danger border-opacity-25 py-2 px-3"><i class="bi bi-exclamation-circle me-1"></i> No Document Attached</span>
+                    <div class="bg-dark bg-opacity-25 rounded-pill py-2 px-4 border border-white border-opacity-25">
+                        <i class="bi bi-exclamation-circle text-warning me-2"></i><span class="text-white-50 fw-medium">No Document</span>
+                    </div>
                 {% endif %}
             </div>
         </div>
-    </div>
-</header>
+    </header>
 
-<main class="container py-5">
-    {% if college.status == 'REJECTED' %}
-    <div class="alert alert-danger shadow-sm border-danger border-opacity-25 rounded-3 mb-5 d-flex align-items-center">
-        <i class="bi bi-exclamation-triangle-fill fs-3 me-3"></i>
-        <div>
-            <h5 class="fw-bold mb-1">Institution Has Been Rejected</h5>
-            <p class="mb-0"><strong>Reason logged:</strong> {{ college.rejection_reason|default:"No specific reason logged by administration." }}</p>
-        </div>
-    </div>
-    {% endif %}
-
-    <div class="row g-5">
+    <!-- Clean Two-Column Grid -->
+    <div class="row g-4 mb-5">
         
-        <!-- Left Sidebar: Comprehensive Info -->
-        <div class="col-lg-4 order-2 order-lg-1">
-            <div class="info-card p-4 sticky-top" style="top: 6rem;">
-                <h5 class="fw-bold mb-4 border-bottom pb-3 text-dark">Administrative Data</h5>
-                
+        <!-- Column 1: Administrative Details -->
+        <div class="col-lg-6">
+            <h3 class="section-heading"><i class="bi bi-building-gear text-primary me-2"></i> Administrative Details</h3>
+            <div class="info-card p-4">
                 <div class="fact-row">
-                    <div class="fact-icon"><i class="bi bi-envelope"></i></div>
+                    <div class="fact-icon"><i class="bi bi-envelope-fill"></i></div>
                     <div class="fact-content">
                         <div class="fact-label">Admin Contact Email</div>
                         <div class="fact-value">
                             {% if college.contact_email %}
-                                <a href="mailto:{{ college.contact_email }}" class="text-decoration-none fw-bold" style="color: #0f172a;">{{ college.contact_email }}</a>
+                                <a href="mailto:{{ college.contact_email }}" class="text-decoration-none fw-bold text-main">{{ college.contact_email }}</a>
                             {% else %}
-                                <span class="text-muted">Not Provided</span>
+                                <span class="text-muted fst-italic">Not Provided</span>
                             {% endif %}
                         </div>
                     </div>
                 </div>
 
                 <div class="fact-row">
-                    <div class="fact-icon"><i class="bi bi-telephone"></i></div>
+                    <div class="fact-icon"><i class="bi bi-telephone-fill"></i></div>
                     <div class="fact-content">
                         <div class="fact-label">Phone Directory</div>
-                        <div class="fact-value">{{ college.phone_number|default:"Not Provided" }}</div>
+                        <div class="fact-value">{{ college.phone_number|default:"<span class='text-muted fst-italic'>Not Provided</span>"|safe }}</div>
                     </div>
                 </div>
 
                 <div class="fact-row">
-                    <div class="fact-icon"><i class="bi bi-link-45deg"></i></div>
+                    <div class="fact-icon"><i class="bi bi-globe2"></i></div>
                     <div class="fact-content">
                         <div class="fact-label">Primary Domain / Website</div>
                         <div class="fact-value">
                             {% if college.website %}
-                                <a href="{{ college.website }}" target="_blank" class="text-decoration-none" style="color: var(--inst-theme);">{{ college.website|urlize }}</a>
+                                <a href="{{ college.website }}" target="_blank" class="text-decoration-none fw-bold" style="color: var(--inst-theme);">{{ college.website|urlize }}</a>
                             {% else %}
-                                <span class="text-muted">Not Provided</span>
+                                <span class="text-muted fst-italic">Not Provided</span>
                             {% endif %}
                         </div>
                     </div>
                 </div>
                 
                 <div class="fact-row">
-                    <div class="fact-icon"><i class="bi bi-building"></i></div>
-                    <div class="fact-content">
-                        <div class="fact-label">District / Region</div>
-                        <div class="fact-value">{{ college.district|default:"Not Provided" }}</div>
-                    </div>
-                </div>
-
-                <div class="fact-row">
                     <div class="fact-icon"><i class="bi bi-shield-check"></i></div>
                     <div class="fact-content">
-                        <div class="fact-label">Official License / Registry No.</div>
+                        <div class="fact-label">Official Registry No.</div>
                         <div class="fact-value font-monospace fw-bold">{{ college.registration_number|default:"N/A" }}</div>
                     </div>
                 </div>
                 
                 <div class="mt-4 pt-3 border-top">
                     <div class="d-flex align-items-center justify-content-between mb-2">
-                        <div class="fact-label mb-0 text-dark">Brand Color Code</div>
-                        <div class="font-monospace small fw-bold">{{ college.theme_color }}</div>
+                        <div class="fact-label mb-0">Brand Color Code</div>
+                        <div class="font-monospace small fw-bold bg-light px-2 py-1 rounded border">{{ college.theme_color }}</div>
                     </div>
-                    <div class="rounded-3" style="height: 30px; background-color: {{ college.theme_color }}; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);"></div>
+                    <div class="rounded-pill w-100" style="height: 12px; background-color: {{ college.theme_color }}; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Main Content -->
-        <div class="col-lg-8 order-1 order-lg-2">
-            
-            <!-- Executive Summary (About) -->
-            <section class="mb-5">
-                <h3 class="section-heading">Executive Summary</h3>
-                <div class="info-card p-4 p-md-5 bg-white">
-                    <p class="fs-5 text-secondary mb-0" style="line-height: 1.8;">
-                        {{ college.description|linebreaksbr|default:"This institution is a registered entity pending further review. The administration has not provided a detailed historical background description during registration." }}
+        <!-- Column 2: Registry & Affiliation -->
+        <div class="col-lg-6">
+            <h3 class="section-heading"><i class="bi bi-journal-bookmark-fill text-primary me-2"></i> Registry & Affiliation</h3>
+            <div class="info-card p-4">
+                
+                {% if college.university_affiliation %}
+                <div class="mb-4">
+                    <div class="fact-label mb-2">University Affiliations</div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-primary-soft text-primary px-3 py-2 rounded-pill fw-medium border border-primary border-opacity-25">
+                            <i class="bi bi-diagram-3 me-1"></i> {{ college.university_affiliation }}
+                        </span>
+                    </div>
+                </div>
+                <hr class="text-muted opacity-25 my-4">
+                {% endif %}
+
+                <div class="mb-4">
+                    <div class="fact-label mb-2">Executive Summary</div>
+                    <p class="fs-6 text-muted mb-0" style="line-height: 1.6;">
+                        {{ college.description|linebreaksbr|default:"<span class='fst-italic'>The administration has not provided a detailed historical background description during registration.</span>"|safe }}
                     </p>
                 </div>
-            </section>
-            
-            <section>
-                <div class="info-card p-5 bg-light text-center border-0">
-                    <i class="bi bi-file-lock2 display-1 text-muted opacity-25 d-block mb-3"></i>
-                    <h4 class="fw-bold text-dark">Confidential Application</h4>
-                    <p class="text-secondary max-w-75 mx-auto">This page contains sensitive registration details used for validation. Upon approval, a subset of this data will be visible via the public directory profile.</p>
+                
+                <div class="bg-warning bg-opacity-10 p-4 rounded-4 border border-warning border-opacity-25 mt-auto">
+                    <div class="d-flex gap-3">
+                        <i class="bi bi-file-lock2-fill fs-3 text-warning"></i>
+                        <div>
+                            <h6 class="fw-bold text-dark mb-1">Confidential Application</h6>
+                            <p class="text-muted small mb-0">This page contains sensitive registration details used for validation. Upon approval, a subset of this data will be visible via the public directory profile.</p>
+                        </div>
+                    </div>
                 </div>
-            </section>
+
+            </div>
         </div>
     </div>
 </main>
@@ -284,20 +351,20 @@
 <!-- Reject Modal for Detail Page -->
 {% if college.status == 'PENDING' %}
 <div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content border-0 rounded-4 shadow">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
             <form action="{% url 'approve_college' college.id 'reject' %}" method="post">
                 {% csrf_token %}
                 <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold">Reject Registration</h5>
+                    <h5 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i> Reject Registration</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body pt-3">
+                <div class="modal-body pt-3 pb-4">
                     <p class="text-muted small">Please provide a reason for rejecting <strong>{{ college.name }}</strong>. This will be visible to the college administrator and sent via email.</p>
                     
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">Reason Category</label>
-                        <select name="reason_category" class="form-select bg-light border-0" required>
+                        <label class="form-label fw-bold small text-dark">Reason Category</label>
+                        <select name="reason_category" class="form-select bg-light border-0 shadow-none" required>
                             <option value="" disabled selected>Select a category...</option>
                             <option value="Incomplete Documentation">Incomplete Documentation</option>
                             <option value="Invalid Accreditation">Invalid Accreditation or Registration</option>
@@ -307,14 +374,14 @@
                         </select>
                     </div>
                     
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small">Detailed Explanation <span class="text-muted fw-normal">(Optional but recommended)</span></label>
-                        <textarea name="rejection_details" rows="3" class="form-control bg-light border-0" placeholder="Provide specific feedback such as missing documents..."></textarea>
+                    <div class="mb-0">
+                        <label class="form-label fw-bold small text-dark">Detailed Explanation <span class="text-muted fw-normal">(Optional but recommended)</span></label>
+                        <textarea name="rejection_details" rows="4" class="form-control bg-light border-0 shadow-none" placeholder="Provide specific feedback such as missing documents..."></textarea>
                     </div>
                 </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Confirm Rejection</button>
+                <div class="modal-footer border-0 pt-0 bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 shadow-sm">Confirm Rejection</button>
                 </div>
             </form>
         </div>

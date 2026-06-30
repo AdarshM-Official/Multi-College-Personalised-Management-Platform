@@ -1,55 +1,300 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
-{% block title %}{{ title|default:"Upload Timetable" }}{% endblock %}
+{% block title %}{{ title }} | {{ request.college.name }}{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card card-premium border-0 shadow-lg overflow-hidden animate__animated animate__fadeInUp">
-                <div class="card-header bg-primary text-white p-4 border-0">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="bg-white bg-opacity-20 p-3 rounded-circle">
-                            <i class="bi bi-calendar-event fs-3"></i>
-                        </div>
-                        <div>
-                            <h3 class="fw-bold mb-0 text-white">{{ title|default:"Upload Timetable" }}</h3>
-                            <p class="mb-0 opacity-75 text-white">Update the academic schedule for your department.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body p-4 p-lg-5 bg-white">
-                    <form method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <div class="mb-4">
-                            <label class="form-label fw-bold small text-muted">Timetable Title</label>
-                            {{ form.title }}
-                            <div class="form-text x-small">e.g., "Odd Semester 2024 - Final"</div>
-                        </div>
-                        <div class="mb-4">
-                            <label class="form-label fw-bold small text-muted">Select File (PDF/Image)</label>
-                            <div class="p-4 border border-dashed rounded-4 text-center bg-light">
-                                <i class="bi bi-file-earmark-arrow-up display-4 text-muted opacity-50"></i>
-                                <div class="mt-3">
-                                    {{ form.file }}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-5 d-flex gap-3">
-                            <button type="submit" class="btn btn-primary px-5 py-3 rounded-3 fw-bold flex-grow-1">Save Timetable</button>
-                            <a href="{% url 'dashboard' %}" class="btn btn-light px-4 py-3 rounded-3 text-dark">Cancel</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
+{% block extra_css %}
 <style>
-    .border-dashed {
-        border-style: dashed !important;
-        border-width: 2px !important;
+    :root {
+        --prof-primary: #2563eb;
+        --prof-primary-soft: #eff6ff;
+        --prof-dark: #0f172a;
+        --prof-gray-50: #f8fafc;
+        --prof-gray-100: #f1f5f9;
+        --prof-gray-200: #e2e8f0;
+        --prof-gray-600: #475569;
+        --prof-gray-800: #1e293b;
+    }
+
+    body {
+        background-color: var(--prof-gray-50);
+        font-family: 'Inter', -apple-system, sans-serif;
+    }
+
+    .form-card {
+        background: #ffffff;
+        border: 1px solid var(--prof-gray-200);
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
+        overflow: hidden;
+        margin-bottom: 3rem;
+    }
+
+    .form-header {
+        background: linear-gradient(to right, #ffffff, #f8fafc);
+        border-bottom: 1px solid var(--prof-gray-200);
+        padding: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .header-icon {
+        width: 54px;
+        height: 54px;
+        border-radius: 12px;
+        background: var(--prof-primary-soft);
+        color: var(--prof-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        flex-shrink: 0;
+    }
+
+    /* Matrix Table Styles */
+    .timetable-wrapper {
+        overflow-x: auto;
+        padding: 1rem 2rem 2rem 2rem;
+    }
+
+    .matrix-table {
+        width: 100%;
+        min-width: 1000px;
+        border-collapse: separate;
+        border-spacing: 0.5rem;
+    }
+
+    .matrix-table th {
+        background: var(--prof-gray-50);
+        color: var(--prof-gray-600);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.75rem;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid var(--prof-gray-200);
+    }
+
+    .matrix-table th.day-col {
+        width: 120px;
+        text-align: left;
+        background: var(--prof-dark);
+        color: white;
+        border-color: var(--prof-dark);
+    }
+
+    .period-cell {
+        background: #ffffff;
+        border: 1px solid var(--prof-gray-200);
+        border-radius: 8px;
+        padding: 0.75rem;
+        transition: all 0.2s ease;
+    }
+
+    .period-cell:hover, .period-cell:focus-within {
+        border-color: var(--prof-primary);
+        box-shadow: 0 0 0 3px var(--prof-primary-soft);
+    }
+
+    .cell-input {
+        width: 100%;
+        border: none;
+        background: transparent;
+        font-size: 0.85rem;
+        padding: 0.25rem 0;
+        color: var(--prof-dark);
+        font-weight: 500;
+    }
+
+    .cell-input:focus {
+        outline: none;
+    }
+
+    .cell-select {
+        width: 100%;
+        border: none;
+        background: transparent;
+        font-size: 0.75rem;
+        color: var(--prof-gray-600);
+        padding: 0.25rem 0;
+        margin-top: 0.25rem;
+        border-top: 1px solid var(--prof-gray-100);
+        cursor: pointer;
+    }
+
+    .cell-select:focus {
+        outline: none;
+        color: var(--prof-primary);
+    }
+
+    /* Class Selection */
+    .class-selector-card {
+        background: white;
+        border: 1px solid var(--prof-gray-200);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: flex-end;
+        gap: 1.5rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid var(--prof-gray-200);
+        padding: 0.5rem 1rem;
+        font-size: 0.95rem;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--prof-primary);
+        box-shadow: 0 0 0 4px var(--prof-primary-soft);
+        outline: none;
+    }
+
+    .btn-primary {
+        background: var(--prof-primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 600;
     }
 </style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <!-- Step 1: Select Class -->
+    <div class="class-selector-card">
+        <form method="get" class="d-flex w-100 align-items-end gap-3 flex-wrap">
+            <div class="flex-grow-1" style="max-width: 400px;">
+                <label class="form-label fw-bold text-muted small mb-2">Select Academic Class</label>
+                <select name="class_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">-- Choose Class --</option>
+                    {% for cls in classes %}
+                        <option value="{{ cls.id }}" {% if selected_class and selected_class.id == cls.id %}selected{% endif %}>{{ cls.name }} ({{ cls.number_of_periods }} Periods)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            {% if selected_class %}
+            <div class="form-check ms-3 mb-2">
+                <input class="form-check-input" type="checkbox" name="include_saturday" id="saturdayCheck" value="1" {% if 'Saturday' in days %}checked{% endif %} onchange="this.form.submit()">
+                <label class="form-check-label small fw-bold text-muted" for="saturdayCheck">
+                    Include Saturday
+                </label>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Step 2: The Matrix Grid -->
+    {% if selected_class %}
+    <div class="form-card">
+        <div class="form-header">
+            <div class="header-icon">
+                <i class="bi bi-grid-3x3-gap-fill"></i>
+            </div>
+            <div>
+                <h4 class="fw-bold mb-1" style="color: var(--prof-dark);">{{ title }}</h4>
+                <p class="text-muted small mb-0">Period-wise scheduling for {{ selected_class.name }}</p>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="px-4 pt-4 pb-2 d-flex justify-content-between align-items-end flex-wrap gap-3">
+                <div style="flex-grow: 1; max-width: 500px;">
+                    <label class="form-label fw-bold text-muted small mb-2">Timetable Title</label>
+                    <input type="text" name="title" class="form-control" value="{{ tt.title|default:'' }}" placeholder="e.g., {{ selected_class.name }} Fall Schedule" required>
+                </div>
+                <button type="button" class="btn btn-outline-primary mb-1 fw-bold px-4" onclick="shuffleSubjects()" title="Auto-fill subjects">
+                    <i class="bi bi-shuffle me-2"></i> Auto-Shuffle
+                </button>
+            </div>
+
+            <div class="timetable-wrapper">
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th class="day-col">Day</th>
+                            {% for p in periods %}
+                            <th>Period {{ p }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for day in days %}
+                        <tr>
+                            <th class="day-col d-flex align-items-center h-100" style="min-height: 80px;">{{ day }}</th>
+                            
+                            {% for p in periods %}
+                            {% with ep=existing_periods|get_item:day|get_item:p %}
+                            <td>
+                                <div class="period-cell">
+                                    <input type="text" name="subject_{{ day }}_{{ p }}" class="cell-input" placeholder="Subject Name" value="{{ ep.subject_name|default:'' }}">
+                                    <select name="teacher_{{ day }}_{{ p }}" class="cell-select">
+                                        <option value="">- Assign Teacher -</option>
+                                        {% for t in teachers %}
+                                            <option value="{{ t.id }}" {% if ep and ep.teacher_id == t.id %}selected{% endif %}>{{ t.user.get_full_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </td>
+                            {% endwith %}
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="p-4 border-top bg-light d-flex gap-3">
+                <button type="submit" class="btn btn-primary px-4 py-2"><i class="bi bi-check2-circle me-2"></i>Save Weekly Timetable</button>
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary px-4 py-2 fw-bold">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const availableSubjects = {{ subjects_json|safe|default:"[]" }};
+        
+        function shuffleSubjects() {
+            if (!availableSubjects || availableSubjects.length === 0) {
+                alert('No subjects configured for this class. Please add subjects in Department Config.');
+                return;
+            }
+
+            const inputs = document.querySelectorAll('.cell-input');
+            if (inputs.length === 0) return;
+
+            // Shuffle the available subjects randomly for distribution
+            let fillArray = [];
+            // We need enough subjects to fill all inputs. We'll loop through availableSubjects
+            while (fillArray.length < inputs.length) {
+                let temp = [...availableSubjects];
+                temp.sort(() => Math.random() - 0.5);
+                fillArray = fillArray.concat(temp);
+            }
+            
+            inputs.forEach((input, index) => {
+                input.value = fillArray[index];
+                // Highlight the cell briefly to show it changed
+                input.parentElement.style.transition = 'background-color 0.3s';
+                input.parentElement.style.backgroundColor = 'var(--prof-primary-soft)';
+                setTimeout(() => {
+                    input.parentElement.style.backgroundColor = '#ffffff';
+                }, 600);
+            });
+        }
+    </script>
+    {% endif %}
+
+</div>
 {% endblock %}

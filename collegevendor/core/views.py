@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
-from management.models import StudentProfile, TeacherProfile, Department, Attendance, PlatformNotification, TimeTable, ExamNotification
+from management.models import StudentProfile, TeacherProfile, Department, Attendance, PlatformNotification, TimeTable, ExamNotification, Assignment, Submission
 from colleges.models import College
 from accounts.models import CustomUser
 
@@ -62,12 +62,95 @@ def dashboard(request):
     
     elif user.role == 'TEACHER':
         profile = getattr(user, 'teacher_profile', None)
-        context['stats'] = {'dept': profile.department.name if profile and profile.department else "None"}
+        
+        # Default contexts
+        context['stats'] = {'dept': 'None', 'active_assignments': 0, 'assigned_students': 0, 'pending_reviews': 0}
+        context['recent_assignments'] = []
+        
+        if profile:
+            from django.utils import timezone
+            from django.db.models import Count
+            
+            active_assignments = Assignment.objects.filter(teacher=profile, deadline__gte=timezone.now()).count()
+            
+            # Students in the same department
+            assigned_students = StudentProfile.objects.filter(department=profile.department).count() if profile.department else 0
+            
+            # Pending reviews (submissions with no marks)
+            pending_reviews = Submission.objects.filter(assignment__teacher=profile, marks__isnull=True).count()
+            
+            # Recent assignments with submission counts
+            recent_assignments = list(Assignment.objects.filter(teacher=profile).annotate(
+                submission_count=Count('submissions')
+            ).order_by('-deadline')[:5])
+            
+            for assignment in recent_assignments:
+                assignment.progress_pct = int((assignment.submission_count / assigned_students) * 100) if assigned_students > 0 else 0
+            
+            context['stats'] = {
+                'dept': profile.department.name if profile.department else "None",
+                'active_assignments': active_assignments,
+                'assigned_students': assigned_students,
+                'pending_reviews': pending_reviews,
+            }
+            context['recent_assignments'] = recent_assignments
+            
         return render(request, 'dashboards/teacher_dashboard.html', context)
     
     elif user.role == 'STUDENT':
         profile = getattr(user, 'student_profile', None)
-        context['stats'] = {'attendance': Attendance.objects.filter(student=profile).count() if profile else 0}
+        
+        # Default empty contexts
+        context['stats'] = {'attendance': 0, 'grade': 'N/A', 'missing_assignments': 0, 'ranking': 'N/A'}
+        context['active_assignments'] = []
+        context['platform_alerts'] = []
+        context['exam_alerts'] = []
+        
+        if profile:
+            # 1. Total Attendance
+            attendances = Attendance.objects.filter(student=profile)
+            total_days = attendances.count()
+            present_days = attendances.filter(status='PRESENT').count()
+            attendance_pct = int((present_days / total_days * 100)) if total_days > 0 else 0
+            
+            # 2. Overall Grade
+            from django.db.models import Avg
+            submissions = Submission.objects.filter(student=profile).exclude(marks__isnull=True)
+            avg_marks = submissions.aggregate(Avg('marks'))['marks__avg']
+            if avg_marks:
+                if avg_marks >= 90: grade = 'A+'
+                elif avg_marks >= 80: grade = 'A'
+                elif avg_marks >= 70: grade = 'B+'
+                elif avg_marks >= 60: grade = 'B'
+                else: grade = 'C'
+            else:
+                grade = 'N/A'
+                
+            # 3. Assignments
+            from django.utils import timezone
+            dept_teachers = TeacherProfile.objects.filter(department=profile.department)
+            all_assignments = Assignment.objects.filter(teacher__in=dept_teachers)
+            submitted_ids = Submission.objects.filter(student=profile).values_list('assignment_id', flat=True)
+            
+            missing_assignments = all_assignments.filter(deadline__lt=timezone.now()).exclude(id__in=submitted_ids).count()
+            active_assignments = all_assignments.filter(deadline__gte=timezone.now()).exclude(id__in=submitted_ids).order_by('deadline')[:3]
+            
+            # 4. Alerts
+            platform_alerts = PlatformNotification.objects.filter(
+                models.Q(college=user.college) | models.Q(college__isnull=True)
+            ).order_by('-created_at')[:3]
+            exam_alerts = ExamNotification.objects.filter(department=profile.department).order_by('-date_posted')[:3]
+            
+            context['stats'] = {
+                'attendance': attendance_pct,
+                'grade': grade,
+                'missing_assignments': missing_assignments,
+                'ranking': 'N/A'
+            }
+            context['active_assignments'] = active_assignments
+            context['platform_alerts'] = platform_alerts
+            context['exam_alerts'] = exam_alerts
+
         return render(request, 'dashboards/student_dashboard.html', context)
     
     elif user.role == 'HOD':

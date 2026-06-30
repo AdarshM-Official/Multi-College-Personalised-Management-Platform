@@ -305,6 +305,7 @@
                                 <tr>
                                     <td class="border-light py-3">
                                         <div class="d-flex align-items-center gap-3">
+                                            {% if tt.file %}
                                             <div class="p-2 bg-danger-soft text-danger rounded-3">
                                                 <i class="bi bi-file-pdf-fill"></i>
                                             </div>
@@ -312,13 +313,24 @@
                                                 <span class="fw-bold small d-block">{{ tt.title }}</span>
                                                 <span class="x-small text-muted">PDF Document</span>
                                             </div>
+                                            {% else %}
+                                            <div class="p-2 bg-primary-soft text-primary rounded-3">
+                                                <i class="bi bi-grid-3x3-gap-fill"></i>
+                                            </div>
+                                            <div>
+                                                <span class="fw-bold small d-block">{{ tt.title }}</span>
+                                                <span class="x-small text-muted">Digital Grid</span>
+                                            </div>
+                                            {% endif %}
                                         </div>
                                     </td>
                                     <td class="border-light py-3 small text-muted">{{ tt.created_at|date:"M d, Y" }}</td>
                                     <td class="border-custom py-3 text-end">
                                         <div class="btn-group shadow-sm rounded-pill bg-card border border-custom p-1">
+                                            {% if tt.file %}
                                             <a href="{{ tt.file.url }}" class="btn btn-sm btn-icon border-0 text-main" title="View Document" target="_blank"><i class="bi bi-eye"></i></a>
-                                            <a href="{% url 'edit_timetable' tt.id %}" class="btn btn-sm btn-icon border-0 text-main" title="Edit Title"><i class="bi bi-pencil"></i></a>
+                                            {% endif %}
+                                            <a href="{% url 'edit_timetable' tt.id %}" class="btn btn-sm btn-icon border-0 text-main" title="Edit Schedule"><i class="bi bi-pencil"></i></a>
                                             <a href="{% url 'delete_timetable' tt.id %}" class="btn btn-sm btn-icon border-0 text-danger" title="Delete Schedule" onclick="return confirm('Permanent delete this timetable?')"><i class="bi bi-trash"></i></a>
                                         </div>
                                     </td>

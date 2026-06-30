@@ -1,0 +1,568 @@
+{% extends 'base.html' %}
+
+{% block title %}Department Configuration | {{ department.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Sleek Minimalist Theme Variables */
+    :root {
+        --minimal-bg: #f8fafc;
+        --minimal-card: #ffffff;
+        --minimal-border: #e2e8f0;
+        --minimal-text: #334155;
+        --minimal-text-light: #64748b;
+        --minimal-accent: #0f172a;
+        --minimal-primary: #3b82f6;
+        --minimal-danger: #ef4444;
+        --minimal-radius: 12px;
+    }
+
+    body {
+        background-color: var(--minimal-bg);
+        color: var(--minimal-text);
+    }
+
+    /* Layout Structure */
+    .settings-container {
+        display: flex;
+        gap: 2rem;
+        align-items: flex-start;
+    }
+
+    /* Left Sidebar Navigation */
+    .settings-sidebar {
+        flex: 0 0 250px;
+        position: sticky;
+        top: 2rem;
+    }
+
+    .nav-settings {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .nav-settings .nav-link {
+        color: var(--minimal-text-light);
+        font-weight: 500;
+        padding: 0.875rem 1.25rem;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        border: 1px solid transparent;
+    }
+
+    .nav-settings .nav-link:hover {
+        background: #f1f5f9;
+        color: var(--minimal-text);
+    }
+
+    .nav-settings .nav-link.active {
+        background: var(--minimal-card);
+        color: var(--minimal-accent);
+        font-weight: 600;
+        border-color: var(--minimal-border);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    /* Right Content Area */
+    .settings-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .minimal-card {
+        background: var(--minimal-card);
+        border: 1px solid var(--minimal-border);
+        border-radius: var(--minimal-radius);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .minimal-card-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--minimal-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+
+    .minimal-card-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--minimal-accent);
+        margin: 0;
+    }
+
+    .minimal-card-subtitle {
+        font-size: 0.875rem;
+        color: var(--minimal-text-light);
+        margin-top: 0.25rem;
+        margin-bottom: 0;
+    }
+
+    /* Table Styling */
+    .table-minimal {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .table-minimal th {
+        background: #f8fafc;
+        color: var(--minimal-text-light);
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 1rem;
+        border-bottom: 1px solid var(--minimal-border);
+        border-top: 1px solid var(--minimal-border);
+    }
+
+    .table-minimal th:first-child { border-left: 1px solid var(--minimal-border); border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+    .table-minimal th:last-child { border-right: 1px solid var(--minimal-border); border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+
+    .table-minimal td {
+        padding: 1.25rem 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+
+    .table-minimal tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Forms */
+    .form-control-minimal, .form-select-minimal {
+        display: block;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: var(--minimal-text);
+        background-color: #f8fafc;
+        border: 1px solid var(--minimal-border);
+        border-radius: 8px;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+
+    .form-control-minimal:focus, .form-select-minimal:focus {
+        border-color: var(--minimal-primary);
+        outline: 0;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        background-color: #ffffff;
+    }
+
+    .form-label-minimal {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--minimal-text);
+        margin-bottom: 0.5rem;
+    }
+
+    .btn-minimal-primary {
+        background: var(--minimal-accent);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .btn-minimal-primary:hover {
+        background: #1e293b;
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    /* Badges */
+    .badge-minimal {
+        background: #f1f5f9;
+        color: var(--minimal-text);
+        border: 1px solid var(--minimal-border);
+        padding: 0.35rem 0.75rem;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.75rem;
+    }
+
+    /* Header hero */
+    .page-header {
+        padding: 2rem 0 3rem 0;
+        border-bottom: 1px solid var(--minimal-border);
+        margin-bottom: 2rem;
+        background: #ffffff;
+    }
+
+    @media (max-width: 992px) {
+        .settings-container {
+            flex-direction: column;
+        }
+        .settings-sidebar {
+            flex: none;
+            width: 100%;
+            position: static;
+        }
+        .nav-settings {
+            flex-direction: row;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+        .nav-settings .nav-link {
+            white-space: nowrap;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header px-4">
+    <div class="container-fluid max-w-7xl">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="fw-bold mb-1" style="color: var(--minimal-accent); font-size: 2rem;">Department Settings</h1>
+                <p class="text-muted mb-0">Manage configuration for <strong>{{ department.name }}</strong></p>
+            </div>
+            <div class="d-none d-md-block">
+                <i class="bi bi-gear text-muted" style="font-size: 2.5rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid max-w-7xl px-4 pb-5">
+    <div class="settings-container">
+        
+        <!-- Sidebar Navigation -->
+        <div class="settings-sidebar">
+            <div class="nav nav-settings" id="settings-tab" role="tablist" aria-orientation="vertical">
+                <button class="nav-link active" id="tab-classes" data-bs-toggle="pill" data-bs-target="#content-classes" type="button" role="tab">
+                    <i class="bi bi-building"></i> Academic Classes
+                </button>
+                <button class="nav-link" id="tab-subjects" data-bs-toggle="pill" data-bs-target="#content-subjects" type="button" role="tab">
+                    <i class="bi bi-book"></i> Subjects
+                </button>
+                <button class="nav-link" id="tab-categories" data-bs-toggle="pill" data-bs-target="#content-categories" type="button" role="tab">
+                    <i class="bi bi-award"></i> Grading Categories
+                </button>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="settings-content tab-content" id="settings-tabContent">
+            
+            <!-- ACADEMIC CLASSES -->
+            <div class="tab-pane fade show active" id="content-classes" role="tabpanel">
+                
+                <!-- Add Form -->
+                <div class="minimal-card">
+                    <div class="minimal-card-header">
+                        <div>
+                            <h3 class="minimal-card-title">Create New Class</h3>
+                            <p class="minimal-card-subtitle">Add a new academic class or semester to your department.</p>
+                        </div>
+                    </div>
+                    
+                    <form method="post" action="{% url 'department_configuration' %}">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label-minimal">Class Name</label>
+                                <input type="text" name="{{ class_form.name.name }}" class="form-control-minimal" placeholder="e.g. S1 Computer Science" required>
+                                {% if class_form.name.errors %}<div class="text-danger small mt-1">{{ class_form.name.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label-minimal">Daily Periods</label>
+                                <input type="number" name="{{ class_form.number_of_periods.name }}" class="form-control-minimal" value="6" min="1" max="15" required>
+                                {% if class_form.number_of_periods.errors %}<div class="text-danger small mt-1">{{ class_form.number_of_periods.errors.0 }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" name="add_class" class="btn-minimal-primary">
+                                <i class="bi bi-plus-lg me-2"></i>Create Class
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- List Table -->
+                <div class="minimal-card">
+                    <div class="minimal-card-header">
+                        <div>
+                            <h3 class="minimal-card-title">Existing Classes</h3>
+                            <p class="minimal-card-subtitle">Classes currently managed under this department.</p>
+                        </div>
+                        <span class="badge-minimal">{{ classes|length }} Total</span>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table-minimal">
+                            <thead>
+                                <tr>
+                                    <th>Class Name</th>
+                                    <th>Configuration</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in classes %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold" style="color: var(--minimal-accent);">{{ c.name }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge-minimal"><i class="bi bi-clock me-1"></i>{{ c.number_of_periods }} Periods / Day</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <form method="post" action="{% url 'delete_academic_class' c.id %}" onsubmit="return confirm('Delete this class forever?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-light text-danger border-0" title="Delete">
+                                                <i class="bi bi-trash fs-5"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-5 text-muted">
+                                        <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                                        No classes have been added yet.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUBJECTS -->
+            <div class="tab-pane fade" id="content-subjects" role="tabpanel">
+                
+                <div class="minimal-card">
+                    <div class="minimal-card-header">
+                        <div>
+                            <h3 class="minimal-card-title">Register Subject</h3>
+                            <p class="minimal-card-subtitle">Define subjects and link them to specific classes.</p>
+                        </div>
+                    </div>
+                    
+                    <form method="post" action="{% url 'department_configuration' %}">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-12 mb-4">
+                                <label class="form-label-minimal">Target Class / Semester</label>
+                                <select name="{{ subject_form.academic_class.name }}" class="form-select-minimal" required>
+                                    <option value="">Select a class...</option>
+                                    {% for c in classes %}
+                                        <option value="{{ c.id }}">{{ c.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% if subject_form.academic_class.errors %}<div class="text-danger small mt-1">{{ subject_form.academic_class.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label-minimal">Subject Name</label>
+                                <input type="text" name="{{ subject_form.name.name }}" class="form-control-minimal" placeholder="e.g. Data Structures" required>
+                                {% if subject_form.name.errors %}<div class="text-danger small mt-1">{{ subject_form.name.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label-minimal">Subject Code (Optional)</label>
+                                <input type="text" name="{{ subject_form.code.name }}" class="form-control-minimal" placeholder="e.g. CS201">
+                                {% if subject_form.code.errors %}<div class="text-danger small mt-1">{{ subject_form.code.errors.0 }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" name="add_subject" class="btn-minimal-primary">
+                                <i class="bi bi-plus-lg me-2"></i>Save Subject
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="minimal-card">
+                    <div class="minimal-card-header">
+                        <div>
+                            <h3 class="minimal-card-title">Subject Directory</h3>
+                            <p class="minimal-card-subtitle">All subjects assigned across the department.</p>
+                        </div>
+                        <span class="badge-minimal">{{ subjects|length }} Total</span>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table-minimal">
+                            <thead>
+                                <tr>
+                                    <th>Subject Details</th>
+                                    <th>Assigned Class</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for subject in subjects %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold" style="color: var(--minimal-accent);">{{ subject.name }}</div>
+                                        {% if subject.code %}<div class="small text-muted mt-1">{{ subject.code }}</div>{% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge-minimal"><i class="bi bi-diagram-3 me-1"></i>{{ subject.academic_class.name }}</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <form method="post" action="{% url 'delete_subject' subject.id %}" onsubmit="return confirm('Delete this subject forever?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-light text-danger border-0" title="Delete">
+                                                <i class="bi bi-trash fs-5"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-5 text-muted">
+                                        <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                                        No subjects have been added yet.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRADING CATEGORIES -->
+            <div class="tab-pane fade" id="content-categories" role="tabpanel">
+                
+                <div class="minimal-card">
+                    <div class="minimal-card-header">
+                        <div>
+                            <h3 class="minimal-card-title">Add Grading Category</h3>
+                            <p class="minimal-card-subtitle">Create evaluation categories like 'Midterms' or 'Assignments'.</p>
+                        </div>
+                    </div>
+                    
+                    <form method="post" action="{% url 'department_configuration' %}">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label-minimal">Category Name</label>
+                                <input type="text" name="{{ cat_form.name.name }}" class="form-control-minimal" placeholder="e.g. Final Examination" required>
+                                {% if cat_form.name.errors %}<div class="text-danger small mt-1">{{ cat_form.name.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label-minimal">Maximum Marks</label>
+                                <input type="number" name="{{ cat_form.max_marks.name }}" class="form-control-minimal" placeholder="e.g. 100" required>
+                                {% if cat_form.max_marks.errors %}<div class="text-danger small mt-1">{{ cat_form.max_marks.errors.0 }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" name="add_category" class="btn-minimal-primary">
+                                <i class="bi bi-plus-lg me-2"></i>Save Category
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="minimal-card">
+                    <div class="minimal-card-header">
+                        <div>
+                            <h3 class="minimal-card-title">Evaluation Metrics</h3>
+                            <p class="minimal-card-subtitle">Grading categories available to teachers.</p>
+                        </div>
+                        <span class="badge-minimal">{{ categories|length }} Total</span>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table-minimal">
+                            <thead>
+                                <tr>
+                                    <th>Category Title</th>
+                                    <th>Weightage</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cat in categories %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold" style="color: var(--minimal-accent);">{{ cat.name }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge-minimal"><i class="bi bi-star me-1"></i>Max: {{ cat.max_marks }}</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <form method="post" action="{% url 'delete_internal_mark_category' cat.id %}" onsubmit="return confirm('Delete this category? Associated marks may be lost.');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-light text-danger border-0" title="Delete">
+                                                <i class="bi bi-trash fs-5"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-5 text-muted">
+                                        <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                                        No grading categories defined.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    .max-w-7xl {
+        max-width: 80rem;
+        margin-left: auto;
+        margin-right: auto;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Get the saved tab from localStorage
+        let activeTab = localStorage.getItem('activeConfigTab');
+        
+        if (activeTab) {
+            // Find the tab button and trigger a click to activate it
+            let tabElement = document.querySelector(`button[data-bs-target="${activeTab}"]`);
+            if (tabElement) {
+                // Remove active class from all tabs
+                document.querySelectorAll('.nav-settings .nav-link').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-pane').forEach(p => {
+                    p.classList.remove('show');
+                    p.classList.remove('active');
+                });
+                
+                // Add active class to the saved tab
+                tabElement.classList.add('active');
+                document.querySelector(activeTab).classList.add('show', 'active');
+            }
+        }
+
+        // Save the active tab to localStorage when clicked
+        document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(function(button) {
+            button.addEventListener('shown.bs.tab', function (e) {
+                let target = e.target.getAttribute('data-bs-target');
+                localStorage.setItem('activeConfigTab', target);
+            });
+        });
+    });
+</script>
+{% endblock %}

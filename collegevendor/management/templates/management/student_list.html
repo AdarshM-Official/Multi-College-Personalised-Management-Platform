@@ -16,23 +16,20 @@
                     <input type="text" class="form-control bg-light border-0" placeholder="Search records...">
                 </div>
                 {% if user.role == 'COLLEGE_ADMIN' or user.role == 'HOD' %}
-                <a href="{% url 'add_student' %}{% if selected_spec %}?specialization={{ selected_spec }}{% endif %}" class="btn btn-premium btn-sm">
+                <a href="{% url 'add_student' %}{% if selected_class %}?class_id={{ selected_class }}{% endif %}" class="btn btn-premium btn-sm">
                     <i class="bi bi-person-plus-fill me-2"></i>Add Student
                 </a>
                 {% endif %}
             </div>
         </div>
 
-        {% if user.role == 'HOD' and specializations %}
+        {% if user.role == 'HOD' and academic_classes %}
         <div class="bg-light p-3 rounded-3 border">
-            <label class="small text-muted text-uppercase fw-bold mb-2 d-block" style="letter-spacing: 0.5px;">Select Class / Course</label>
+            <label class="small text-muted text-uppercase fw-bold mb-2 d-block" style="letter-spacing: 0.5px;">Select Academic Class</label>
             <div class="d-flex flex-wrap gap-2">
-                <a href="{% url 'student_list' %}" class="btn btn-sm {% if not selected_spec %}btn-primary shadow-sm{% else %}btn-outline-secondary{% endif %} rounded-pill px-3">
-                    All Classes
-                </a>
-                {% for spec in specializations %}
-                <a href="{% url 'student_list' %}?specialization={{ spec.id }}" class="btn btn-sm {% if selected_spec == spec.id|stringformat:'i' %}btn-primary shadow-sm{% else %}btn-outline-secondary{% endif %} rounded-pill px-3">
-                    {{ spec.name }}
+                {% for cls in academic_classes %}
+                <a href="{% url 'student_list' %}?class_id={{ cls.id }}" class="btn btn-sm {% if selected_class == cls.id|stringformat:'i' %}btn-primary shadow-sm{% else %}btn-outline-secondary{% endif %} rounded-pill px-3">
+                    {{ cls.name }}
                 </a>
                 {% endfor %}
             </div>
@@ -48,7 +45,7 @@
                         <th>University ID</th>
                         <th>Class Roll</th>
                         <th>Age</th>
-                        <th>Department & Course</th>
+                        <th>Department & Class</th>
                         <th class="pe-4 text-end">Actions</th>
                     </tr>
                 </thead>
@@ -71,7 +68,7 @@
                         <td><span class="small text-dark">{{ student.age|default:"--" }} yrs</span></td>
                         <td>
                             <div class="small fw-bold text-dark">{{ student.department.name }}</div>
-                            <div class="x-small text-muted">{{ student.specialization.name|default:"General Course" }}</div>
+                            <div class="x-small text-muted">{{ student.academic_class.name|default:"Unassigned Class" }}</div>
                         </td>
                         <td class="pe-4 text-end">
                             <div class="btn-group shadow-sm rounded-pill bg-white border p-1">

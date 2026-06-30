@@ -69,3 +69,18 @@ class CollegeAchievement(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.college.name}"
+
+class CollegeLeader(models.Model):
+    college = models.ForeignKey(College, on_delete=models.CASCADE, related_name='leaders')
+    name = models.CharField(max_length=255)
+    designation = models.CharField(max_length=255)
+    image = models.ImageField(upload_to='college_leaders/', null=True, blank=True)
+    bio = models.TextField(blank=True)
+    order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'created_at']
+
+    def __str__(self):
+        return f"{self.name} - {self.designation}"

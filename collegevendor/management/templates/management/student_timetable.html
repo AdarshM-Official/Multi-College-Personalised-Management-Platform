@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}My Timetable | {{ request.college.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold text-main mb-1">My Timetable</h3>
+        <p class="text-muted small mb-0"><i class="bi bi-calendar-week me-1"></i> Class schedules for your department</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    {% for timetable in timetables %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100 hover-lift transition-all bg-white">
+            <div class="card-body p-4 text-center">
+                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px;">
+                    <i class="bi bi-calendar-week fs-1"></i>
+                </div>
+                <h5 class="fw-bold text-main mb-2">{{ timetable.title }}</h5>
+                <p class="text-muted small mb-4">Uploaded by: {% if timetable.uploaded_by %}{{ timetable.uploaded_by.user.get_full_name }}{% else %}Admin{% endif %}</p>
+                
+                {% if timetable.file %}
+                <a href="{{ timetable.file.url }}" class="btn btn-primary w-100 py-3 fw-bold rounded-pill shadow-sm" download>
+                    <i class="bi bi-download me-2"></i> Download PDF
+                </a>
+                {% else %}
+                <a href="{% url 'view_timetable' timetable.id %}" class="btn btn-primary-soft text-primary w-100 py-3 fw-bold rounded-pill shadow-sm border border-primary">
+                    <i class="bi bi-grid-3x3-gap-fill me-2"></i> View Digital Grid
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <i class="bi bi-calendar-x display-1 text-muted opacity-25 mb-4 d-block"></i>
+        <h4 class="fw-bold text-main">No Timetables Available</h4>
+        <p class="text-muted">Your department hasn't uploaded any timetables yet.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,322 +1,357 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ college.name }} | Institution Official Site{% endblock %}
+{% block title %}{{ college.name }} | Official Website{% endblock %}
 
 {% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
     :root {
-        --brand-primary: {{ college.theme_color|default:'#3b82f6' }};
-        --brand-soft: {{ college.theme_color|default:'#3b82f6' }}15;
-        --brand-glow: {{ college.theme_color|default:'#3b82f6' }}33;
+        --college-primary: {{ college.theme_color|default:'#0f172a' }};
+        --college-secondary: #f8fafc;
+        --college-text: #334155;
+        --font-heading: 'Playfair Display', serif;
+        --font-body: 'Inter', sans-serif;
     }
 
     body {
-        background-color: #fbfcfd;
+        font-family: var(--font-body);
+        color: var(--college-text);
+        background-color: white;
     }
 
-    .glass-nav {
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    /* Traditional College Navbar */
+    .college-nav {
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 1rem 0;
         position: sticky;
         top: 0;
         z-index: 1050;
     }
-
-    .hero-vibrant {
-        background: radial-gradient(circle at top right, var(--brand-soft), transparent),
-                    radial-gradient(circle at bottom left, #ffffff, transparent);
-        padding: 120px 0 80px;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .hero-title {
-        font-family: 'Outfit', sans-serif;
-        font-weight: 800;
-        letter-spacing: -0.02em;
-        line-height: 1.1;
-        background: linear-gradient(135deg, #1e293b 0%, var(--brand-primary) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .btn-brand {
-        background: var(--brand-primary);
+    
+    .nav-top-bar {
+        background: var(--college-primary);
         color: white;
-        border: none;
-        padding: 14px 32px;
-        border-radius: 14px;
+        padding: 0.5rem 0;
+        font-size: 0.85rem;
+    }
+
+    .nav-top-link {
+        color: rgba(255,255,255,0.8);
+        text-decoration: none;
+        margin-left: 1.5rem;
+        font-weight: 500;
+        transition: color 0.2s;
+    }
+    .nav-top-link:hover { color: white; }
+
+    .college-brand {
+        font-family: var(--font-heading);
+        font-weight: 700;
+        font-size: 1.8rem;
+        color: var(--college-primary);
+        text-decoration: none;
+    }
+
+    .main-nav-link {
         font-weight: 600;
-        box-shadow: 0 10px 20px -5px var(--brand-glow);
-        transition: all 0.3s ease;
+        color: #1e293b;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+        margin: 0 1rem;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .main-nav-link:hover { color: var(--college-primary); }
+
+    /* Academic Hero */
+    .academic-hero {
+        position: relative;
+        padding: 180px 0 140px;
+        {% if college.images.first %}
+        background: url('{{ college.images.first.image.url }}') center/cover no-repeat;
+        {% else %}
+        background: linear-gradient(135deg, var(--college-primary), #1e293b);
+        {% endif %}
+    }
+    .academic-hero::before {
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 100%);
     }
 
-    .btn-brand:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 15px 30px -5px var(--brand-glow);
+    .hero-content {
+        position: relative;
+        z-index: 2;
         color: white;
-        filter: brightness(1.1);
     }
 
-    .stat-pill {
-        background: white;
-        border: 1px solid #edf2f7;
-        padding: 24px;
-        border-radius: 20px;
+    .hero-headline {
+        font-family: var(--font-heading);
+        font-size: clamp(3rem, 5vw, 4.5rem);
+        font-weight: 700;
+        line-height: 1.1;
+        margin-bottom: 1.5rem;
+    }
+
+    .hero-divider {
+        width: 80px;
+        height: 4px;
+        background: var(--college-primary);
+        margin: 2rem 0;
+    }
+
+    .btn-college-primary {
+        background: var(--college-primary);
+        color: white;
+        font-weight: 600;
+        padding: 1rem 2.5rem;
+        text-decoration: none;
+        display: inline-block;
         transition: all 0.3s ease;
+        border: 2px solid var(--college-primary);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.9rem;
+    }
+    .btn-college-primary:hover {
+        background: transparent;
+        color: white;
     }
 
-    .stat-pill:hover {
-        border-color: var(--brand-primary);
+    /* Prestige Stats Bar */
+    .stats-bar {
+        background: var(--college-primary);
+        color: white;
+        padding: 3rem 0;
+        margin-top: -50px;
+        position: relative;
+        z-index: 10;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .stat-number {
+        font-family: var(--font-heading);
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: white;
+    }
+    .stat-label {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: rgba(255,255,255,0.7);
+        font-weight: 600;
+    }
+
+    /* Section Typography */
+    .section-title {
+        font-family: var(--font-heading);
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 1rem;
+    }
+    .section-subtitle {
+        font-size: 1.1rem;
+        color: #64748b;
+        max-width: 600px;
+        margin-bottom: 3rem;
+        line-height: 1.8;
+    }
+
+    /* Academic Programs Grid */
+    .dept-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        padding: 2.5rem;
+        height: 100%;
+        transition: all 0.3s ease;
+        border-top: 4px solid transparent;
+    }
+    .dept-card:hover {
+        border-top-color: var(--college-primary);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.05);
         transform: translateY(-5px);
     }
-
-    .feature-card-modern {
-        background: white;
-        border: 1px solid #f1f5f9;
-        border-radius: 24px;
-        padding: 40px;
-        height: 100%;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    .dept-icon {
+        font-size: 2.5rem;
+        color: var(--college-primary);
+        margin-bottom: 1.5rem;
     }
-
-    .feature-card-modern:hover {
-        border-color: var(--brand-primary);
-        box-shadow: 0 20px 40px -10px rgba(0,0,0,0.05);
-        transform: translateY(-8px);
-    }
-
-    .dept-badge {
-        background: var(--brand-soft);
-        color: var(--brand-primary);
+    .dept-title {
+        font-family: var(--font-heading);
+        font-size: 1.5rem;
         font-weight: 700;
-        font-size: 0.75rem;
-        padding: 6px 14px;
-        border-radius: 100px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+        color: #0f172a;
+        margin-bottom: 1rem;
     }
 
-    .campus-image-container {
+    /* Campus Gallery */
+    .gallery-item {
         position: relative;
-        border-radius: 24px;
         overflow: hidden;
         aspect-ratio: 4/3;
     }
-
-    .campus-image-container img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+    .gallery-item img {
+        width: 100%; height: 100%; object-fit: cover;
         transition: transform 0.6s ease;
     }
-
-    .campus-image-container:hover img {
-        transform: scale(1.1);
+    .gallery-item:hover img { transform: scale(1.05); }
+    .gallery-overlay {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        padding: 2rem 1.5rem 1.5rem;
+        color: white;
     }
 
-    .floating-logo {
-        animation: float 6s ease-in-out infinite;
-    }
-
-    @keyframes float {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-20px); }
-    }
-
-    .footer-dark {
+    /* Formal Footer */
+    .college-footer {
         background: #0f172a;
-        color: #94a3b8;
-        padding: 80px 0 40px;
+        color: #cbd5e1;
+        padding: 5rem 0 2rem;
+        font-size: 0.95rem;
     }
+    .footer-heading {
+        font-family: var(--font-heading);
+        font-size: 1.25rem;
+        color: white;
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+    }
+    .footer-list {
+        list-style: none; padding: 0; margin: 0;
+    }
+    .footer-list li { margin-bottom: 0.8rem; }
+    .footer-list a {
+        color: #cbd5e1; text-decoration: none; transition: color 0.2s;
+    }
+    .footer-list a:hover { color: white; text-decoration: underline; }
 </style>
 {% endblock %}
 
 {% block content %}
-<nav class="glass-nav py-3">
+
+<!-- Main Navigation -->
+<nav class="college-nav">
     <div class="container d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center">
+        <a href="#" class="college-brand d-flex align-items-center gap-3">
             {% if college.logo %}
-                <img src="{{ college.logo.url }}" alt="Logo" height="45" class="me-3">
+                <img src="{{ college.logo.url }}" alt="Logo" height="50">
             {% else %}
-                <div class="bg-primary-soft p-2 rounded-3 me-3"><i class="bi bi-mortarboard-fill text-primary fs-4"></i></div>
+                <i class="bi bi-bank2" style="color: var(--college-primary); font-size: 2rem;"></i>
             {% endif %}
-            <span class="fs-4 fw-bold text-dark h-font">{{ college.name }}</span>
+            {{ college.name }}
+        </a>
+        <div class="d-none d-lg-flex align-items-center">
+            <a href="#about" class="main-nav-link">About Us</a>
+            <a href="#academics" class="main-nav-link">Academics</a>
+            <a href="#campus" class="main-nav-link">Campus Life</a>
+            <a href="#admissions" class="main-nav-link">Admissions</a>
+            <a href="{% url 'login' %}" class="btn-college-primary ms-3" style="padding: 0.6rem 1.5rem; font-size: 0.8rem;">Login</a>
         </div>
-        <div class="d-none d-md-flex gap-4 align-items-center">
-            <a href="#about" class="text-decoration-none text-muted fw-medium">About</a>
-            <a href="#academics" class="text-decoration-none text-muted fw-medium">Academics</a>
-            <a href="#campus" class="text-decoration-none text-muted fw-medium">Campus</a>
-            <a href="{% url 'login' %}" class="btn btn-brand btn-sm px-4">Portal Login</a>
-        </div>
+        <button class="navbar-toggler d-lg-none border-0" type="button" data-bs-toggle="collapse">
+            <i class="bi bi-list fs-2 text-dark"></i>
+        </button>
     </div>
 </nav>
 
-<section class="hero-vibrant">
+<!-- Hero Section -->
+<header class="academic-hero">
     <div class="container">
-        <div class="row align-items-center g-5">
-            <div class="col-lg-7">
-                <div class="dept-badge mb-4">Official Institutional Website</div>
-                <h1 class="display-2 hero-title mb-4">Empowering the <br>Next Generation of <br>Global Leaders.</h1>
-                <p class="lead text-muted mb-5 fs-4" style="max-width: 600px;">
-                    Dive into a community of excellence at {{ college.name }}. Where innovation meets tradition to create a world-class learning experience.
+        <div class="row">
+            <div class="col-lg-8 hero-content">
+                <div class="text-uppercase tracking-widest mb-3 fw-semibold" style="letter-spacing: 3px; color: rgba(255,255,255,0.8);">Established {% if college.established_year %}{{ college.established_year }}{% else %}1990{% endif %}</div>
+                <h1 class="hero-headline">Truth, Knowledge, <br>& Excellence.</h1>
+                <div class="hero-divider"></div>
+                <p class="fs-5 mb-5" style="max-width: 600px; color: rgba(255,255,255,0.9); line-height: 1.8;">
+                    Welcome to {{ college.name }}. A premier institution dedicated to rigorous academic pursuit, character development, and shaping the global leaders of tomorrow.
                 </p>
-                <div class="d-flex flex-wrap gap-3">
-                    <a href="{% url 'login' %}" class="btn btn-brand">Access Student Portal</a>
-                    <a href="#about" class="btn btn-outline-dark border-2 px-5 py-3 rounded-4 fw-bold">Explore Campus</a>
+                <div class="d-flex gap-3 flex-wrap">
+                    <a href="#academics" class="btn-college-primary">Explore Programs</a>
+                    <a href="{% url 'login' %}" class="btn-college-primary" style="background: transparent; border-color: white;">Student Portal</a>
                 </div>
             </div>
-            <div class="col-lg-5">
-                <div class="position-relative floating-logo">
-                    {% if college.logo %}
-                        <div class="bg-white p-5 rounded-5 shadow-2xl border border-light">
-                            <img src="{{ college.logo.url }}" alt="Logo" class="img-fluid">
-                        </div>
-                    {% else %}
-                        <div class="bg-white p-5 rounded-5 shadow-2xl border border-light text-center">
-                            <i class="bi bi-bank display-1 text-primary"></i>
-                        </div>
-                    {% endif %}
-                    
-                    <div class="position-absolute -bottom-10 -right-10 bg-white p-4 rounded-4 shadow-lg border border-light d-none d-xl-block" style="right: -20px; bottom: -20px;">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="bg-success p-2 rounded-circle"><i class="bi bi-check2 text-white"></i></div>
-                            <div>
-                                <div class="fw-bold small">Verified Institution</div>
-                                <div class="x-small text-muted">Registry Confirmed 2024</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        </div>
+    </div>
+</header>
+
+<!-- Prestige Stats Bar -->
+<section class="container">
+    <div class="stats-bar px-4 px-md-5">
+        <div class="row text-center g-4">
+            <div class="col-md-4">
+                <div class="stat-number">{{ departments.count|default:"12" }}+</div>
+                <div class="stat-label">Academic Departments</div>
+            </div>
+            <div class="col-md-4 border-md-start border-md-end" style="border-color: rgba(255,255,255,0.2) !important;">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Digital Integration</div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-number">A+</div>
+                <div class="stat-label">Accreditation Grade</div>
             </div>
         </div>
     </div>
 </section>
 
-<section class="py-5">
-    <div class="container">
-        <div class="row g-4">
-            <div class="col-md-3 col-6">
-                <div class="stat-pill text-center">
-                    <div class="display-5 fw-bold text-dark mb-1">{% if college.established_year %}{{ college.established_year }}{% else %}2024{% endif %}</div>
-                    <div class="text-muted small fw-bold text-uppercase">Foundation Year</div>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="stat-pill text-center">
-                    <div class="display-5 fw-bold text-dark mb-1">{{ departments.count }}</div>
-                    <div class="text-muted small fw-bold text-uppercase">Academic Wings</div>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="stat-pill text-center">
-                    <div class="display-5 fw-bold text-dark mb-1">100%</div>
-                    <div class="text-muted small fw-bold text-uppercase">Digital Campus</div>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="stat-pill text-center">
-                    <div class="display-5 fw-bold text-dark mb-1">24/7</div>
-                    <div class="text-muted small fw-bold text-uppercase">Portal Access</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
+<!-- About Section -->
 <section id="about" class="py-5 my-5">
-    <div class="container">
+    <div class="container py-4">
         <div class="row align-items-center g-5">
-            <div class="col-lg-6">
-                <div class="campus-image-container shadow-lg">
-                    {% if college.images.first %}
-                        <img src="{{ college.images.first.image.url }}" alt="Campus">
-                    {% else %}
-                        <div class="bg-light w-100 h-100 d-flex align-items-center justify-content-center">
-                             <i class="bi bi-image display-1 text-muted opacity-25"></i>
-                        </div>
-                    {% endif %}
-                </div>
+            <div class="col-lg-6 pe-lg-5">
+                <h2 class="section-title">A Legacy of Academic Distinction</h2>
+                <div class="hero-divider" style="margin: 1.5rem 0; background: var(--college-primary); width: 60px;"></div>
+                <p class="fs-5 text-muted mb-4 lh-lg">
+                    {{ college.description|default:"Our institution stands as a beacon of intellectual freedom and rigorous scholarship. We challenge our students to think critically, communicate effectively, and act ethically in an increasingly complex world." }}
+                </p>
+                <p class="text-muted mb-5 lh-lg">
+                    With state-of-the-art facilities, a distinguished faculty, and a vibrant community of scholars, we provide an environment where profound learning and groundbreaking research thrive side by side.
+                </p>
+                <a href="#" class="main-nav-link" style="margin:0; border-bottom: 2px solid var(--college-primary); padding-bottom: 4px;">Read the President's Message &rarr;</a>
             </div>
             <div class="col-lg-6">
-                <h2 class="display-5 fw-bold mb-4">A Legacy of Excellence</h2>
-                <p class="fs-5 text-muted lh-lg mb-4">
-                    {{ college.description|default:"Welcome to our esteemed institution. We are dedicated to providing a transformative educational experience that prepares students for the challenges of the future. Our campus offers a vibrant environment where academic rigor meets creative exploration." }}
-                </p>
-                <div class="row g-4 mb-5">
-                    <div class="col-md-6 d-flex gap-3">
-                        <div class="text-primary fs-3"><i class="bi bi-geo-alt"></i></div>
-                        <div>
-                            <div class="fw-bold">Location</div>
-                            <div class="small text-muted">{{ college.address }}</div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 d-flex gap-3">
-                        <div class="text-primary fs-3"><i class="bi bi-envelope"></i></div>
-                        <div>
-                            <div class="fw-bold">Contact</div>
-                            <div class="small text-muted">{{ college.contact_email }}</div>
-                        </div>
-                    </div>
+                {% if college.images.first %}
+                <img src="{{ college.images.first.image.url }}" alt="Campus Building" class="img-fluid" style="box-shadow: -20px 20px 0px var(--college-secondary);">
+                {% else %}
+                <div class="bg-light d-flex align-items-center justify-content-center p-5" style="aspect-ratio: 4/3; box-shadow: -20px 20px 0px var(--college-secondary);">
+                    <i class="bi bi-bank text-muted opacity-25 display-1"></i>
                 </div>
-                <a href="{% url 'login' %}" class="btn btn-brand">Connect with us</a>
+                {% endif %}
             </div>
         </div>
     </div>
 </section>
 
-<section id="academics" class="py-5 bg-light rounded-5 mx-2">
+<!-- Leadership Section -->
+{% if college.leaders.exists %}
+<section id="leadership" class="py-5" style="background-color: white;">
     <div class="container py-5">
         <div class="text-center mb-5">
-            <div class="dept-badge mb-3">Academic Structure</div>
-            <h2 class="display-5 fw-bold">Explore Our Departments</h2>
+            <h2 class="section-title">Leadership & Administration</h2>
+            <div class="hero-divider mx-auto" style="margin: 1.5rem auto; background: var(--college-primary); width: 60px;"></div>
         </div>
-        
-        <div class="row g-4">
-            {% for dept in departments %}
-            <div class="col-lg-4 col-md-6">
-                <div class="feature-card-modern">
+        <div class="row g-4 justify-content-center">
+            {% for leader in college.leaders.all|dictsort:"order" %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 h-100 text-center p-4">
                     <div class="mb-4">
-                        <div class="bg-primary-soft p-3 rounded-4 d-inline-block">
-                            <i class="bi bi-book text-brand fs-3"></i>
+                        {% if leader.image %}
+                        <img src="{{ leader.image.url }}" alt="{{ leader.name }}" class="rounded-circle object-fit-cover shadow-sm" style="width: 120px; height: 120px; border: 4px solid white; outline: 2px solid var(--college-primary);">
+                        {% else %}
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto" style="width: 120px; height: 120px; border: 4px solid white; outline: 2px solid var(--college-primary);">
+                            <i class="bi bi-person text-muted display-4"></i>
                         </div>
+                        {% endif %}
                     </div>
-                    <h4 class="fw-bold mb-3">{{ dept.name }}</h4>
-                    <p class="text-muted small mb-4">Focusing on modern curriculum and practical learning modules to ensure student readiness.</p>
-                    <div class="d-flex flex-wrap gap-2">
-                        {% for spec in dept.specializations.all|slice:":3" %}
-                            <span class="badge bg-light text-muted fw-normal p-2 px-3 rounded-pill border">{{ spec.name }}</span>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-            {% empty %}
-            <div class="col-12 text-center py-5">
-                <div class="text-muted">Academic data is being updated. Check back soon.</div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-
-{% if college.images.exists %}
-<section id="campus" class="py-5 my-5">
-    <div class="container">
-        <div class="text-center mb-5">
-            <div class="dept-badge mb-3">Gallery</div>
-            <h2 class="display-5 fw-bold">Campus Life in Frames</h2>
-        </div>
-        <div class="row g-3">
-            {% for img in college.images.all %}
-            <div class="col-md-{% if forloop.first %}8{% else %}4{% endif %}">
-                <div class="campus-image-container">
-                    <img src="{{ img.image.url }}" alt="Gallery Image">
-                    <div class="position-absolute bottom-0 start-0 p-4 text-white w-100" style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);">
-                        <div class="fw-bold">{{ img.caption|default:"Campus View" }}</div>
-                    </div>
+                    <h5 class="font-heading fw-bold mb-1" style="color: #0f172a;">{{ leader.name }}</h5>
+                    <p class="text-uppercase tracking-widest small fw-bold mb-3" style="color: var(--college-primary);">{{ leader.designation }}</p>
+                    {% if leader.bio %}
+                    <p class="text-muted small mb-0">{{ leader.bio }}</p>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}
@@ -325,37 +360,183 @@
 </section>
 {% endif %}
 
-<footer class="footer-dark">
+<!-- Academics Section -->
+<section id="academics" class="py-5" style="background-color: var(--college-secondary);">
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Schools & Departments</h2>
+            <p class="section-subtitle mx-auto">Discover comprehensive undergraduate and graduate programs designed to prepare you for a lifetime of success.</p>
+        </div>
+        
+        <div class="row g-4">
+            {% for dept in departments %}
+            <div class="col-lg-4 col-md-6">
+                <div class="dept-card">
+                    <div class="dept-icon"><i class="bi bi-journal-bookmark-fill"></i></div>
+                    <h3 class="dept-title">{{ dept.name }}</h3>
+                    <p class="text-muted mb-4 line-clamp-3">Advancing knowledge through dedicated teaching, research, and collaborative academic inquiry.</p>
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        {% for spec in dept.specializations.all|slice:":3" %}
+                            <span class="badge bg-light text-dark border p-2">{{ spec.name }}</span>
+                        {% endfor %}
+                    </div>
+                    <a href="#" class="text-decoration-none fw-bold" style="color: var(--college-primary); font-size: 0.9rem;">View Programs &rarr;</a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5">
+                <p class="text-muted fs-5">Academic departments are currently being updated in the registry.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Milestones & Achievements -->
+{% if college.achievements.exists %}
+<section id="achievements" class="py-5 my-5">
+    <div class="container py-4">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Institutional Milestones</h2>
+            <div class="hero-divider mx-auto" style="margin: 1.5rem auto; background: var(--college-primary); width: 60px;"></div>
+            <p class="section-subtitle mx-auto">A history of excellence, recognition, and continuous advancement.</p>
+        </div>
+        
+        <div class="row g-4">
+            {% for ach in college.achievements.all|dictsortreversed:"date" %}
+            <div class="col-md-6 col-lg-4">
+                <div class="achievement-card bg-white p-4 rounded-4 shadow-sm border border-light h-100">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-trophy-fill text-warning fs-4 me-3"></i>
+                        <span class="text-muted fw-bold small text-uppercase tracking-widest" style="color: var(--college-primary) !important;">
+                            {% if ach.date %}{{ ach.date|date:"F Y" }}{% else %}Recent{% endif %}
+                        </span>
+                    </div>
+                    <h5 class="font-heading fw-bold mb-3" style="color: #0f172a;">{{ ach.title }}</h5>
+                    <p class="text-muted mb-0" style="font-size: 0.95rem;">{{ ach.description }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Campus Gallery -->
+{% if college.images.exists %}
+<section id="campus" class="py-5 my-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-end mb-5">
+            <div>
+                <h2 class="section-title mb-0">Life on Campus</h2>
+            </div>
+            <a href="#" class="main-nav-link" style="margin:0;">View Full Gallery &rarr;</a>
+        </div>
+        
+        {% regroup college.images.all|dictsort:"category" by get_category_display as categorized_images %}
+        {% for group in categorized_images %}
+            <h4 class="font-heading mb-4 mt-5" style="color: var(--college-primary); border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem;">{{ group.grouper }}</h4>
+            <div class="row g-3">
+                {% for img in group.list %}
+                <div class="col-md-4 col-sm-6">
+                    <div class="gallery-item rounded shadow-sm">
+                        <img src="{{ img.image.url }}" alt="Gallery Image">
+                        <div class="gallery-overlay">
+                            <h6 class="font-heading mb-0">{{ img.caption|default:group.grouper }}</h6>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Admissions / Portal CTA -->
+<section id="admissions" class="py-5" style="background: var(--college-primary); color: white;">
+    <div class="container py-5 text-center">
+        <h2 class="font-heading fw-bold mb-4" style="font-size: 3rem; font-family: var(--font-heading);">Join Our Academic Community</h2>
+        <p class="fs-5 mx-auto mb-5" style="max-width: 700px; color: rgba(255,255,255,0.8);">
+            Whether you are a prospective student looking to apply, or a current member of our community accessing your courses, our digital portal is your gateway.
+        </p>
+        <div class="d-flex justify-content-center gap-4">
+            <a href="{% url 'login' %}" class="btn-college-primary" style="background: white; color: var(--college-primary); border-color: white;">Access Student Portal</a>
+            <a href="#" class="btn-college-primary">Undergraduate Admissions</a>
+        </div>
+    </div>
+</section>
+
+<!-- Formal Footer -->
+<footer class="college-footer">
     <div class="container">
         <div class="row g-5">
-            <div class="col-lg-4">
-                <div class="d-flex align-items-center mb-4">
+            <div class="col-lg-4 pe-lg-5">
+                <div class="d-flex align-items-center gap-3 mb-4">
                     {% if college.logo %}
-                        <img src="{{ college.logo.url }}" alt="Logo" height="40" class="me-2">
+                        <img src="{{ college.logo.url }}" alt="Logo" height="60">
+                    {% else %}
+                        <i class="bi bi-bank2" style="font-size: 2.5rem; color: white;"></i>
                     {% endif %}
-                    <span class="fs-4 fw-bold text-white">{{ college.name }}</span>
+                    <span class="font-heading fw-bold fs-3 text-white" style="font-family: var(--font-heading);">{{ college.name }}</span>
                 </div>
-                <p class="small">Building a brighter future through education and innovation. Join our digital ecosystem today.</p>
+                <p class="mb-4 text-muted lh-lg">Dedicated to the advancement of learning and the ennoblement of life since its founding.</p>
+                <div class="d-flex gap-3">
+                    <a href="#" class="text-white fs-5"><i class="bi bi-facebook"></i></a>
+                    <a href="#" class="text-white fs-5"><i class="bi bi-twitter"></i></a>
+                    <a href="#" class="text-white fs-5"><i class="bi bi-instagram"></i></a>
+                    <a href="#" class="text-white fs-5"><i class="bi bi-linkedin"></i></a>
+                </div>
             </div>
-            <div class="col-lg-2 ms-auto">
-                <h6 class="text-white fw-bold mb-4">Portal</h6>
-                <ul class="list-unstyled small d-grid gap-2">
-                    <li><a href="{% url 'login' %}" class="text-decoration-none text-reset">Student Login</a></li>
-                    <li><a href="{% url 'login' %}" class="text-decoration-none text-reset">Faculty Login</a></li>
-                    <li><a href="{% url 'login' %}" class="text-decoration-none text-reset">Admin Access</a></li>
+            
+            <div class="col-lg-2 col-md-4">
+                <h4 class="footer-heading">Academics</h4>
+                <ul class="footer-list">
+                    <li><a href="#">Undergraduate</a></li>
+                    <li><a href="#">Graduate Studies</a></li>
+                    <li><a href="#">Online Programs</a></li>
+                    <li><a href="#">Library</a></li>
+                    <li><a href="#">Academic Calendar</a></li>
                 </ul>
             </div>
-            <div class="col-lg-3">
-                <h6 class="text-white fw-bold mb-4">Connect</h6>
-                <ul class="list-unstyled small d-grid gap-2">
-                    <li class="d-flex gap-2"><i class="bi bi-geo-alt text-brand"></i> {{ college.address }}</li>
-                    <li class="d-flex gap-2"><i class="bi bi-envelope text-brand"></i> {{ college.contact_email }}</li>
+            
+            <div class="col-lg-2 col-md-4">
+                <h4 class="footer-heading">Admissions</h4>
+                <ul class="footer-list">
+                    <li><a href="#">Apply Now</a></li>
+                    <li><a href="#">Financial Aid</a></li>
+                    <li><a href="#">Tuition & Fees</a></li>
+                    <li><a href="#">Campus Tours</a></li>
+                    <li><a href="#">International Students</a></li>
+                </ul>
+            </div>
+
+            <div class="col-lg-4 col-md-4">
+                <h4 class="footer-heading">Contact Us</h4>
+                <ul class="footer-list">
+                    <li class="d-flex gap-3 mb-3">
+                        <i class="bi bi-geo-alt fs-5 text-white"></i>
+                        <span>{{ college.address|default:"100 University Ave, City, State 12345" }}</span>
+                    </li>
+                    <li class="d-flex gap-3 mb-3">
+                        <i class="bi bi-telephone fs-5 text-white"></i>
+                        <span>(555) 123-4567</span>
+                    </li>
+                    <li class="d-flex gap-3">
+                        <i class="bi bi-envelope fs-5 text-white"></i>
+                        <span>{{ college.contact_email|default:"admissions@university.edu" }}</span>
+                    </li>
                 </ul>
             </div>
         </div>
-        <hr class="my-5 opacity-10">
-        <div class="text-center x-small">
-            &copy; 2024 {{ college.name }}. All rights reserved. Powered by CollegeManager.
+        
+        <div class="border-top mt-5 pt-4 d-flex justify-content-between align-items-center flex-wrap" style="border-color: rgba(255,255,255,0.1) !important;">
+            <p class="mb-0 text-muted">&copy; {% now "Y" %} {{ college.name }}. All rights reserved.</p>
+            <div class="d-flex gap-4">
+                <a href="#" class="text-muted text-decoration-none small">Privacy Policy</a>
+                <a href="#" class="text-muted text-decoration-none small">Terms of Service</a>
+                <a href="#" class="text-muted text-decoration-none small">Accessibility</a>
+            </div>
         </div>
     </div>
 </footer>

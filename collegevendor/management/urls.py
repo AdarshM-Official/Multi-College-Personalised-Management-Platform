@@ -6,6 +6,7 @@ urlpatterns = [
     path('teachers/template/', views.download_teacher_template, name='download_teacher_template'),
     path('settings/', views.college_settings, name='college_settings'),
     path('gallery/delete/<int:image_id>/', views.delete_gallery_image, name='delete_gallery_image'),
+    path('leaders/delete/<int:leader_id>/', views.delete_college_leader, name='delete_college_leader'),
     
     # Students
     path('students/', views.student_list, name='student_list'),
@@ -13,6 +14,12 @@ urlpatterns = [
     path('students/view/<int:student_id>/', views.student_detail, name='student_detail'),
     path('students/edit/<int:student_id>/', views.edit_student, name='edit_student'),
     path('students/delete/<int:student_id>/', views.delete_student, name='delete_student'),
+    
+    # Student Dashboard
+    path('student/attendance/', views.student_attendance, name='student_attendance'),
+    path('student/assignments/', views.student_assignments, name='student_assignments'),
+    path('student/grades/', views.student_grades, name='student_grades'),
+    path('student/timetable/', views.student_timetable, name='student_timetable'),
     
     # Teachers
     path('teachers/', views.teacher_list, name='teacher_list'),
@@ -41,6 +48,9 @@ urlpatterns = [
     # Attendance
     path('attendance/', views.mark_attendance, name='mark_attendance'),
     
+    # Internal Marks
+    path('internal-marks/', views.internal_marks_list, name='internal_marks_list'),
+    
     # Utilities
     path('setup-data/', views.generate_sample_data, name='generate_sample_data'),
     
@@ -50,7 +60,16 @@ urlpatterns = [
     path('profile/edit/', views.edit_profile, name='edit_profile'),
     path('profile/change-password/', views.change_password, name='change_password'),
     path('timetable/create/', views.create_timetable, name='create_timetable'),
+    path('timetable/view/<int:tt_id>/', views.view_timetable, name='view_timetable'),
     path('timetable/edit/<int:tt_id>/', views.edit_timetable, name='edit_timetable'),
     path('timetable/delete/<int:tt_id>/', views.delete_timetable, name='delete_timetable'),
     path('exam-notification/create/', views.create_exam_notification, name='create_exam_notification'),
+    path('department/config/', views.department_configuration, name='department_configuration'),
+    path('department/config/class/delete/<int:class_id>/', views.delete_academic_class, name='delete_academic_class'),
+    path('department/config/subject/delete/<int:subject_id>/', views.delete_subject, name='delete_subject'),
+    path('department/config/category/delete/<int:category_id>/', views.delete_internal_mark_category, name='delete_internal_mark_category'),
+    
+    # Submissions
+    path('assignments/<int:pk>/submissions/', views.assignment_submissions, name='assignment_submissions'),
+    path('assignments/<int:pk>/submit/', views.submit_assignment, name='submit_assignment'),
 ]

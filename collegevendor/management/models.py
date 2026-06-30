@@ -27,6 +27,23 @@ class Specialization(TenantModel):
     def __str__(self):
         return f"{self.name} ({self.department.name})"
 
+class AcademicClass(TenantModel):
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='academic_classes')
+    name = models.CharField(max_length=100)
+    number_of_periods = models.IntegerField(default=6)
+
+    def __str__(self):
+        return f"{self.name} - {self.department.name}"
+
+class Subject(TenantModel):
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='subjects')
+    academic_class = models.ForeignKey(AcademicClass, on_delete=models.CASCADE, related_name='subjects')
+    name = models.CharField(max_length=255)
+    code = models.CharField(max_length=50, blank=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.code})" if self.code else self.name
+
 class TeacherProfile(TenantModel):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='teacher_profile')
     profile_photo = models.ImageField(upload_to='teachers/photos/', null=True, blank=True)
@@ -68,6 +85,7 @@ class StudentProfile(TenantModel):
     
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True)
     specialization = models.ForeignKey(Specialization, on_delete=models.SET_NULL, null=True, blank=True)
+    academic_class = models.ForeignKey('AcademicClass', on_delete=models.SET_NULL, null=True, blank=True)
 
     @property
     def age(self):
@@ -83,9 +101,14 @@ class StudentProfile(TenantModel):
 class Attendance(TenantModel):
     STATUS_CHOICES = (('PRESENT', 'Present'), ('ABSENT', 'Absent'), ('LATE', 'Late'))
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
+    academic_class = models.ForeignKey('AcademicClass', on_delete=models.CASCADE, null=True, blank=True)
+    period = models.IntegerField(default=1)
     date = models.DateField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES)
     marked_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        unique_together = ['student', 'date', 'period']
 
 class Assignment(TenantModel):
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.CASCADE)
@@ -116,12 +139,35 @@ class Announcement(TenantModel):
 
 class TimeTable(TenantModel):
     department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='timetables')
+    academic_class = models.ForeignKey(AcademicClass, on_delete=models.CASCADE, related_name='timetables', null=True, blank=True)
     title = models.CharField(max_length=255)
-    file = models.FileField(upload_to='timetables/')
+    file = models.FileField(upload_to='timetables/', null=True, blank=True)
     uploaded_by = models.ForeignKey('HODProfile', on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
         return self.title
+
+class TimeTablePeriod(TenantModel):
+    DAY_CHOICES = [
+        ('Monday', 'Monday'),
+        ('Tuesday', 'Tuesday'),
+        ('Wednesday', 'Wednesday'),
+        ('Thursday', 'Thursday'),
+        ('Friday', 'Friday'),
+        ('Saturday', 'Saturday'),
+    ]
+    timetable = models.ForeignKey(TimeTable, on_delete=models.CASCADE, related_name='periods')
+    day_of_week = models.CharField(max_length=15, choices=DAY_CHOICES)
+    period_number = models.IntegerField()
+    subject_name = models.CharField(max_length=255, blank=True, null=True)
+    teacher = models.ForeignKey('TeacherProfile', on_delete=models.SET_NULL, null=True, blank=True, related_name='timetable_periods')
+
+    class Meta:
+        ordering = ['day_of_week', 'period_number']
+        unique_together = ('timetable', 'day_of_week', 'period_number')
+
+    def __str__(self):
+        return f"{self.timetable.title} - {self.day_of_week} Period {self.period_number}"
 
 class ExamNotification(TenantModel):
     department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='exam_notifications')
@@ -144,3 +190,25 @@ class PlatformNotification(models.Model):
 
     def __str__(self):
         return self.title
+
+class InternalMarkCategory(TenantModel):
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='internal_mark_categories')
+    name = models.CharField(max_length=100)
+    max_marks = models.IntegerField(default=10)
+
+    def __str__(self):
+        return f"{self.name} (Max {self.max_marks}) - {self.department.name}"
+
+class InternalMark(TenantModel):
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='internal_marks')
+    academic_class = models.ForeignKey(AcademicClass, on_delete=models.CASCADE, related_name='internal_marks')
+    category = models.ForeignKey(InternalMarkCategory, on_delete=models.CASCADE, related_name='internal_marks', null=True)
+    marks_obtained = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    marked_by = models.ForeignKey(TeacherProfile, on_delete=models.SET_NULL, null=True)
+    date_marked = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('student', 'academic_class', 'category')
+
+    def __str__(self):
+        return f"{self.student.user.get_full_name()} - {self.category.name if self.category else 'No Category'} - {self.marks_obtained}"

@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ title }} | {{ request.college.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --prof-primary: #2563eb;
+        --prof-primary-soft: #eff6ff;
+        --prof-dark: #0f172a;
+        --prof-gray-50: #f8fafc;
+        --prof-gray-100: #f1f5f9;
+        --prof-gray-200: #e2e8f0;
+        --prof-gray-600: #475569;
+        --prof-gray-800: #1e293b;
+    }
+
+    body {
+        background-color: var(--prof-gray-50);
+        font-family: 'Inter', -apple-system, sans-serif;
+    }
+
+    .form-card {
+        background: #ffffff;
+        border: 1px solid var(--prof-gray-200);
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
+        overflow: hidden;
+        margin-bottom: 3rem;
+    }
+
+    .form-header {
+        background: linear-gradient(to right, #ffffff, #f8fafc);
+        border-bottom: 1px solid var(--prof-gray-200);
+        padding: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .header-icon {
+        width: 54px;
+        height: 54px;
+        border-radius: 12px;
+        background: var(--prof-primary-soft);
+        color: var(--prof-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        flex-shrink: 0;
+    }
+
+    /* Matrix Table Styles */
+    .timetable-wrapper {
+        overflow-x: auto;
+        padding: 1rem 2rem 2rem 2rem;
+    }
+
+    .matrix-table {
+        width: 100%;
+        min-width: 1000px;
+        border-collapse: separate;
+        border-spacing: 0.5rem;
+    }
+
+    .matrix-table th {
+        background: var(--prof-gray-50);
+        color: var(--prof-gray-600);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.75rem;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid var(--prof-gray-200);
+    }
+
+    .matrix-table th.day-col {
+        width: 120px;
+        text-align: left;
+        background: var(--prof-dark);
+        color: white;
+        border-color: var(--prof-dark);
+    }
+
+    .period-cell {
+        background: #ffffff;
+        border: 1px solid var(--prof-gray-200);
+        border-radius: 8px;
+        padding: 0.75rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .cell-subject {
+        color: var(--prof-dark);
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .cell-teacher {
+        color: var(--prof-gray-600);
+        font-size: 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="form-card">
+        <div class="form-header">
+            <div class="d-flex align-items-center gap-3">
+                <div class="header-icon">
+                    <i class="bi bi-grid-3x3-gap-fill"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold mb-1" style="color: var(--prof-dark);">{{ title }}</h4>
+                    <p class="text-muted small mb-0">Period-wise scheduling for {{ selected_class.name }}</p>
+                </div>
+            </div>
+            {% if request.user.role == 'HOD' %}
+            <a href="{% url 'edit_timetable' tt.id %}" class="btn btn-outline-primary btn-sm px-3 fw-bold rounded-pill">
+                <i class="bi bi-pencil me-1"></i>Edit
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="timetable-wrapper">
+            <table class="matrix-table">
+                <thead>
+                    <tr>
+                        <th class="day-col">Day</th>
+                        {% for p in periods %}
+                        <th>Period {{ p }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for day in days %}
+                    <tr>
+                        <th class="day-col d-flex align-items-center h-100" style="min-height: 80px;">{{ day }}</th>
+                        
+                        {% for p in periods %}
+                        {% with ep=existing_periods|get_item:day|get_item:p %}
+                        <td>
+                            <div class="period-cell {% if not ep.subject_name %}bg-light opacity-50{% endif %}">
+                                {% if ep.subject_name %}
+                                    <div class="cell-subject">{{ ep.subject_name }}</div>
+                                    <div class="cell-teacher">
+                                        {% if ep.teacher %}{{ ep.teacher.user.get_full_name }}{% else %}<span class="fst-italic opacity-50">Unassigned</span>{% endif %}
+                                    </div>
+                                {% else %}
+                                    <div class="text-muted small fst-italic">- Free -</div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        {% endwith %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="p-4 border-top bg-light text-end">
+            <a href="javascript:history.back()" class="btn btn-outline-secondary px-4 py-2 fw-bold">Go Back</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

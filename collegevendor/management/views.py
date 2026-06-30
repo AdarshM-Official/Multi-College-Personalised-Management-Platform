@@ -5,10 +5,10 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 import pandas as pd
-from .models import StudentProfile, TeacherProfile, Department, Specialization, Assignment, Submission, Attendance, HODProfile, TimeTable, ExamNotification
+from .models import StudentProfile, TeacherProfile, Department, Specialization, Assignment, Submission, Attendance, HODProfile, TimeTable, ExamNotification, AcademicClass, InternalMarkCategory, InternalMark, TimeTablePeriod, Subject
 from accounts.models import CustomUser
-from .forms import StudentForm, StudentEditForm, TeacherForm, TeacherEditForm, AssignmentForm, DepartmentForm, SpecializationForm, CollegeSettingsForm, ExcelImportForm, HODForm, TimeTableForm, ExamNotificationForm, HODEditForm, UserEditForm
-from colleges.models import College, CollegeImage, CollegeAchievement
+from .forms import StudentForm, StudentEditForm, TeacherForm, TeacherEditForm, AssignmentForm, DepartmentForm, SpecializationForm, CollegeSettingsForm, ExcelImportForm, HODForm, TimeTableForm, ExamNotificationForm, HODEditForm, UserEditForm, AcademicClassForm, InternalMarkCategoryForm, SubjectForm
+from colleges.models import College, CollegeImage, CollegeAchievement, CollegeLeader
 
 @login_required
 def college_settings(request):
@@ -31,9 +31,22 @@ def college_settings(request):
                     date=request.POST.get('achievement_date') or None
                 )
             
-            gallery_images = request.FILES.getlist('gallery_images')
+            image_category = request.POST.get('image_category', 'OTHER')
+            gallery_images = request.FILES.getlist('gallery_images[]')
+            if not gallery_images:
+                gallery_images = request.FILES.getlist('gallery_images')
             for img in gallery_images:
-                CollegeImage.objects.create(college=college, image=img)
+                CollegeImage.objects.create(college=college, image=img, category=image_category)
+            
+            leader_name = request.POST.get('leader_name')
+            if leader_name:
+                CollegeLeader.objects.create(
+                    college=college,
+                    name=leader_name,
+                    designation=request.POST.get('leader_designation', ''),
+                    bio=request.POST.get('leader_bio', ''),
+                    image=request.FILES.get('leader_image')
+                )
             
             messages.success(request, "Institutional profile and gallery updated.")
             return redirect('college_settings')
@@ -50,23 +63,36 @@ def delete_gallery_image(request, image_id):
     return redirect('college_settings')
 
 @login_required
+def delete_college_leader(request, leader_id):
+    if request.user.role != 'COLLEGE_ADMIN': return redirect('dashboard')
+    leader = get_object_or_404(CollegeLeader, id=leader_id, college=request.college)
+    leader.delete()
+    messages.warning(request, "Leadership profile removed.")
+    return redirect('college_settings')
+
+@login_required
 def student_list(request):
     students = StudentProfile.objects.filter(college=request.college)
-    specializations = None
+    academic_classes = None
     if request.user.role == 'HOD':
         dept = request.user.hod_profile.department
         students = students.filter(department=dept)
-        specializations = Specialization.objects.filter(department=dept)
+        academic_classes = AcademicClass.objects.filter(department=dept)
     
-    # Optional: Filter by specialization if provided in GET
-    spec_id = request.GET.get('specialization')
-    if spec_id:
-        students = students.filter(specialization_id=spec_id)
+    # Filter by class if provided in GET, otherwise select the first class by default
+    class_id = request.GET.get('class_id')
+    if not class_id and academic_classes and academic_classes.exists():
+        class_id = academic_classes.first().id
+        
+    if class_id:
+        students = students.filter(academic_class_id=class_id)
+        # Ensure class_id is a string for template comparison
+        class_id = str(class_id)
         
     return render(request, 'management/student_list.html', {
         'students': students,
-        'specializations': specializations,
-        'selected_spec': spec_id
+        'academic_classes': academic_classes,
+        'selected_class': class_id
     })
 
 @login_required
@@ -75,7 +101,7 @@ def add_student(request):
         messages.error(request, "Permission Denied.")
         return redirect('student_list')
     
-    spec_id = request.GET.get('specialization')
+    class_id = request.GET.get('class_id')
     
     if request.method == 'POST':
         form = StudentForm(request.POST, request.FILES, college=request.college, user_role=request.user.role, user_dept=getattr(request.user, 'hod_profile', None).department if request.user.role == 'HOD' else None)
@@ -99,16 +125,17 @@ def add_student(request):
                 plus_two_marklist=form.cleaned_data.get('plus_two_marklist'),
                 last_passout_year=form.cleaned_data.get('last_passout_year'),
                 department=form.cleaned_data['department'], 
-                specialization=form.cleaned_data['specialization']
+                specialization=form.cleaned_data['specialization'],
+                academic_class=form.cleaned_data.get('academic_class')
             )
             messages.success(request, f"Student {user.get_full_name()} added successfully.")
             return redirect('student_list')
     else:
         initial = {}
-        if spec_id:
-            initial['specialization'] = spec_id
-            spec = Specialization.objects.filter(id=spec_id).first()
-            if spec: initial['department'] = spec.department
+        if class_id:
+            initial['academic_class'] = class_id
+            cls = AcademicClass.objects.filter(id=class_id).first()
+            if cls: initial['department'] = cls.department
             
         form = StudentForm(
             college=request.college, 
@@ -132,7 +159,7 @@ def edit_student(request, student_id):
         return redirect('student_list')
     
     if request.method == 'POST':
-        form = StudentEditForm(request.POST, request.FILES, college=request.college, user_role=request.user.role, user_dept=getattr(request.user, 'hod_profile', None).department if request.user.role == 'HOD' else None)
+        form = StudentEditForm(request.POST, request.FILES, instance=student, college=request.college, user_role=request.user.role, user_dept=getattr(request.user, 'hod_profile', None).department if request.user.role == 'HOD' else None)
         if form.is_valid():
             user = student.user
             user.first_name = form.cleaned_data['first_name']
@@ -155,6 +182,7 @@ def edit_student(request, student_id):
             student.last_passout_year = form.cleaned_data.get('last_passout_year')
             student.department = form.cleaned_data['department']
             student.specialization = form.cleaned_data['specialization']
+            student.academic_class = form.cleaned_data.get('academic_class')
             student.save()
             
             messages.success(request, "Student record updated.")
@@ -173,8 +201,9 @@ def edit_student(request, student_id):
             'last_passout_year': student.last_passout_year,
             'department': student.department,
             'specialization': student.specialization,
+            'academic_class': student.academic_class,
         }
-        form = StudentEditForm(college=request.college, user_role=request.user.role, user_dept=getattr(request.user, 'hod_profile', None).department if request.user.role == 'HOD' else None, initial=initial)
+        form = StudentEditForm(instance=student, college=request.college, user_role=request.user.role, user_dept=getattr(request.user, 'hod_profile', None).department if request.user.role == 'HOD' else None, initial=initial)
     
     return render(request, 'management/add_student.html', {'form': form, 'student': student, 'is_edit': True})
 
@@ -505,28 +534,147 @@ def hod_list(request):
     return render(request, 'management/hod_list.html', {'departments': departments})
 
 @login_required
+@login_required
 def create_timetable(request):
     if request.user.role != 'HOD': return redirect('dashboard')
-    if request.method == 'POST':
-        form = TimeTableForm(request.POST, request.FILES)
-        if form.is_valid():
-            tt = form.save(commit=False); tt.college = request.college
-            tt.department = request.user.hod_profile.department
-            tt.uploaded_by = request.user.hod_profile; tt.save()
-            messages.success(request, "Time table created."); return redirect('dashboard')
-    else: form = TimeTableForm()
-    return render(request, 'management/create_timetable.html', {'form': form, 'title': 'Upload Timetable'})
+    
+    classes = AcademicClass.objects.filter(department=request.user.hod_profile.department)
+    teachers = TeacherProfile.objects.filter(user__college=request.college)
+    
+    class_id = request.GET.get('class_id')
+    selected_class = None
+    if class_id:
+        selected_class = get_object_or_404(AcademicClass, id=class_id, department=request.user.hod_profile.department)
+        
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    if request.GET.get('include_saturday'):
+        days.append('Saturday')
+        
+    if request.method == 'POST' and selected_class:
+        title = request.POST.get('title', f"Timetable for {selected_class.name}")
+        tt = TimeTable.objects.create(
+            department=request.user.hod_profile.department,
+            academic_class=selected_class,
+            title=title,
+            uploaded_by=request.user.hod_profile,
+            college=request.college
+        )
+        
+        periods = range(1, selected_class.number_of_periods + 1)
+        for day in days:
+            for p in periods:
+                subj = request.POST.get(f'subject_{day}_{p}')
+                tid = request.POST.get(f'teacher_{day}_{p}')
+                if subj or tid:
+                    teacher = None
+                    if tid:
+                        teacher = TeacherProfile.objects.get(id=tid)
+                    TimeTablePeriod.objects.create(
+                        timetable=tt,
+                        day_of_week=day,
+                        period_number=p,
+                        subject_name=subj,
+                        teacher=teacher,
+                        college=request.college
+                    )
+        messages.success(request, "Timetable created successfully.")
+        return redirect('dashboard')
+        
+    subjects_json = "[]"
+    if selected_class:
+        subjects = list(selected_class.subjects.values_list('name', flat=True))
+        import json
+        subjects_json = json.dumps(subjects)
+
+    return render(request, 'management/create_timetable.html', {
+        'classes': classes,
+        'selected_class': selected_class,
+        'days': days,
+        'teachers': teachers,
+        'periods': range(1, (selected_class.number_of_periods + 1) if selected_class else 1),
+        'title': 'Create Timetable',
+        'subjects_json': subjects_json
+    })
+
+@login_required
+def view_timetable(request, tt_id):
+    tt = get_object_or_404(TimeTable, id=tt_id, college=request.college)
+    selected_class = tt.academic_class
+    
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    if tt.periods.filter(day_of_week='Saturday').exists():
+        days.append('Saturday')
+        
+    existing_periods = {}
+    for period in tt.periods.all():
+        if period.day_of_week not in existing_periods:
+            existing_periods[period.day_of_week] = {}
+        existing_periods[period.day_of_week][period.period_number] = period
+
+    return render(request, 'management/view_timetable.html', {
+        'tt': tt,
+        'selected_class': selected_class,
+        'days': days,
+        'periods': range(1, (selected_class.number_of_periods + 1) if selected_class else 7),
+        'existing_periods': existing_periods,
+        'title': tt.title
+    })
 
 @login_required
 def edit_timetable(request, tt_id):
     if request.user.role != 'HOD': return redirect('dashboard')
     tt = get_object_or_404(TimeTable, id=tt_id, department=request.user.hod_profile.department)
+    selected_class = tt.academic_class
+    
+    classes = AcademicClass.objects.filter(department=request.user.hod_profile.department)
+    teachers = TeacherProfile.objects.filter(user__college=request.college)
+    
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    if tt.periods.filter(day_of_week='Saturday').exists():
+        days.append('Saturday')
+        
     if request.method == 'POST':
-        form = TimeTableForm(request.POST, request.FILES, instance=tt)
-        if form.is_valid():
-            form.save(); messages.success(request, "Timetable updated."); return redirect('dashboard')
-    else: form = TimeTableForm(instance=tt)
-    return render(request, 'management/create_timetable.html', {'form': form, 'title': 'Edit Timetable'})
+        tt.title = request.POST.get('title', tt.title)
+        tt.save()
+        
+        tt.periods.all().delete()
+        
+        periods = range(1, selected_class.number_of_periods + 1) if selected_class else range(1, 7)
+        for day in days:
+            for p in periods:
+                subj = request.POST.get(f'subject_{day}_{p}')
+                tid = request.POST.get(f'teacher_{day}_{p}')
+                if subj or tid:
+                    teacher = None
+                    if tid:
+                        teacher = TeacherProfile.objects.get(id=tid)
+                    TimeTablePeriod.objects.create(
+                        timetable=tt,
+                        day_of_week=day,
+                        period_number=p,
+                        subject_name=subj,
+                        teacher=teacher,
+                        college=request.college
+                    )
+        messages.success(request, "Timetable updated successfully.")
+        return redirect('dashboard')
+        
+    existing_periods = {}
+    for period in tt.periods.all():
+        if period.day_of_week not in existing_periods:
+            existing_periods[period.day_of_week] = {}
+        existing_periods[period.day_of_week][period.period_number] = period
+
+    return render(request, 'management/create_timetable.html', {
+        'tt': tt,
+        'classes': classes,
+        'selected_class': selected_class,
+        'days': days,
+        'teachers': teachers,
+        'periods': range(1, (selected_class.number_of_periods + 1) if selected_class else 7),
+        'existing_periods': existing_periods,
+        'title': 'Edit Timetable'
+    })
 
 @login_required
 def delete_timetable(request, tt_id):
@@ -609,3 +757,199 @@ def change_password(request):
     return render(request, 'management/change_password.html', {
         'form': form
     })
+
+@login_required
+def student_grades(request):
+    if request.user.role != 'STUDENT':
+        return redirect('dashboard')
+    student = request.user.student_profile
+    submissions = Submission.objects.filter(student=student).exclude(marks__isnull=True).order_by('-submitted_at')
+    return render(request, 'management/student_grades.html', {'submissions': submissions})
+
+@login_required
+def student_timetable(request):
+    if request.user.role != 'STUDENT':
+        return redirect('dashboard')
+    student = request.user.student_profile
+    if student.academic_class:
+        timetables = TimeTable.objects.filter(academic_class=student.academic_class)
+    else:
+        timetables = TimeTable.objects.filter(department=student.department)
+    return render(request, 'management/student_timetable.html', {'timetables': timetables})
+
+@login_required
+def student_attendance(request):
+    if request.user.role != 'STUDENT':
+        return redirect('dashboard')
+    return render(request, 'management/student_attendance.html', {})
+
+@login_required
+def student_assignments(request):
+    if request.user.role != 'STUDENT':
+        return redirect('dashboard')
+    return render(request, 'management/student_assignments.html', {})
+
+@login_required
+def department_configuration(request):
+    if request.user.role != 'HOD':
+        return redirect('dashboard')
+    
+    department = request.user.hod_profile.department
+    
+    if request.method == 'POST' and 'add_class' in request.POST:
+        class_form = AcademicClassForm(request.POST)
+        if class_form.is_valid():
+            academic_class = class_form.save(commit=False)
+            academic_class.department = department
+            academic_class.college = request.college
+            academic_class.save()
+            messages.success(request, 'Class added successfully.')
+            return redirect('department_configuration')
+    else:
+        class_form = AcademicClassForm()
+        
+    if request.method == 'POST' and 'add_subject' in request.POST:
+        subject_form = SubjectForm(request.POST, department=department)
+        if subject_form.is_valid():
+            subject = subject_form.save(commit=False)
+            subject.department = department
+            subject.college = request.college
+            subject.save()
+            messages.success(request, 'Subject added successfully.')
+            return redirect('department_configuration')
+    else:
+        subject_form = SubjectForm(department=department)
+        
+    if request.method == 'POST' and 'add_category' in request.POST:
+        cat_form = InternalMarkCategoryForm(request.POST)
+        if cat_form.is_valid():
+            cat = cat_form.save(commit=False)
+            cat.department = department
+            cat.college = request.college
+            cat.save()
+            messages.success(request, 'Internal Mark Category added successfully.')
+            return redirect('department_configuration')
+    else:
+        cat_form = InternalMarkCategoryForm()
+        
+    classes = AcademicClass.objects.filter(department=department)
+    categories = InternalMarkCategory.objects.filter(department=department)
+    subjects = Subject.objects.filter(department=department)
+    
+    return render(request, 'management/department_config.html', {
+        'classes': classes,
+        'categories': categories,
+        'subjects': subjects,
+        'class_form': class_form,
+        'cat_form': cat_form,
+        'subject_form': subject_form
+    })
+
+@login_required
+def delete_academic_class(request, class_id):
+    if request.user.role != 'HOD': return redirect('dashboard')
+    cls = get_object_or_404(AcademicClass, id=class_id, department=request.user.hod_profile.department)
+    cls.delete()
+    messages.success(request, 'Class deleted.')
+    return redirect('department_configuration')
+
+@login_required
+def delete_subject(request, subject_id):
+    if request.user.role != 'HOD': return redirect('dashboard')
+    subject = get_object_or_404(Subject, id=subject_id, department=request.user.hod_profile.department)
+    subject.delete()
+    messages.success(request, 'Subject deleted.')
+    return redirect('department_configuration')
+
+@login_required
+def delete_internal_mark_category(request, category_id):
+    if request.user.role != 'HOD': return redirect('dashboard')
+    cat = get_object_or_404(InternalMarkCategory, id=category_id, department=request.user.hod_profile.department)
+    cat.delete()
+    messages.success(request, 'Category deleted.')
+    return redirect('department_configuration')
+
+@login_required
+def assignment_submissions(request, pk):
+    if request.user.role not in ['TEACHER', 'HOD']: return redirect('dashboard')
+    assignment = get_object_or_404(Assignment, pk=pk)
+    submissions = Submission.objects.filter(assignment=assignment)
+    return render(request, 'management/assignment_submissions.html', {'assignment': assignment, 'submissions': submissions})
+
+@login_required
+def internal_marks_list(request):
+    if request.user.role not in ['TEACHER', 'HOD']:
+        return redirect('dashboard')
+        
+    if request.user.role == 'TEACHER':
+        department = request.user.teacher_profile.department
+    else:
+        department = request.user.hod_profile.department
+        
+    classes = AcademicClass.objects.filter(department=department)
+    categories = InternalMarkCategory.objects.filter(department=department)
+    
+    selected_class = None
+    students = []
+    
+    class_id = request.GET.get('class_id')
+    if class_id:
+        selected_class = get_object_or_404(AcademicClass, id=class_id, department=department)
+        students = StudentProfile.objects.filter(academic_class=selected_class)
+        
+    if request.method == 'POST' and selected_class:
+        for student in students:
+            for cat in categories:
+                mark_key = f'marks_{student.id}_{cat.id}'
+                if mark_key in request.POST:
+                    mark_val = request.POST[mark_key]
+                    if mark_val:
+                        InternalMark.objects.update_or_create(
+                            student=student,
+                            category=cat,
+                            academic_class=selected_class,
+                            defaults={'marks_obtained': float(mark_val), 'college': request.college}
+                        )
+                    else:
+                        InternalMark.objects.filter(
+                            student=student,
+                            category=cat,
+                            academic_class=selected_class
+                        ).delete()
+        messages.success(request, 'Marks saved successfully.')
+        return redirect(f"{request.path}?class_id={selected_class.id}")
+        
+    marks_dict = {}
+    if selected_class:
+        for student in students:
+            marks_dict[student.id] = {}
+            marks = InternalMark.objects.filter(student=student, academic_class=selected_class)
+            for m in marks:
+                marks_dict[student.id][m.category.id] = m.marks_obtained
+                
+    return render(request, 'management/internal_marks.html', {
+        'classes': classes,
+        'selected_class': selected_class,
+        'categories': categories,
+        'students': students,
+        'marks_dict': marks_dict
+    })
+
+@login_required
+def submit_assignment(request, pk):
+    if request.user.role != 'STUDENT': return redirect('dashboard')
+    assignment = get_object_or_404(Assignment, pk=pk)
+    
+    student = request.user.student_profile
+    submission = Submission.objects.filter(assignment=assignment, student=student).first()
+    
+    if request.method == 'POST':
+        if 'file' in request.FILES:
+            if not submission:
+                submission = Submission(assignment=assignment, student=student, college=request.college)
+            submission.file = request.FILES['file']
+            submission.save()
+            messages.success(request, 'Assignment submitted successfully.')
+            return redirect('student_assignments')
+            
+    return render(request, 'management/submit_assignment.html', {'assignment': assignment, 'submission': submission})

@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import PasswordChangeForm
-from .models import StudentProfile, TeacherProfile, Department, Specialization, Assignment, Attendance, HODProfile, TimeTable, ExamNotification
+from .models import StudentProfile, TeacherProfile, Department, Specialization, Assignment, Attendance, HODProfile, TimeTable, ExamNotification, AcademicClass, InternalMarkCategory, Subject
 from accounts.models import CustomUser
 from colleges.models import College
 
@@ -14,6 +14,7 @@ DISTRICT_CHOICES = [
 ]
 
 class CollegeSettingsForm(forms.ModelForm):
+    district = forms.ChoiceField(choices=DISTRICT_CHOICES, widget=forms.Select(attrs={'class': 'form-select'}), required=False)
     university_affiliation = forms.MultipleChoiceField(
         choices=[
             ('University of Kerala', 'University of Kerala'),
@@ -32,7 +33,6 @@ class CollegeSettingsForm(forms.ModelForm):
         fields = ['logo', 'address', 'district', 'website', 'theme_color', 'university_affiliation']
         widgets = {
             'address': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
-            'district': forms.Select(attrs={'class': 'form-select'}),
             'website': forms.URLInput(attrs={'class': 'form-control'}),
             'theme_color': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'}),
             'logo': forms.FileInput(attrs={'class': 'form-control'}),
@@ -63,7 +63,8 @@ class StudentForm(forms.Form):
     last_passout_year = forms.IntegerField(required=False, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Year of last completion'}))
 
     department = forms.ModelChoiceField(queryset=Department.objects.none(), widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_department'}))
-    specialization = forms.ModelChoiceField(queryset=Specialization.objects.none(), required=False, label="Class", widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_specialization'}))
+    specialization = forms.ModelChoiceField(queryset=Specialization.objects.none(), required=False, label="Specialization", widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_specialization'}))
+    academic_class = forms.ModelChoiceField(queryset=AcademicClass.objects.none(), required=False, label="Academic Class", widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_academic_class'}))
 
     def __init__(self, *args, **kwargs):
         college = kwargs.pop('college', None)
@@ -75,9 +76,11 @@ class StudentForm(forms.Form):
                 self.fields['department'].queryset = Department.objects.filter(id=user_dept.id)
                 self.fields['department'].initial = user_dept
                 self.fields['specialization'].queryset = Specialization.objects.filter(department=user_dept)
+                self.fields['academic_class'].queryset = AcademicClass.objects.filter(department=user_dept)
             else:
                 self.fields['department'].queryset = Department.objects.filter(college=college)
                 self.fields['specialization'].queryset = Specialization.objects.filter(college=college)
+                self.fields['academic_class'].queryset = AcademicClass.objects.filter(college=college)
 
 class StudentEditForm(forms.ModelForm):
     first_name = forms.CharField(max_length=100, widget=forms.TextInput(attrs={'class': 'form-control'}))
@@ -86,7 +89,7 @@ class StudentEditForm(forms.ModelForm):
     
     class Meta:
         model = StudentProfile
-        fields = ['profile_photo', 'phone_number', 'address', 'father_name', 'mother_name', 'date_of_birth']
+        fields = ['profile_photo', 'phone_number', 'address', 'father_name', 'mother_name', 'date_of_birth', 'academic_class', 'university_reg_number', 'roll_number', 'last_passout_year', 'department', 'specialization']
         widgets = {
             'profile_photo': forms.FileInput(attrs={'class': 'form-control'}),
             'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
@@ -94,14 +97,34 @@ class StudentEditForm(forms.ModelForm):
             'father_name': forms.TextInput(attrs={'class': 'form-control'}),
             'mother_name': forms.TextInput(attrs={'class': 'form-control'}),
             'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'academic_class': forms.Select(attrs={'class': 'form-select'}),
+            'university_reg_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'roll_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_passout_year': forms.NumberInput(attrs={'class': 'form-control'}),
+            'department': forms.Select(attrs={'class': 'form-select'}),
+            'specialization': forms.Select(attrs={'class': 'form-select'}),
         }
 
     def __init__(self, *args, **kwargs):
+        college = kwargs.pop('college', None)
+        user_role = kwargs.pop('user_role', None)
+        user_dept = kwargs.pop('user_dept', None)
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.user:
             self.fields['first_name'].initial = self.instance.user.first_name
             self.fields['last_name'].initial = self.instance.user.last_name
             self.fields['email'].initial = self.instance.user.email
+            
+        if college:
+            if user_role == 'HOD' and user_dept:
+                self.fields['department'].queryset = Department.objects.filter(id=user_dept.id)
+                self.fields['department'].initial = user_dept
+                self.fields['specialization'].queryset = Specialization.objects.filter(department=user_dept)
+                self.fields['academic_class'].queryset = AcademicClass.objects.filter(department=user_dept)
+            else:
+                self.fields['department'].queryset = Department.objects.filter(college=college)
+                self.fields['specialization'].queryset = Specialization.objects.filter(college=college)
+                self.fields['academic_class'].queryset = AcademicClass.objects.filter(college=college)
 
 class UserEditForm(forms.ModelForm):
     email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
@@ -277,3 +300,39 @@ class ExamNotificationForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'exam_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         }
+
+class AcademicClassForm(forms.ModelForm):
+    class Meta:
+        model = AcademicClass
+        fields = ['name', 'number_of_periods']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., S1 B.Tech CS'}),
+            'number_of_periods': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'max': '15'}),
+        }
+
+class SubjectForm(forms.ModelForm):
+    class Meta:
+        model = Subject
+        fields = ['academic_class', 'name', 'code']
+        widgets = {
+            'academic_class': forms.Select(attrs={'class': 'form-select'}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Engineering Mathematics'}),
+            'code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., MAT101'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        department = kwargs.pop('department', None)
+        super().__init__(*args, **kwargs)
+        if department:
+            self.fields['academic_class'].queryset = AcademicClass.objects.filter(department=department)
+            self.fields['academic_class'].empty_label = "Select Class/Semester"
+
+class InternalMarkCategoryForm(forms.ModelForm):
+    class Meta:
+        model = InternalMarkCategory
+        fields = ['name', 'max_marks']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Attendance'}),
+            'max_marks': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'max': '1000'}),
+        }
+

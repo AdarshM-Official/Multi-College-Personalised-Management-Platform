@@ -28,6 +28,9 @@
                         <a href="#branding" class="list-group-item list-group-item-action py-3 px-4 border-0">
                             <i class="bi bi-palette me-2"></i> Branding & Logo
                         </a>
+                        <a href="#leadership" class="list-group-item list-group-item-action py-3 px-4 border-0">
+                            <i class="bi bi-person-badge me-2"></i> Leadership
+                        </a>
                         <a href="#achievements" class="list-group-item list-group-item-action py-3 px-4 border-0">
                             <i class="bi bi-trophy me-2"></i> Achievements
                         </a>
@@ -48,6 +51,22 @@
             <div class="col-md-9">
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
+                    
+                    {% if form.errors %}
+                    <div class="alert alert-danger shadow-sm rounded-4 mb-4">
+                        <h6 class="fw-bold mb-2"><i class="bi bi-exclamation-triangle-fill me-2"></i>Please correct the following errors:</h6>
+                        <ul class="mb-0 small">
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                    <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
 
                     <!-- General Info -->
                     <div id="general" class="card border-0 shadow-sm rounded-4 mb-4">
@@ -144,6 +163,76 @@
                                     <div class="form-text x-small">Recommended: Square PNG with transparent background.</div>
                                 </div>
                             </div>
+                            <hr class="border-light my-4">
+                            <div class="row align-items-center">
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Primary Brand Color</label>
+                                    <div class="d-flex align-items-center gap-3">
+                                        {{ form.theme_color }}
+                                        <div class="form-text x-small mb-0">Used across your public portals.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Leadership -->
+                    <div id="leadership" class="card border-0 shadow-sm rounded-4 mb-4">
+                        <div class="card-header bg-white py-3 px-4 border-light d-flex justify-content-between align-items-center">
+                            <h6 class="fw-bold mb-0">Leadership & Administration</h6>
+                            <span class="badge bg-light text-primary rounded-pill small fw-normal">{{ college.leaders.count }} Listed</span>
+                        </div>
+                        <div class="card-body p-4">
+                            <!-- Add New Leader -->
+                            <div class="bg-light p-3 rounded-4 mb-4">
+                                <h6 class="x-small fw-bold text-uppercase text-muted mb-3 letter-spacing-1">Add Important Person</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <input type="text" name="leader_name" class="form-control form-control-sm" placeholder="Name (e.g. Dr. Jane Smith)">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="text" name="leader_designation" class="form-control form-control-sm" placeholder="Designation (e.g. Principal)">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label small text-muted">Profile Photo</label>
+                                        <input type="file" name="leader_image" class="form-control form-control-sm" accept="image/*">
+                                    </div>
+                                    <div class="col-12">
+                                        <textarea name="leader_bio" class="form-control form-control-sm" rows="3" placeholder="Brief bio or welcome message..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- List -->
+                            {% if college.leaders.exists %}
+                            <div class="list-group list-group-flush border-top">
+                                {% for leader in college.leaders.all|dictsort:"order" %}
+                                <div class="list-group-item px-0 py-3 border-light">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center gap-3">
+                                            {% if leader.image %}
+                                            <img src="{{ leader.image.url }}" class="rounded-circle object-fit-cover" width="40" height="40">
+                                            {% else %}
+                                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                <i class="bi bi-person text-muted"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <h6 class="fw-bold mb-0 small text-dark">{{ leader.name }}</h6>
+                                                <p class="x-small text-muted mb-0">{{ leader.designation }}</p>
+                                            </div>
+                                        </div>
+                                        <a href="{% url 'delete_college_leader' leader.id %}" class="btn btn-sm btn-outline-danger border-0" onclick="return confirm('Remove this person?')"><i class="bi bi-trash3-fill"></i></a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4 border rounded-4 border-dashed">
+                                <i class="bi bi-people display-6 text-muted opacity-25"></i>
+                                <p class="small text-muted mb-0">No leadership personnel added yet.</p>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -204,7 +293,7 @@
                                 <label class="form-label small fw-bold">Upload New Images</label>
                                 <div class="row g-2">
                                     <div class="col-md-8">
-                                        <input type="file" name="gallery_images" multiple class="form-control" accept="image/*">
+                                        <input type="file" name="gallery_images[]" multiple="multiple" class="form-control" accept="image/*">
                                     </div>
                                     <div class="col-md-4">
                                         <select name="image_category" class="form-select">
@@ -216,7 +305,7 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="form-text x-small mt-1">Select photos and assign them to a category. You can select multiple images per category.</div>
+                                <div class="form-text x-small mt-1">Select photos and assign them to a category. You can select multiple images per category. <strong>(Hold Ctrl/Cmd while clicking to select multiple files)</strong></div>
                             </div>
                             
                             {% if college.images.exists %}
