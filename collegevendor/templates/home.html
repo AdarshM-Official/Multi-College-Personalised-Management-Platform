@@ -364,6 +364,9 @@
         overflow: hidden;
         transition: all 0.3s ease;
         box-shadow: 0 15px 35px rgba(0,0,0,0.04);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
     }
     .pricing-card:hover { transform: translateY(-8px); box-shadow: 0 25px 50px rgba(0,0,0,0.08); }
     .pricing-popular {
@@ -384,14 +387,64 @@
     .pricing-price {
         font-size: 3.5rem; font-weight: 900; color: var(--cm-primary);
         margin: 1.5rem 0; letter-spacing: -2px;
+        transition: opacity 0.15s ease-in-out;
     }
     .pricing-price span { font-size: 1.2rem; color: var(--cm-text-light); font-weight: 600; letter-spacing: 0; }
-    .pricing-list { list-style: none; padding: 0; margin: 2.5rem 0; }
+    .pricing-list { list-style: none; padding: 0; margin: 2.5rem 0; flex-grow: 1; }
     .pricing-list li {
         display: flex; align-items: center; gap: 1rem;
         margin-bottom: 1.25rem; color: var(--cm-text); font-size: 1rem; font-weight: 500;
     }
     .pricing-list i { color: var(--cm-accent); font-size: 1.2rem;}
+    .pricing-list li.disabled {
+        color: var(--cm-text-light);
+        opacity: 0.55;
+    }
+    .pricing-list li.disabled i {
+        color: var(--cm-text-light);
+        opacity: 0.5;
+    }
+
+    /* Billing Switch Custom Styling */
+    .custom-switch-label {
+        width: 56px;
+        height: 28px;
+        background-color: var(--cm-border);
+        border-radius: 100px;
+        position: relative;
+        cursor: pointer;
+        display: inline-block;
+        transition: background-color 0.3s ease;
+        vertical-align: middle;
+    }
+    .custom-switch-thumb {
+        width: 22px;
+        height: 22px;
+        background-color: white;
+        border-radius: 50%;
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .custom-switch-input:checked + .custom-switch-label {
+        background-color: var(--cm-accent);
+    }
+    .custom-switch-input:checked + .custom-switch-label .custom-switch-thumb {
+        transform: translateX(28px);
+    }
+    .bg-indigo-soft {
+        background-color: rgba(99, 102, 241, 0.1);
+        color: #4f46e5;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-weight: 700;
+    }
+    .active-billing {
+        color: var(--cm-primary) !important;
+        font-weight: 700 !important;
+    }
 
     /* Footer */
     .footer-clean {
@@ -634,27 +687,45 @@
 </section>
 
 <!-- Pricing Section -->
-<section class="container py-5 my-5">
-    <div class="text-center mb-5">
+<section class="container py-5 my-5" id="pricing">
+    <div class="text-center mb-4">
         <div class="pill-badge mb-3"><i class="bi bi-tag"></i> Simple Plans</div>
         <h2 class="hero-title" style="font-size: 3rem;">Transparent Pricing</h2>
         <p class="hero-subtitle mx-auto">Plans tailored to institutions of any scale.</p>
     </div>
 
-    <div class="row g-4 align-items-center justify-content-center">
+    <!-- Billing Switch -->
+    <div class="d-flex justify-content-center align-items-center gap-3 mb-5">
+        <span class="fw-semibold text-muted" id="billing-monthly-label" style="font-size: 0.95rem; transition: color 0.2s;">Monthly Billing</span>
+        <div class="form-check form-switch p-0 m-0">
+            <input class="custom-switch-input" type="checkbox" id="billingToggle" style="display: none;">
+            <label class="custom-switch-label" for="billingToggle">
+                <span class="custom-switch-thumb"></span>
+            </label>
+        </div>
+        <span class="fw-semibold text-muted d-flex align-items-center gap-2" id="billing-yearly-label" style="font-size: 0.95rem; transition: color 0.2s;">
+            Annual Billing
+            <span class="bg-indigo-soft text-indigo" style="font-size: 0.75rem; border: 1px solid rgba(99, 102, 241, 0.2);">Save 20%</span>
+        </span>
+    </div>
+
+    <div class="row g-4 align-items-stretch justify-content-center">
         <!-- Starter Plan -->
         <div class="col-lg-4 col-md-6">
             <div class="pricing-card">
                 <h4 class="fw-bold" style="color: var(--cm-primary); letter-spacing:-0.5px;">Starter</h4>
                 <p class="text-muted">Perfect for emerging academies</p>
-                <div class="pricing-price">$0<span> /mo</span></div>
+                <div class="pricing-price">₹0<span> /mo</span></div>
                 <ul class="pricing-list">
-                    <li><i class="bi bi-check2-circle"></i> Up to 500 Students</li>
+                    <li><i class="bi bi-check2-circle"></i> Up to 200 Students</li>
+                    <li><i class="bi bi-check2-circle"></i> 1 Department</li>
                     <li><i class="bi bi-check2-circle"></i> Basic Attendance Tracking</li>
+                    <li><i class="bi bi-check2-circle"></i> Standard Gradebook</li>
                     <li><i class="bi bi-check2-circle"></i> Community Support</li>
-                    <li class="text-muted opacity-50"><i class="bi bi-x-circle text-muted"></i> Matrix Timetables</li>
+                    <li class="disabled"><i class="bi bi-x-circle"></i> Matrix Timetable Engine</li>
+                    <li class="disabled"><i class="bi bi-x-circle"></i> Custom Domain Integration</li>
                 </ul>
-                <a href="{% url 'register_college' %}" class="btn btn-secondary-hero w-100 justify-content-center">Start Free</a>
+                <a href="{% url 'register_college' %}" class="btn btn-secondary-hero w-100 justify-content-center mt-auto">Start Free</a>
             </div>
         </div>
         
@@ -663,15 +734,37 @@
             <div class="pricing-card pricing-popular">
                 <div class="popular-badge">MOST POPULAR</div>
                 <h4 class="fw-bold" style="color: var(--cm-primary); letter-spacing:-0.5px;">Professional</h4>
-                <p class="text-muted">For growing universities</p>
-                <div class="pricing-price">$299<span> /mo</span></div>
+                <p class="text-muted">For growing colleges & schools</p>
+                <div class="pricing-price" id="proPrice"><span class="price-amount" id="proPriceNum">₹24,999</span><span id="proPricePeriod"> /mo</span></div>
                 <ul class="pricing-list">
-                    <li><i class="bi bi-check2-circle"></i> Unlimited Students</li>
+                    <li><i class="bi bi-check2-circle"></i> Up to 1,500 Students</li>
+                    <li><i class="bi bi-check2-circle"></i> Unlimited Departments</li>
+                    <li><i class="bi bi-check2-circle"></i> Matrix Timetable Shuffle Engine</li>
                     <li><i class="bi bi-check2-circle"></i> Advanced Internal Marks</li>
-                    <li><i class="bi bi-check2-circle"></i> Matrix Timetable Engine</li>
-                    <li><i class="bi bi-check2-circle"></i> Priority Support</li>
+                    <li><i class="bi bi-check2-circle"></i> Tenant Isolation & Custom Branding</li>
+                    <li><i class="bi bi-check2-circle"></i> Priority Email Support</li>
+                    <li class="disabled"><i class="bi bi-x-circle"></i> Custom Domain Integration</li>
                 </ul>
-                <a href="{% url 'register_college' %}" class="btn btn-primary-hero w-100 justify-content-center">Start 14-Day Trial</a>
+                <a href="{% url 'register_college' %}" class="btn btn-primary-hero w-100 justify-content-center mt-auto">Start 14-Day Trial</a>
+            </div>
+        </div>
+
+        <!-- Enterprise Plan -->
+        <div class="col-lg-4 col-md-6">
+            <div class="pricing-card">
+                <h4 class="fw-bold" style="color: var(--cm-primary); letter-spacing:-0.5px;">Enterprise</h4>
+                <p class="text-muted">For full-scale universities</p>
+                <div class="pricing-price">Custom</div>
+                <ul class="pricing-list">
+                    <li><i class="bi bi-check2-circle"></i> Unlimited Students & Staff</li>
+                    <li><i class="bi bi-check2-circle"></i> Full White-Label UI Branding</li>
+                    <li><i class="bi bi-check2-circle"></i> Custom Domain Mapping</li>
+                    <li><i class="bi bi-check2-circle"></i> Dedicated Account Manager</li>
+                    <li><i class="bi bi-check2-circle"></i> 99.9% Uptime SLA</li>
+                    <li><i class="bi bi-check2-circle"></i> Bulk Data Migration Service</li>
+                    <li><i class="bi bi-check2-circle"></i> 24/7 Phone & Email Support</li>
+                </ul>
+                <a href="mailto:sales@collegemanager.com?subject=Enterprise Inquiry" class="btn btn-secondary-hero w-100 justify-content-center mt-auto">Contact Sales</a>
             </div>
         </div>
     </div>
@@ -766,4 +859,46 @@
     </div>
 </footer>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const billingToggle = document.getElementById('billingToggle');
+        const proPriceNum = document.getElementById('proPriceNum');
+        const proPricePeriod = document.getElementById('proPricePeriod');
+        const billingMonthlyLabel = document.getElementById('billing-monthly-label');
+        const billingYearlyLabel = document.getElementById('billing-yearly-label');
+        
+        // Initial active class
+        billingMonthlyLabel.classList.add('active-billing');
+
+        billingToggle.addEventListener('change', function() {
+            if (this.checked) {
+                // Year billing
+                billingMonthlyLabel.classList.remove('active-billing');
+                billingYearlyLabel.classList.add('active-billing');
+                
+                // Animate price change
+                proPriceNum.style.opacity = '0';
+                setTimeout(() => {
+                    proPriceNum.innerText = '₹19,999';
+                    proPriceNum.style.opacity = '1';
+                }, 150);
+                
+                proPricePeriod.innerText = ' /mo, billed annually';
+            } else {
+                // Month billing
+                billingMonthlyLabel.classList.add('active-billing');
+                billingYearlyLabel.classList.remove('active-billing');
+                
+                // Animate price change
+                proPriceNum.style.opacity = '0';
+                setTimeout(() => {
+                    proPriceNum.innerText = '₹24,999';
+                    proPriceNum.style.opacity = '1';
+                }, 150);
+                
+                proPricePeriod.innerText = ' /mo';
+            }
+        });
+    });
+</script>
 {% endblock %}
