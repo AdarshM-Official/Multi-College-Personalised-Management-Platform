@@ -45,10 +45,13 @@ urlpatterns = [
     # Assignments
     path('assignments/', views.assignment_list, name='assignment_list'),
     path('assignments/create/', views.create_assignment, name='create_assignment'),
+    path('assignments/edit/<int:pk>/', views.edit_assignment, name='edit_assignment'),
+    path('assignments/delete/<int:pk>/', views.delete_assignment, name='delete_assignment'),
     
     # Attendance
     path('attendance/', views.mark_attendance, name='mark_attendance'),
     path('attendance/report/print/', views.print_monthly_attendance_report, name='print_monthly_attendance_report'),
+    path('attendance/report/print/6month/', views.print_six_month_attendance_report, name='print_six_month_attendance_report'),
     
     # Internal Marks
     path('internal-marks/', views.internal_marks_list, name='internal_marks_list'),

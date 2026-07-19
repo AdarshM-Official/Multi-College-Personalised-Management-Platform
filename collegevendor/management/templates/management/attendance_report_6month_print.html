@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>6-Month Attendance Report - {{ selected_class.name }}</title>
+    <!-- Include Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', -apple-system, sans-serif;
+            color: #334155;
+        }
+        .print-container {
+            background: white;
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        .table-attendance th {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.6rem;
+            text-align: center;
+            background-color: #f1f5f9;
+            border: 1px solid #cbd5e1;
+        }
+        .table-attendance td {
+            font-size: 0.8rem;
+            padding: 0.6rem;
+            text-align: center;
+            border: 1px solid #cbd5e1;
+        }
+        .action-bar {
+            background: #1e293b;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        @media print {
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+            }
+            .print-container {
+                box-shadow: none;
+                margin: 0;
+                padding: 1rem;
+                max-width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+            @page {
+                size: A4 landscape;
+                margin: 1cm;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid px-4 py-3">
+    <!-- Floating Action Bar for Web View -->
+    <div class="action-bar no-print d-flex justify-content-between align-items-center">
+        <div>
+            <h6 class="fw-bold mb-0 text-white"><i class="bi bi-file-pdf-fill text-danger me-2"></i>6-Month PDF Report Generator</h6>
+            <small class="text-white-50">Save this page as a PDF using your browser's print dialog (Landscape layout recommended).</small>
+        </div>
+        <div class="d-flex gap-2">
+            <button onclick="window.print();" class="btn btn-primary btn-sm fw-bold px-3 py-2" style="border-radius: 8px;">
+                <i class="bi bi-printer me-1"></i> Print / Save PDF
+            </button>
+            <button onclick="window.close();" class="btn btn-outline-light btn-sm fw-bold px-3 py-2" style="border-radius: 8px;">
+                Close Preview
+            </button>
+        </div>
+    </div>
+
+    <!-- Printable Report Container -->
+    <div class="print-container">
+        <!-- Report Header -->
+        <div class="row border-bottom pb-4 mb-4">
+            <div class="col-6">
+                <h4 class="fw-bold mb-1 text-dark">{{ request.college.name }}</h4>
+                <p class="text-muted small mb-0"><i class="bi bi-building me-1"></i> Department of {{ selected_class.department.name }}</p>
+            </div>
+            <div class="col-6 text-end">
+                <h5 class="fw-bold mb-1 text-primary">6-Month Attendance Summary</h5>
+                <p class="text-muted small mb-0">Period: <strong>{{ start_title }}</strong> to <strong>{{ end_title }}</strong> &bull; Class: <strong>{{ selected_class.name }}</strong></p>
+            </div>
+        </div>
+
+        <!-- Report Content Grid -->
+        <div class="row g-4">
+            <!-- Left Side: Stats Column -->
+            <div class="col-md-3">
+                <div class="d-flex flex-column gap-3">
+                    <div class="p-3 bg-light rounded-3 border text-center">
+                        <span class="text-muted small d-block">Overall Present Rate</span>
+                        <strong class="fs-5 text-success">{{ present_rate }}%</strong>
+                    </div>
+                    <div class="p-3 bg-light rounded-3 border text-center">
+                        <span class="text-muted small d-block">Overall Absent Rate</span>
+                        <strong class="fs-5 text-danger">{{ absent_rate }}%</strong>
+                    </div>
+                    <div class="p-3 bg-light rounded-3 border text-center">
+                        <span class="text-muted small d-block">Overall Tardy Rate</span>
+                        <strong class="fs-5 text-warning">{{ late_rate }}%</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: 6-Month Summary Table -->
+            <div class="col-md-9">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover table-attendance align-middle">
+                        <thead>
+                            <tr>
+                                <th class="ps-3 text-start" style="min-width: 80px;">Roll No</th>
+                                <th class="text-start" style="min-width: 150px;">Student Name</th>
+                                {% for month_info in months_list %}
+                                    <th>{{ month_info.short_name }}</th>
+                                {% endfor %}
+                                <th class="bg-light" style="width: 50px;">P</th>
+                                <th class="bg-light" style="width: 50px;">A</th>
+                                <th class="bg-light" style="width: 50px;">L</th>
+                                <th class="bg-light" style="width: 70px;">%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in rows %}
+                            <tr>
+                                <td class="ps-3 text-start fw-bold text-muted">#{{ row.roll_no }}</td>
+                                <td class="text-start fw-bold text-dark">{{ row.name }}</td>
+                                {% for pct in row.month_pcts %}
+                                    <td class="fw-semibold">{{ pct }}</td>
+                                {% endfor %}
+                                <td class="fw-bold text-success">{{ row.p_count }}</td>
+                                <td class="fw-bold text-danger">{{ row.a_count }}</td>
+                                <td class="fw-bold text-warning">{{ row.l_count }}</td>
+                                <td class="fw-black text-primary">{{ row.pct }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Footer -->
+        <div class="row mt-5 pt-4 border-top">
+            <div class="col-6">
+                <small class="text-muted">Report generated on {% now "F d, Y H:i" %}</small>
+            </div>
+            <div class="col-6 text-end">
+                <span class="border-top pt-2 d-inline-block px-5 small text-muted fw-bold">Head of Department Signature</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Automatically trigger print dialog on page load
+    window.onload = function() {
+        setTimeout(function() {
+            window.print();
+        }, 500);
+    };
+</script>
+
+</body>
+</html>

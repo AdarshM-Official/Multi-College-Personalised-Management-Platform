@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Create Assignment | {{ request.college.name }}{% endblock %}
+{% block title %}{% if is_edit %}Edit Assignment{% else %}Create Assignment{% endif %} | {{ request.college.name }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -141,11 +141,11 @@
         <div class="form-card">
             <div class="form-header">
                 <div class="header-icon">
-                    <i class="bi bi-file-earmark-plus"></i>
+                    <i class="bi {% if is_edit %}bi-pencil-square{% else %}bi-file-earmark-plus{% endif %}"></i>
                 </div>
                 <div>
-                    <h4 class="fw-bold mb-1" style="color: var(--prof-dark);">Publish Assignment</h4>
-                    <p class="text-muted small mb-0">Create a new task and distribute it to your assigned students.</p>
+                    <h4 class="fw-bold mb-1" style="color: var(--prof-dark);">{% if is_edit %}Edit Assignment{% else %}Publish Assignment{% endif %}</h4>
+                    <p class="text-muted small mb-0">{% if is_edit %}Modify details for your assignment.{% else %}Create a new task and distribute it to your assigned students.{% endif %}</p>
                 </div>
             </div>
             
@@ -155,12 +155,12 @@
                     
                     <div class="mb-4">
                         <label class="form-label">Assignment Title</label>
-                        <input type="text" name="title" class="form-control form-control-lg fs-6" placeholder="e.g., Data Structures Mid-Term Project" required>
+                        <input type="text" name="title" class="form-control form-control-lg fs-6" placeholder="e.g., Data Structures Mid-Term Project" value="{{ form.title.value|default_if_none:'' }}" required>
                     </div>
                     
                     <div class="mb-4">
                         <label class="form-label">Detailed Instructions</label>
-                        <textarea name="description" class="form-control" rows="6" placeholder="Provide clear requirements, grading criteria, and instructions for the students..." required></textarea>
+                        <textarea name="description" class="form-control" rows="6" placeholder="Provide clear requirements, grading criteria, and instructions for the students..." required>{{ form.description.value|default_if_none:'' }}</textarea>
                     </div>
                     
                     <div class="row g-4 mb-5">
@@ -170,13 +170,16 @@
                                 <i class="bi bi-cloud-arrow-up fs-3 text-muted mb-2 d-block"></i>
                                 <span class="fw-bold" style="color: var(--prof-primary);">Click to upload</span> or drag and drop
                                 <p class="small text-muted mt-1 mb-0">PDF, DOCX, ZIP up to 10MB</p>
-                                <input type="file" name="file" required>
+                                <input type="file" name="file" {% if not is_edit %}required{% endif %}>
                             </div>
+                            {% if is_edit and form.instance.file %}
+                            <p class="small text-muted mt-2 mb-0">Current file: <a href="{{ form.instance.file.url }}" target="_blank">{{ form.instance.file.name|default:"Download File" }}</a></p>
+                            {% endif %}
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Submission Deadline</label>
                             <div class="position-relative">
-                                <input type="datetime-local" name="deadline" class="form-control" style="padding-left: 2.5rem;" required>
+                                <input type="datetime-local" name="deadline" class="form-control" style="padding-left: 2.5rem;" value="{{ form.deadline.value|date:'Y-m-d\TH:i' }}" required>
                                 <i class="bi bi-calendar-event position-absolute" style="top: 50%; transform: translateY(-50%); left: 1rem; color: var(--prof-gray-600);"></i>
                             </div>
                             <div class="mt-3 p-3 rounded" style="background: var(--prof-gray-50); border: 1px solid var(--prof-gray-200);">
@@ -190,9 +193,9 @@
                     
                     <div class="d-flex align-items-center gap-3 pt-3 border-top">
                         <button type="submit" class="btn-submit">
-                            <i class="bi bi-send me-2"></i>Publish Assignment
+                            <i class="bi bi-send me-2"></i>{% if is_edit %}Save Changes{% else %}Publish Assignment{% endif %}
                         </button>
-                        <a href="{% url 'dashboard' %}" class="btn-cancel">Cancel</a>
+                        <a href="{% url 'assignment_list' %}" class="btn-cancel">Cancel</a>
                     </div>
                 </form>
             </div>

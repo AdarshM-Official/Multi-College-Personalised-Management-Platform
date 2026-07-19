@@ -149,11 +149,18 @@
         }
     }
     
-    /* Mobile Adjustments */
-    @media (max-width: 768px) {
-        .glass-header {
-            padding: 1.5rem;
-        }
+    
+    /* Report tabs styling */
+    #reportTabs .nav-link {
+        color: #475569;
+        background: transparent;
+        transition: all 0.2s ease;
+        border: none;
+    }
+    #reportTabs .nav-link.active {
+        color: #ef4444 !important;
+        background: white !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     }
 </style>
 {% endblock %}
@@ -208,7 +215,7 @@
     </div>
 
     {% if request.user.role == 'HOD' %}
-    <!-- Monthly Attendance Report Card -->
+    <!-- Attendance Reports Card -->
     <div class="col-lg-4">
         <div class="card border-0 shadow-sm p-4 bg-white h-100 d-flex flex-column justify-content-between" style="border-radius: 20px; border: 1px solid rgba(241, 245, 249, 0.8) !important;">
             <div>
@@ -217,31 +224,74 @@
                         <i class="bi bi-file-pdf-fill fs-4"></i>
                     </div>
                     <div>
-                        <h5 class="fw-bold mb-0 text-dark">Monthly Report</h5>
-                        <small class="text-muted">Generate printable PDF report</small>
+                        <h5 class="fw-bold mb-0 text-dark">Attendance Reports</h5>
+                        <small class="text-muted">Generate printable PDF reports</small>
                     </div>
                 </div>
                 
-                <form action="{% url 'print_monthly_attendance_report' %}" method="get" target="_blank">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold text-muted small mb-1" style="text-transform: none; letter-spacing: normal;">Academic Class</label>
-                        <select name="class_id" class="form-select" required>
-                            <option value="">-- Select Class --</option>
-                            {% for c in academic_classes %}
-                                <option value="{{ c.id }}" {% if selected_class and selected_class.id == c.id %}selected{% endif %}>{{ c.name }}</option>
-                            {% endfor %}
-                        </select>
+                <!-- Report Tabs -->
+                <ul class="nav nav-pills gap-1 p-1 bg-light rounded-3 mb-4" id="reportTabs" role="tablist" style="font-size: 0.85rem;">
+                    <li class="nav-item flex-fill" role="presentation">
+                        <button class="nav-link active py-2 w-100 fw-bold border-0 text-center" id="monthly-report-tab" data-bs-toggle="pill" data-bs-target="#monthly-report-pane" type="button" role="tab" style="border-radius: 8px;">
+                            Monthly
+                        </button>
+                    </li>
+                    <li class="nav-item flex-fill" role="presentation">
+                        <button class="nav-link py-2 w-100 fw-bold border-0 text-center" id="sixmonth-report-tab" data-bs-toggle="pill" data-bs-target="#sixmonth-report-pane" type="button" role="tab" style="border-radius: 8px;">
+                            6-Month
+                        </button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="reportTabsContent">
+                    <!-- Pane 1: Monthly Report Form -->
+                    <div class="tab-pane fade show active" id="monthly-report-pane" role="tabpanel">
+                        <form action="{% url 'print_monthly_attendance_report' %}" method="get" target="_blank">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted small mb-1" style="text-transform: none; letter-spacing: normal;">Academic Class</label>
+                                <select name="class_id" class="form-select" required>
+                                    <option value="">-- Select Class --</option>
+                                    {% for c in academic_classes %}
+                                        <option value="{{ c.id }}" {% if selected_class and selected_class.id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-muted small mb-1" style="text-transform: none; letter-spacing: normal;">Select Month</label>
+                                <input type="month" name="month" class="form-control" value="{{ current_month }}" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-danger w-100 py-2.5 fw-bold shadow-sm" style="border-radius: 12px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none;">
+                                <i class="bi bi-file-pdf-fill me-2"></i> Generate Monthly Report
+                            </button>
+                        </form>
                     </div>
                     
-                    <div class="mb-4">
-                        <label class="form-label fw-bold text-muted small mb-1" style="text-transform: none; letter-spacing: normal;">Select Month</label>
-                        <input type="month" name="month" class="form-control" value="{{ current_month }}" required>
+                    <!-- Pane 2: 6-Month Report Form -->
+                    <div class="tab-pane fade" id="sixmonth-report-pane" role="tabpanel">
+                        <form action="{% url 'print_six_month_attendance_report' %}" method="get" target="_blank">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted small mb-1" style="text-transform: none; letter-spacing: normal;">Academic Class</label>
+                                <select name="class_id" class="form-select" required>
+                                    <option value="">-- Select Class --</option>
+                                    {% for c in academic_classes %}
+                                        <option value="{{ c.id }}" {% if selected_class and selected_class.id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-muted small mb-1" style="text-transform: none; letter-spacing: normal;">Select Start Month</label>
+                                <input type="month" name="start_month" class="form-control" value="{{ current_month }}" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-danger w-100 py-2.5 fw-bold shadow-sm" style="border-radius: 12px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none;">
+                                <i class="bi bi-file-pdf-fill me-2"></i> Generate 6-Month Report
+                            </button>
+                        </form>
                     </div>
-                    
-                    <button type="submit" class="btn btn-danger w-100 py-2.5 fw-bold shadow-sm" style="border-radius: 12px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none;">
-                        <i class="bi bi-file-pdf-fill me-2"></i> Generate PDF Report
-                    </button>
-                </form>
+                </div>
             </div>
         </div>
     </div>

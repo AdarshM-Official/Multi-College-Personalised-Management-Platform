@@ -4,358 +4,481 @@
 
 {% block extra_css %}
 <style>
-    /* Super Admin Dashboard Styles */
-    .metric-card-gradient-1 { background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); color: white; }
-    .metric-card-gradient-2 { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
-    .metric-card-gradient-3 { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
-    .metric-card-gradient-4 { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color: white; }
-
-    .metric-icon-bg {
-        position: absolute;
-        right: -10px;
-        bottom: -20px;
-        font-size: 6rem;
-        opacity: 0.15;
-        transform: rotate(-15deg);
-        line-height: 1;
+    /* Dashboard animations */
+    .fade-in-slide {
+        animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
-    .metric-card {
-        position: relative;
-        overflow: hidden;
+    /* Metric Cards */
+    .stat-card-white {
+        background: #ffffff;
         border-radius: 20px;
-        transition: transform 0.3s;
-        border: none;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        padding: 1.5rem;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.01);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
     }
+    .stat-card-white:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 16px 30px -10px rgba(0,0,0,0.08);
+        border-color: #cbd5e1;
+    }
+    .stat-card-white::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 5px;
+        border-radius: 20px 0 0 20px;
+    }
+    .stat-card-white.primary::before { background: var(--primary); }
+    .stat-card-white.success::before { background: #10b981; }
+    .stat-card-white.warning::before { background: #f59e0b; }
+    .stat-card-white.info::before { background: #8b5cf6; }
 
-    .metric-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-    }
-
-    /* Table Styles */
-    .table-sleek th {
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.5px;
-        color: var(--text-muted);
-        border-bottom: 2px solid var(--border);
-        padding: 1rem 1.5rem;
-        background: var(--surface-2);
-    }
-    
-    .table-sleek td {
-        padding: 1.25rem 1.5rem;
-        vertical-align: middle;
-        border-bottom: 1px solid var(--border);
-    }
-
-    .table-sleek tbody tr {
-        transition: background-color 0.2s;
-    }
-
-    .table-sleek tbody tr:hover {
-        background-color: var(--primary-soft);
-    }
-
-    .logo-orb {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        object-fit: contain;
-        background: white;
-        border: 2px solid var(--border);
-        padding: 4px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    }
-
-    .logo-orb-placeholder {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--surface-2) 0%, var(--border) 100%);
+    .stat-icon-box {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: var(--text-muted);
-        font-size: 1.25rem;
-        border: 2px solid var(--border);
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        font-size: 1.35rem;
+        transition: transform 0.3s;
+    }
+    .stat-card-white:hover .stat-icon-box {
+        transform: scale(1.08);
+    }
+    .bg-primary-light { background: rgba(99, 102, 241, 0.08); color: var(--primary); }
+    .bg-success-light { background: rgba(16, 185, 129, 0.08); color: #10b981; }
+    .bg-warning-light { background: rgba(245, 158, 11, 0.08); color: #f59e0b; }
+    .bg-info-light { background: rgba(139, 92, 246, 0.08); color: #8b5cf6; }
+
+    /* Custom Tables */
+    .premium-sleek-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    .premium-sleek-table th {
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        padding: 14px 20px;
+        background: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .premium-sleek-table td {
+        padding: 16px 20px;
+        background: white;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background-color 0.2s ease;
+    }
+    .premium-sleek-table tbody tr:hover td {
+        background-color: #f8fafc;
     }
 
-    /* Badges */
-    .badge-soft-success { background-color: rgba(16, 185, 129, 0.1); color: #10b981; }
-    .badge-soft-warning { background-color: rgba(245, 158, 11, 0.1); color: #f59e0b; }
-    .badge-soft-danger { background-color: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    /* Logo badges */
+    .badge-logo-orb {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        object-fit: contain;
+        background: #ffffff;
+        border: 1.5px solid #e2e8f0;
+        padding: 4px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.03);
+    }
+    .badge-logo-orb-placeholder {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #475569;
+        font-size: 1.15rem;
+        border: 1.5px solid #e2e8f0;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.03);
+    }
 
-    .sticky-sidebar {
+    /* Soft status badges */
+    .badge-status-soft {
+        font-weight: 700;
+        font-size: 0.72rem;
+        padding: 6px 14px;
+        border-radius: 50px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .status-success { background: rgba(16, 185, 129, 0.08); color: #10b981; border: 1.5px solid rgba(16, 185, 129, 0.15); }
+    .status-warning { background: rgba(245, 158, 11, 0.08); color: #f59e0b; border: 1.5px solid rgba(245, 158, 11, 0.15); }
+    .status-danger { background: rgba(239, 68, 68, 0.08); color: #ef4444; border: 1.5px solid rgba(239, 68, 68, 0.15); }
+
+    /* Sticky control panel */
+    .sticky-control-panel {
         position: sticky;
         top: 90px;
         z-index: 10;
+    }
+
+    /* Input styling updates */
+    .modern-form-input {
+        border: 1.5px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        padding: 0.65rem 1rem !important;
+        font-size: 0.9rem;
+        transition: all 0.3s;
+        background-color: #f8fafc !important;
+    }
+    .modern-form-input:focus {
+        border-color: var(--primary) !important;
+        background-color: #ffffff !important;
+        box-shadow: 0 0 0 4px var(--primary-soft) !important;
+    }
+
+    /* Welcome Card Styling */
+    .welcome-admin-banner {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-radius: 22px;
+        padding: 1.75rem 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+    .welcome-admin-banner::after {
+        content: '';
+        position: absolute;
+        top: -30%;
+        right: -5%;
+        width: 260px;
+        height: 260px;
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 60%);
+        border-radius: 50%;
+        pointer-events: none;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Gradient-Accented Metric Cards -->
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <div class="card metric-card metric-card-gradient-1 p-4">
-            <i class="bi bi-buildings-fill metric-icon-bg"></i>
-            <h1 class="fw-bold mb-1 position-relative z-1">{{ stats.total_colleges }}</h1>
-            <p class="small fw-medium mb-0 position-relative z-1 opacity-75">Total Institutions</p>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card metric-card metric-card-gradient-2 p-4">
-            <i class="bi bi-check-circle-fill metric-icon-bg"></i>
-            <h1 class="fw-bold mb-1 position-relative z-1">{{ stats.approved_colleges }}</h1>
-            <p class="small fw-medium mb-0 position-relative z-1 opacity-75">Active Portals</p>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card metric-card metric-card-gradient-3 p-4">
-            <i class="bi bi-hourglass-split metric-icon-bg"></i>
-            <h1 class="fw-bold mb-1 position-relative z-1">{{ pending_colleges.count }}</h1>
-            <p class="small fw-medium mb-0 position-relative z-1 opacity-75">Pending Approvals</p>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card metric-card metric-card-gradient-4 p-4">
-            <i class="bi bi-people-fill metric-icon-bg"></i>
-            <h1 class="fw-bold mb-1 position-relative z-1">{{ stats.total_users }}</h1>
-            <p class="small fw-medium mb-0 position-relative z-1 opacity-75">Total Platform Users</p>
-        </div>
-    </div>
-</div>
-
-<div class="row g-4">
-    <!-- Main Content Area: Tables -->
-    <div class="col-lg-8">
-        <!-- Pending Approval Queue -->
-        <div class="card card-premium border-0 mb-4 shadow-sm overflow-hidden">
-            <div class="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center border-bottom">
-                <h5 class="fw-bold mb-0 d-flex align-items-center">
-                    <div class="bg-warning bg-opacity-10 text-warning p-2 rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                        <i class="bi bi-shield-exclamation fs-5"></i>
-                    </div>
-                    Pending Approval Queue
-                </h5>
-                <span class="badge bg-warning rounded-pill">{{ pending_colleges.count }} Needs Review</span>
+<div class="container-fluid px-0 fade-in-slide">
+    
+    <!-- Welcome SaaS Manager Banner -->
+    <div class="welcome-admin-banner">
+        <div class="row align-items-center">
+            <div class="col-md-8 position-relative z-1">
+                <span class="badge bg-primary bg-opacity-20 text-primary-light px-3 py-2 rounded-pill fw-bold mb-3 small" style="backdrop-filter: blur(4px);">Super Admin Hub</span>
+                <h3 class="fw-bold mb-1 text-white" style="letter-spacing: -0.8px;">Welcome back, SaaS Administrator!</h3>
+                <p class="mb-0 text-white text-opacity-70 small">Monitor registrations, manage institutional configurations, and deploy platform notifications.</p>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-sleek align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>Institution Name</th>
-                                <th>Registry Info</th>
-                                <th class="text-end">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for coll in pending_colleges %}
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-3">
-                                        {% if coll.logo %}
-                                            <img src="{{ coll.logo.url }}" alt="{{ coll.name }}" class="logo-orb">
-                                        {% else %}
-                                            <div class="logo-orb-placeholder"><i class="bi bi-bank"></i></div>
-                                        {% endif %}
+            <div class="col-md-4 text-md-end mt-3 mt-md-0 position-relative z-1">
+                <a href="{% url 'test_email' %}" class="btn btn-outline-light d-inline-flex align-items-center gap-2 fw-bold px-4 py-2.5 rounded-3 border-opacity-20">
+                    <i class="bi bi-envelope-paper"></i> Test Mail Server
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metrics Cards Row -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card stat-card-white primary border-0">
+                <div>
+                    <span class="text-muted small d-block mb-1 fw-semibold">Total Institutions</span>
+                    <h2 class="fw-black text-dark mb-0" style="font-weight: 850; font-size: 2.2rem; letter-spacing: -1px;">{{ stats.total_colleges }}</h2>
+                </div>
+                <div class="stat-icon-box bg-primary-light">
+                    <i class="bi bi-buildings-fill"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card-white success border-0">
+                <div>
+                    <span class="text-muted small d-block mb-1 fw-semibold">Active Portals</span>
+                    <h2 class="fw-black text-dark mb-0" style="font-weight: 850; font-size: 2.2rem; letter-spacing: -1px;">{{ stats.approved_colleges }}</h2>
+                </div>
+                <div class="stat-icon-box bg-success-light">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card-white warning border-0">
+                <div>
+                    <span class="text-muted small d-block mb-1 fw-semibold">Pending Approvals</span>
+                    <h2 class="fw-black text-dark mb-0" style="font-weight: 850; font-size: 2.2rem; letter-spacing: -1px;">{{ pending_colleges.count }}</h2>
+                </div>
+                <div class="stat-icon-box bg-warning-light">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card-white info border-0">
+                <div>
+                    <span class="text-muted small d-block mb-1 fw-semibold">Platform Users</span>
+                    <h2 class="fw-black text-dark mb-0" style="font-weight: 850; font-size: 2.2rem; letter-spacing: -1px;">{{ stats.total_users }}</h2>
+                </div>
+                <div class="stat-icon-box bg-info-light">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Section Grid -->
+    <div class="row g-4">
+        <!-- Main Actions Tables -->
+        <div class="col-lg-8">
+            
+            <!-- Approval Queue Card -->
+            <div class="card card-premium border-0 mb-4 shadow-sm overflow-hidden rounded-4">
+                <div class="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center border-bottom border-light">
+                    <h5 class="fw-bold mb-0 text-dark d-flex align-items-center">
+                        <div class="bg-warning-soft text-warning p-2 rounded-3 me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="bi bi-shield-exclamation fs-4"></i>
+                        </div>
+                        Approval Requests Queue
+                    </h5>
+                    <span class="badge bg-warning-soft text-warning px-3 py-2 rounded-pill fw-bold" style="font-size: 0.72rem;">
+                        {{ pending_colleges.count }} Requests
+                    </span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="premium-sleek-table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Institution Details</th>
+                                    <th>Credentials File</th>
+                                    <th class="text-end pe-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for coll in pending_colleges %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-3">
+                                            {% if coll.logo %}
+                                                <img src="{{ coll.logo.url }}" alt="{{ coll.name }}" class="badge-logo-orb">
+                                            {% else %}
+                                                <div class="badge-logo-orb-placeholder"><i class="bi bi-bank"></i></div>
+                                            {% endif %}
+                                            <div>
+                                                <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.95rem;">{{ coll.name }}</h6>
+                                                <span class="x-small text-muted"><i class="bi bi-envelope me-1"></i>{{ coll.contact_email }}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="mb-1"><span class="small fw-bold text-muted">ID:</span> <span class="small font-monospace text-dark">{{ coll.registration_number }}</span></div>
                                         <div>
-                                            <h6 class="fw-bold mb-0 text-main">{{ coll.name }}</h6>
-                                            <span class="small text-muted"><i class="bi bi-envelope me-1"></i>{{ coll.contact_email }}</span>
+                                            {% if coll.verification_document %}
+                                                <a href="{{ coll.verification_document.url }}" class="badge-status-soft status-success text-decoration-none rounded-pill px-2.5 py-1" target="_blank">
+                                                    <i class="bi bi-file-earmark-check me-1"></i> Attached
+                                                </a>
+                                            {% else %}
+                                                <span class="badge-status-soft status-danger rounded-pill px-2.5 py-1"><i class="bi bi-exclamation-triangle me-1"></i> Missing</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <div class="d-inline-flex gap-2">
+                                            <a href="{% url 'college_detail_admin' coll.id %}" class="btn btn-light btn-sm fw-bold px-3 py-2 rounded-3 border border-light-subtle shadow-xs" title="Review Details">
+                                                <i class="bi bi-eye me-1"></i> Review
+                                            </a>
+                                            <a href="{% url 'approve_college' coll.id 'approve' %}" class="btn btn-success btn-sm fw-bold px-3 py-2 rounded-3 shadow-xs" onclick="return confirm('Approve this institution registration?')">
+                                                <i class="bi bi-check-lg"></i>
+                                            </a>
+                                            <button class="btn btn-danger btn-sm fw-bold px-3 py-2 rounded-3 shadow-xs" type="button" data-bs-toggle="modal" data-bs-target="#rejectModal{{ coll.id }}">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                <!-- Rejection Reason Modal -->
+                                <div class="modal fade" id="rejectModal{{ coll.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content border-0 rounded-4 shadow-lg bg-white">
+                                            <form action="{% url 'approve_college' coll.id 'reject' %}" method="post">
+                                                {% csrf_token %}
+                                                <div class="modal-header border-0 pb-0">
+                                                    <h5 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Reject Registration Request</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body pt-3">
+                                                    <p class="text-muted small">Specify the grounds for rejecting <strong>{{ coll.name }}</strong>. This justification will be emailed to their administration.</p>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold small text-dark">Reason Category</label>
+                                                        <select name="reason_category" class="form-select modern-form-input bg-light border-0" required>
+                                                            <option value="" disabled selected>Select category...</option>
+                                                            <option value="Incomplete Documentation">Incomplete Documentation</option>
+                                                            <option value="Invalid Accreditation">Invalid Accreditation</option>
+                                                            <option value="Information Mismatch">Information Mismatch</option>
+                                                            <option value="Policy Violation">Policy Violation</option>
+                                                            <option value="Other">Other Reasons</option>
+                                                        </select>
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold small text-dark">Explanation Details</label>
+                                                        <textarea name="rejection_details" rows="3" class="form-control modern-form-input bg-light border-0" placeholder="Describe the specifics..."></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer border-0 pt-0">
+                                                    <button type="button" class="btn btn-light rounded-3 px-4" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-danger rounded-3 px-4 shadow-sm">Confirm Rejection</button>
+                                                </div>
+                                            </form>
                                         </div>
                                     </div>
-                                </td>
-                                <td>
-                                    <div class="mb-1"><span class="small fw-bold text-muted">REG:</span> <span class="small font-monospace">{{ coll.registration_number }}</span></div>
-                                    <div>
-                                        {% if coll.verification_document %}
-                                            <a href="{{ coll.verification_document.url }}" class="badge badge-soft-success text-decoration-none rounded-pill border border-success border-opacity-25" target="_blank">
-                                                <i class="bi bi-file-earmark-check me-1"></i> Doc Attached
-                                            </a>
-                                        {% else %}
-                                            <span class="badge badge-soft-danger rounded-pill border border-danger border-opacity-25"><i class="bi bi-exclamation-triangle me-1"></i> No Doc</span>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                                <td class="text-end">
-                                    <div class="dropdown">
-                                        <button class="btn btn-light btn-sm rounded-circle shadow-sm" type="button" data-bs-toggle="dropdown" style="width: 36px; height: 36px;">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
-                                            <li><a class="dropdown-item py-2 fw-medium" href="{% url 'college_detail_admin' coll.id %}"><i class="bi bi-eye text-primary me-2"></i> Review Details</a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item py-2 fw-medium text-success" href="{% url 'approve_college' coll.id 'approve' %}"><i class="bi bi-check-circle me-2"></i> Approve Now</a></li>
-                                            <li><button class="dropdown-item py-2 fw-medium text-danger" type="button" data-bs-toggle="modal" data-bs-target="#rejectModal{{ coll.id }}"><i class="bi bi-x-circle me-2"></i> Reject Request</button></li>
-                                        </ul>
-                                    </div>
-                                </td>
-                            </tr>
-                            
-                            <!-- Reject Modal -->
-                            <div class="modal fade" id="rejectModal{{ coll.id }}" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content border-0 rounded-4 shadow-lg">
-                                        <form action="{% url 'approve_college' coll.id 'reject' %}" method="post">
-                                            {% csrf_token %}
-                                            <div class="modal-header border-0 pb-0">
-                                                <h5 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Reject Registration</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body pt-3">
-                                                <p class="text-muted small">Please provide a reason for rejecting <strong>{{ coll.name }}</strong>. This will be visible to the college administrator and sent via email.</p>
-                                                
-                                                <div class="mb-3">
-                                                    <label class="form-label fw-bold small text-dark">Reason Category</label>
-                                                    <select name="reason_category" class="form-select bg-light border-0" required>
-                                                        <option value="" disabled selected>Select a category...</option>
-                                                        <option value="Incomplete Documentation">Incomplete Documentation</option>
-                                                        <option value="Invalid Accreditation">Invalid Accreditation or Registration</option>
-                                                        <option value="Information Mismatch">Information Mismatch</option>
-                                                        <option value="Policy Violation">Platform Policy Violation</option>
-                                                        <option value="Other">Other (Specify below)</option>
-                                                    </select>
-                                                </div>
-                                                
-                                                <div class="mb-3">
-                                                    <label class="form-label fw-bold small text-dark">Detailed Explanation <span class="text-muted fw-normal">(Optional but recommended)</span></label>
-                                                    <textarea name="rejection_details" rows="3" class="form-control bg-light border-0" placeholder="Provide specific feedback such as missing documents..."></textarea>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer border-0 pt-0">
-                                                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-danger rounded-pill px-4 shadow-sm">Confirm Rejection</button>
-                                            </div>
-                                        </form>
-                                    </div>
                                 </div>
-                            </div>
-                            
-                            {% empty %}
-                            <tr><td colspan="3" class="text-center py-5 text-muted">
-                                <div class="mb-3"><i class="bi bi-check2-circle display-4 text-success opacity-50"></i></div>
-                                <h6 class="fw-bold text-dark">All Caught Up!</h6>
-                                <p class="small mb-0">No pending registrations at the moment.</p>
-                            </td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-5 text-muted bg-white">
+                                        <div class="mb-3"><i class="bi bi-check2-circle display-4 text-success opacity-50"></i></div>
+                                        <h6 class="fw-bold text-dark">All Caught Up!</h6>
+                                        <p class="small mb-0">No new registration requests awaiting approval.</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Managed Institutions -->
-        <div class="card card-premium border-0 shadow-sm overflow-hidden">
-            <div class="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center border-bottom">
-                <h5 class="fw-bold mb-0 d-flex align-items-center">
-                    <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                        <i class="bi bi-list-stars fs-5"></i>
-                    </div>
-                    Managed Institutions
-                </h5>
-                <a href="{% url 'test_email' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold"><i class="bi bi-envelope-paper me-1"></i> Test Mail Server</a>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-sleek align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>Institution Name</th>
-                                <th>Status</th>
-                                <th>Onboarded</th>
-                                <th class="text-end">Options</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for coll in all_colleges %}
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-3">
-                                        {% if coll.logo %}
-                                            <img src="{{ coll.logo.url }}" alt="{{ coll.name }}" class="logo-orb" style="width: 40px; height: 40px;">
-                                        {% else %}
-                                            <div class="logo-orb-placeholder" style="width: 40px; height: 40px; font-size: 1rem;"><i class="bi bi-bank"></i></div>
-                                        {% endif %}
-                                        <div class="fw-bold text-main">{{ coll.name }}</div>
-                                    </div>
-                                </td>
-                                <td>
-                                    {% if coll.status == 'APPROVED' %}
-                                        <span class="badge badge-soft-success rounded-pill px-3 py-2 border border-success border-opacity-25"><i class="bi bi-record-circle-fill me-1"></i> Active</span>
-                                    {% elif coll.status == 'PENDING' %}
-                                        <span class="badge badge-soft-warning rounded-pill px-3 py-2 border border-warning border-opacity-25"><i class="bi bi-hourglass-split me-1"></i> Pending</span>
-                                    {% else %}
-                                        <span class="badge badge-soft-danger rounded-pill px-3 py-2 border border-danger border-opacity-25"><i class="bi bi-x-circle me-1"></i> Rejected</span>
-                                    {% endif %}
-                                </td>
-                                <td class="small fw-medium text-muted"><i class="bi bi-calendar3 me-1"></i> {{ coll.created_at|date:"M d, Y" }}</td>
-                                <td class="text-end">
-                                    <div class="d-flex justify-content-end gap-2">
+            <!-- Managed Institutions Card -->
+            <div class="card card-premium border-0 shadow-sm overflow-hidden rounded-4">
+                <div class="card-header bg-white border-0 p-4 d-flex justify-content-between align-items-center border-bottom border-light">
+                    <h5 class="fw-bold mb-0 text-dark d-flex align-items-center">
+                        <div class="bg-primary-soft text-primary p-2 rounded-3 me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="bi bi-grid-fill fs-4"></i>
+                        </div>
+                        Registered Institutions
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="premium-sleek-table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Institution Name</th>
+                                    <th>Status</th>
+                                    <th>Onboarding Date</th>
+                                    <th class="text-end pe-4">Options</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for coll in all_colleges %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-3">
+                                            {% if coll.logo %}
+                                                <img src="{{ coll.logo.url }}" alt="{{ coll.name }}" class="badge-logo-orb">
+                                            {% else %}
+                                                <div class="badge-logo-orb-placeholder"><i class="bi bi-bank"></i></div>
+                                            {% endif %}
+                                            <span class="fw-bold text-dark" style="font-size: 0.95rem;">{{ coll.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
                                         {% if coll.status == 'APPROVED' %}
-                                        <a href="{{ coll.get_subdomain_url }}" class="btn btn-sm btn-light text-primary rounded-circle shadow-sm" title="Go to Portal" style="width: 32px; height: 32px; padding: 0; line-height: 32px;" target="_blank">
-                                            <i class="bi bi-box-arrow-up-right"></i>
-                                        </a>
+                                            <span class="badge-status-soft status-success"><i class="bi bi-record-circle-fill me-1"></i> Active</span>
+                                        {% elif coll.status == 'PENDING' %}
+                                            <span class="badge-status-soft status-warning"><i class="bi bi-hourglass-split me-1"></i> Pending</span>
+                                        {% else %}
+                                            <span class="badge-status-soft status-danger"><i class="bi bi-x-circle-fill me-1"></i> Rejected</span>
                                         {% endif %}
-                                        <a href="{% url 'delete_college' coll.id %}" class="btn btn-sm btn-light text-danger rounded-circle shadow-sm" title="Delete Data" style="width: 32px; height: 32px; padding: 0; line-height: 32px;" onclick="return confirm('Delete this college and ALL its data? This cannot be undone.')">
-                                            <i class="bi bi-trash"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr><td colspan="4" class="text-center py-4 text-muted">No institutions registered yet.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                    </td>
+                                    <td class="small fw-semibold text-muted"><i class="bi bi-calendar3 me-1"></i> {{ coll.created_at|date:"M d, Y" }}</td>
+                                    <td class="text-end pe-4">
+                                        <div class="d-inline-flex gap-2">
+                                            {% if coll.status == 'APPROVED' %}
+                                            <a href="{{ coll.get_subdomain_url }}" class="btn btn-sm btn-icon border border-light-subtle text-primary shadow-xs bg-white" title="Launch Portal" target="_blank" style="width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; border-radius:8px;">
+                                                <i class="bi bi-box-arrow-up-right"></i>
+                                            </a>
+                                            {% endif %}
+                                            <a href="{% url 'delete_college' coll.id %}" class="btn btn-sm btn-icon border border-light-subtle text-danger shadow-xs bg-white" title="Remove Registration" onclick="return confirm('WARNING: Delete this college and all its databases? This is irreversible.')" style="width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; border-radius:8px;">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">No institutions registered on the platform yet.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sticky Control Sidebar (Dispatch Announcements) -->
+        <div class="col-lg-4">
+            <div class="card card-premium border-0 sticky-control-panel shadow-sm overflow-hidden rounded-4">
+                <div class="card-header border-0 p-4 text-white" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+                    <h5 class="fw-bold mb-1"><i class="bi bi-broadcast-pin me-2 text-warning"></i>Global Broadcast</h5>
+                    <p class="small mb-0 opacity-75">Send warning notices to administrators</p>
+                </div>
+                <div class="card-body p-4 bg-white">
+                    <form action="{% url 'send_platform_notification' %}" method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted mb-1">Target Portal</label>
+                            <select name="college_id" class="form-select modern-form-input fw-semibold">
+                                <option value="ALL">🌐 All Portals (Global Broadcast)</option>
+                                {% for coll in all_colleges %}
+                                    {% if coll.status == 'APPROVED' %}
+                                    <option value="{{ coll.id }}">🏫 {{ coll.name }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted mb-1">Notice Heading</label>
+                            <input type="text" name="title" class="form-control modern-form-input" placeholder="e.g. Scheduled System Upgrades" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted mb-1">Detailed Message</label>
+                            <textarea name="message" class="form-control modern-form-input" rows="5" placeholder="Input alert text..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-3 shadow-xs">
+                            <i class="bi bi-send-fill me-2"></i> Dispatch Message
+                        </button>
+                        <div class="mt-3 text-center px-2">
+                            <small class="text-muted" style="font-size: 0.72rem;">
+                                <i class="bi bi-info-circle me-1"></i> Announcements will display instantly in target admin control dashboards.
+                            </small>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Communication Sidebar (Sticky) -->
-    <div class="col-lg-4">
-        <div class="card card-premium border-0 sticky-sidebar shadow-sm overflow-hidden">
-            <div class="card-header border-0 p-4 text-white" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
-                <h5 class="fw-bold mb-1"><i class="bi bi-broadcast-pin me-2"></i>Platform Broadcast</h5>
-                <p class="small mb-0 opacity-75">Send alerts to college administrators</p>
-            </div>
-            <div class="card-body p-4 bg-white">
-                <form action="{% url 'send_platform_notification' %}" method="post">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-dark">Target Audience</label>
-                        <select name="college_id" class="form-select border-0 bg-light shadow-none">
-                            <option value="ALL">🌐 All Institutions (Global Broadcast)</option>
-                            {% for coll in all_colleges %}
-                                {% if coll.status == 'APPROVED' %}
-                                <option value="{{ coll.id }}">🏫 {{ coll.name }}</option>
-                                {% endif %}
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-dark">Message Title</label>
-                        <input type="text" name="title" class="form-control border-0 bg-light shadow-none" placeholder="e.g. Scheduled System Maintenance" required>
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label small fw-bold text-dark">Broadcast Content</label>
-                        <textarea name="message" class="form-control border-0 bg-light shadow-none" rows="5" placeholder="Detailed message for administrators..." required></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-pill shadow-sm"><i class="bi bi-send-fill me-2"></i> Dispatch Message</button>
-                    <div class="mt-3 text-center px-3">
-                        <small class="text-muted" style="font-size: 0.75rem;">
-                            <i class="bi bi-info-circle me-1"></i> Delivered instantly to selected administrators' dashboards.
-                        </small>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
 </div>
 {% endblock %}

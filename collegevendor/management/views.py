@@ -495,6 +495,36 @@ def create_assignment(request):
     return render(request, 'management/create_assignment.html', {'form': form})
 
 @login_required
+def edit_assignment(request, pk):
+    if request.user.role != 'TEACHER':
+        return redirect('dashboard')
+    assignment = get_object_or_404(Assignment, pk=pk, college=request.college)
+    if assignment.teacher != request.user.teacher_profile:
+        messages.error(request, "Permission Denied: You can only edit your own assignments.")
+        return redirect('assignment_list')
+    if request.method == 'POST':
+        form = AssignmentForm(request.POST, request.FILES, instance=assignment)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Assignment updated successfully.")
+            return redirect('assignment_list')
+    else:
+        form = AssignmentForm(instance=assignment)
+    return render(request, 'management/create_assignment.html', {'form': form, 'assignment': assignment, 'is_edit': True})
+
+@login_required
+def delete_assignment(request, pk):
+    if request.user.role != 'TEACHER':
+        return redirect('dashboard')
+    assignment = get_object_or_404(Assignment, pk=pk, college=request.college)
+    if assignment.teacher != request.user.teacher_profile:
+        messages.error(request, "Permission Denied: You can only delete your own assignments.")
+        return redirect('assignment_list')
+    assignment.delete()
+    messages.warning(request, "Assignment deleted successfully.")
+    return redirect('assignment_list')
+
+@login_required
 def mark_attendance(request):
     if request.user.role not in ['TEACHER', 'HOD']: 
         return redirect('dashboard')
@@ -729,6 +759,151 @@ def print_monthly_attendance_report(request):
         'present_rate': present_rate,
         'absent_rate': absent_rate,
         'late_rate': late_rate
+    })
+
+@login_required
+def print_six_month_attendance_report(request):
+    if request.user.role not in ['HOD', 'COLLEGE_ADMIN']:
+        return redirect('dashboard')
+        
+    from django.utils import timezone
+    from django.shortcuts import get_object_or_404
+    from django.contrib import messages
+    from datetime import datetime
+    
+    class_id = request.GET.get('class_id')
+    start_month_str = request.GET.get('start_month') # expected format: YYYY-MM
+    
+    if not class_id or not start_month_str:
+        messages.error(request, "Class and Start Month must be selected.")
+        return redirect('mark_attendance')
+        
+    # Get user's department
+    if request.user.role == 'HOD':
+        dept = getattr(request.user.hod_profile, 'department', None)
+    else:
+        dept = None
+
+    if dept:
+        selected_class = get_object_or_404(AcademicClass, id=class_id, department=dept)
+    else:
+        selected_class = get_object_or_404(AcademicClass, id=class_id, college=request.college)
+        
+    try:
+        start_year, start_month = map(int, start_month_str.split('-'))
+        start_date = datetime(start_year, start_month, 1).date()
+        
+        end_month = start_month + 5
+        end_year = start_year
+        if end_month > 12:
+            end_year += (end_month - 1) // 12
+            end_month = ((end_month - 1) % 12) + 1
+        
+        import calendar
+        last_day = calendar.monthrange(end_year, end_month)[1]
+        end_date = datetime(end_year, end_month, last_day).date()
+    except Exception as e:
+        messages.error(request, "Invalid start month format.")
+        return redirect('mark_attendance')
+        
+    students = StudentProfile.objects.filter(academic_class=selected_class).order_by('roll_number')
+    if not students.exists():
+        messages.error(request, "No students enrolled in this class.")
+        return redirect('mark_attendance')
+        
+    # Generate list of 6 months
+    months_list = []
+    curr = start_date
+    for i in range(6):
+        months_list.append({
+            'year': curr.year,
+            'month': curr.month,
+            'name': curr.strftime('%B %Y'),
+            'short_name': curr.strftime('%b %y')
+        })
+        m = curr.month + 1
+        y = curr.year
+        if m > 12:
+            m = 1
+            y += 1
+        curr = datetime(y, m, 1).date()
+        
+    # Fetch all attendance logs for this class within the range
+    attendance_logs = Attendance.objects.filter(
+        academic_class=selected_class,
+        date__range=(start_date, end_date)
+    ).select_related('student')
+    
+    rows = []
+    overall_total_sessions = 0
+    overall_total_present = 0
+    overall_total_absent = 0
+    overall_total_late = 0
+    
+    for student in students:
+        student_logs = [log for log in attendance_logs if log.student_id == student.id]
+        
+        month_pcts = []
+        student_p = 0
+        student_a = 0
+        student_l = 0
+        
+        for m_info in months_list:
+            m_logs = [log for log in student_logs if log.date.year == m_info['year'] and log.date.month == m_info['month']]
+            p_count = sum(1 for log in m_logs if log.status == 'PRESENT')
+            a_count = sum(1 for log in m_logs if log.status == 'ABSENT')
+            l_count = sum(1 for log in m_logs if log.status == 'LATE')
+            
+            tot = p_count + a_count + l_count
+            pct = "--"
+            if tot > 0:
+                pct = f"{int(((p_count + l_count) / tot) * 100)}%"
+                
+            month_pcts.append(pct)
+            
+            student_p += p_count
+            student_a += a_count
+            student_l += l_count
+            
+        student_tot = student_p + student_a + student_l
+        student_pct = 100
+        if student_tot > 0:
+            student_pct = int(((student_p + student_l) / student_tot) * 100)
+            
+        overall_total_present += student_p
+        overall_total_absent += student_a
+        overall_total_late += student_l
+        overall_total_sessions += student_tot
+        
+        rows.append({
+            'roll_no': student.roll_number,
+            'name': student.user.get_full_name(),
+            'month_pcts': month_pcts,
+            'p_count': student_p,
+            'a_count': student_a,
+            'l_count': student_l,
+            'tot_count': student_tot,
+            'pct': student_pct
+        })
+        
+    # Calculate overall averages
+    present_rate = 100
+    absent_rate = 0
+    late_rate = 0
+    if overall_total_sessions > 0:
+        present_rate = int((overall_total_present / overall_total_sessions) * 100)
+        absent_rate = int((overall_total_absent / overall_total_sessions) * 100)
+        late_rate = int((overall_total_late / overall_total_sessions) * 100)
+        
+    return render(request, 'management/attendance_report_6month_print.html', {
+        'selected_class': selected_class,
+        'months_list': months_list,
+        'rows': rows,
+        'present_rate': present_rate,
+        'absent_rate': absent_rate,
+        'late_rate': late_rate,
+        'start_title': months_list[0]['name'],
+        'end_title': months_list[-1]['name']
     })
 
 @login_required
@@ -1049,8 +1224,25 @@ def student_grades(request):
     if request.user.role != 'STUDENT':
         return redirect('dashboard')
     student = request.user.student_profile
-    submissions = Submission.objects.filter(student=student).exclude(marks__isnull=True).order_by('-submitted_at')
-    return render(request, 'management/student_grades.html', {'submissions': submissions})
+    internal_marks = InternalMark.objects.filter(student=student).select_related('category').order_by('category__name')
+    
+    total_obtained = 0
+    total_possible = 0
+    for im in internal_marks:
+        if im.marks_obtained is not None and im.category:
+            total_obtained += float(im.marks_obtained)
+            total_possible += im.category.max_marks
+            
+    percentage = 0
+    if total_possible > 0:
+        percentage = round((total_obtained / total_possible) * 100, 1)
+        
+    return render(request, 'management/student_grades.html', {
+        'internal_marks': internal_marks,
+        'total_obtained': total_obtained,
+        'total_possible': total_possible,
+        'percentage': percentage
+    })
 
 @login_required
 def student_timetable(request):
@@ -1098,7 +1290,34 @@ def student_attendance(request):
 def student_assignments(request):
     if request.user.role != 'STUDENT':
         return redirect('dashboard')
-    return render(request, 'management/student_assignments.html', {})
+        
+    from django.utils import timezone
+    student = request.user.student_profile
+    assignments = Assignment.objects.filter(college=request.college).order_by('-deadline')
+    
+    submissions = {s.assignment_id: s for s in Submission.objects.filter(student=student)}
+    
+    assignments_data = []
+    for asm in assignments:
+        sub = submissions.get(asm.id)
+        assignments_data.append({
+            'assignment': asm,
+            'submission': sub,
+            'is_submitted': sub is not None,
+            'is_graded': sub.marks is not None if sub else False,
+            'marks': sub.marks if sub else None,
+            'feedback': sub.feedback if sub else None,
+            'is_past_due': asm.deadline < timezone.now()
+        })
+        
+    pending_count = sum(1 for item in assignments_data if not item['is_submitted'])
+    completed_count = sum(1 for item in assignments_data if item['is_submitted'])
+        
+    return render(request, 'management/student_assignments.html', {
+        'assignments_data': assignments_data,
+        'pending_count': pending_count,
+        'completed_count': completed_count
+    })
 
 @login_required
 def department_configuration(request):
@@ -1203,7 +1422,7 @@ def internal_marks_list(request):
     selected_class = None
     students = []
     
-    class_id = request.GET.get('class_id')
+    class_id = request.GET.get('class_id') or request.POST.get('class_id')
     if class_id:
         selected_class = get_object_or_404(AcademicClass, id=class_id, department=department)
         students = StudentProfile.objects.filter(academic_class=selected_class)
@@ -1214,7 +1433,7 @@ def internal_marks_list(request):
                 mark_key = f'marks_{student.id}_{cat.id}'
                 if mark_key in request.POST:
                     mark_val = request.POST[mark_key]
-                    if mark_val:
+                    if mark_val != '' and mark_val is not None:
                         InternalMark.objects.update_or_create(
                             student=student,
                             category=cat,
@@ -1230,20 +1449,23 @@ def internal_marks_list(request):
         messages.success(request, 'Marks saved successfully.')
         return redirect(f"{request.path}?class_id={selected_class.id}")
         
-    marks_dict = {}
+    students_data = []
     if selected_class:
         for student in students:
-            marks_dict[student.id] = {}
+            category_marks = {}
             marks = InternalMark.objects.filter(student=student, academic_class=selected_class)
             for m in marks:
-                marks_dict[student.id][m.category.id] = m.marks_obtained
+                category_marks[m.category.id] = m.marks_obtained
+            students_data.append({
+                'student': student,
+                'category_marks': category_marks
+            })
                 
     return render(request, 'management/internal_marks.html', {
-        'classes': classes,
+        'academic_classes': classes,
         'selected_class': selected_class,
         'categories': categories,
-        'students': students,
-        'marks_dict': marks_dict
+        'students_data': students_data
     })
 
 @login_required

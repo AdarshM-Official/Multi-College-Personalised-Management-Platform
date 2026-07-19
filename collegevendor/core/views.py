@@ -238,15 +238,29 @@ def approve_college(request, college_id, action):
         college.save()
         
         # Send Approval Email
+        subject = f"Institution Approved: {college.name}"
+        message = (
+            f"Congratulations! Your institution '{college.name}' has been approved.\n\n"
+            f"You can now access your branded portal and login here: {college.get_subdomain_url}\n"
+        )
         try:
             send_mail(
-                subject=f"Institution Approved: {college.name}",
-                message=f"Congratulations! Your institution '{college.name}' has been approved on the CollegeManager platform.\n\nYou can now access your branded portal at: {college.get_subdomain_url}",
+                subject=subject,
+                message=message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[admin_email],
                 fail_silently=True,
             )
-        except Exception: pass
+        except Exception:
+            pass
+            
+        # Print email details to terminal
+        print("\n=== SENDING APPROVAL EMAIL ===")
+        print(f"From: {settings.DEFAULT_FROM_EMAIL}")
+        print(f"To: {admin_email}")
+        print(f"Subject: {subject}")
+        print(f"Body:\n{message}")
+        print("==============================\n")
         
         messages.success(request, f"{college.name} has been approved.")
         
