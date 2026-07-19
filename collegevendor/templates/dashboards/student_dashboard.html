@@ -99,11 +99,14 @@
                 {% for exam in exam_alerts %}
                 <div class="mb-4">
                     <div class="d-flex align-items-center mb-2">
-                        <span class="badge bg-warning text-dark me-2">Exam</span>
+                        <span class="badge bg-warning text-dark me-2">Exam Alert</span>
                         <span class="small text-muted-custom">{{ exam.date_posted|timesince }} ago</span>
                     </div>
-                    <h6 class="fw-bold text-main">{{ exam.title }}</h6>
-                    <p class="small text-muted-custom">{{ exam.description }}</p>
+                    <h6 class="fw-bold text-main mb-1">{{ exam.title }}</h6>
+                    {% if exam.exam_date %}
+                    <div class="small text-warning mb-2" style="font-size: 0.8rem; font-weight: 600;"><i class="bi bi-calendar-event me-1"></i>Exam Date: {{ exam.exam_date|date:"M d, Y" }}</div>
+                    {% endif %}
+                    <p class="small text-muted-custom mb-0">{{ exam.description }}</p>
                 </div>
                 {% if not forloop.last %}<hr>{% endif %}
                 {% endfor %}

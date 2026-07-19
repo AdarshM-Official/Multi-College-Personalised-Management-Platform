@@ -58,7 +58,12 @@
                         {% if form.password %}
                         <div class="col-md-6 mb-3">
                             <label class="form-label small fw-bold">Temporary Password</label>
-                            {{ form.password }}
+                            <div class="input-group">
+                                {{ form.password }}
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                                </button>
+                            </div>
                         </div>
                         {% endif %}
                         <div class="col-md-12 mb-3">
@@ -138,6 +143,38 @@ document.addEventListener('DOMContentLoaded', function() {
         if (initialSpecId) specSelect.value = initialSpecId;
     }
 });
+</script>
+
+<script>
+    (function() {
+        function initPasswordToggle() {
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordField = document.getElementById('id_password');
+            
+            if (togglePassword && passwordField) {
+                togglePassword.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const type = passwordField.type === 'password' ? 'text' : 'password';
+                    passwordField.type = type;
+                    
+                    const icon = togglePassword.querySelector('i') || document.getElementById('togglePasswordIcon');
+                    if (icon) {
+                        if (type === 'password') {
+                            icon.className = 'bi bi-eye';
+                        } else {
+                            icon.className = 'bi bi-eye-slash';
+                        }
+                    }
+                });
+            }
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initPasswordToggle);
+        } else {
+            initPasswordToggle();
+        }
+    })();
 </script>
 {% endblock %}
 {% endblock %}

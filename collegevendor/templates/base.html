@@ -291,6 +291,9 @@
             <a href="{% url 'college_settings' %}" class="nav-link-custom {% if 'settings' in request.path %}active{% endif %}">
                 <i class="bi bi-gear-fill"></i> College Settings
             </a>
+            <a href="{% url 'college_enquiries_list' %}" class="nav-link-custom {% if 'enquiries' in request.path %}active{% endif %}">
+                <i class="bi bi-chat-left-text-fill"></i> Enquiries / Admission
+            </a>
             {% endif %}
 
             {% if user.role == 'TEACHER' %}

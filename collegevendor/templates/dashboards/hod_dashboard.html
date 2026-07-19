@@ -151,6 +151,9 @@
                 <a href="{% url 'create_exam_notification' %}" class="btn btn-outline-dark rounded-3 px-3 border-custom text-main" title="New Notice">
                     <i class="bi bi-megaphone"></i>
                 </a>
+                <a href="{% url 'create_department_event' %}" class="btn btn-outline-dark rounded-3 px-3 border-custom text-main" title="New Event">
+                    <i class="bi bi-calendar-event"></i>
+                </a>
             </div>
         </div>
     </div>
@@ -392,6 +395,39 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Department Events -->
+            <div class="card glass-card border-0 shadow-sm mb-4 mt-4">
+                <div class="card-header bg-transparent border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-main">Dept Events</h5>
+                    <a href="{% url 'create_department_event' %}" class="btn btn-primary-soft btn-sm rounded-pill px-3 fw-bold"><i class="bi bi-plus-lg me-1"></i> Add</a>
+                </div>
+                <div class="card-body p-4">
+                    {% if department_events %}
+                        {% for event in department_events %}
+                        <div class="p-3 bg-body-custom rounded-4 mb-3 border-start {% if event.is_approved %}border-success{% else %}border-warning{% endif %} border-4 shadow-xs">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <h6 class="fw-bold mb-0 small pe-3 text-main">{{ event.title }}</h6>
+                                {% if event.is_approved %}
+                                    <span class="badge bg-success bg-opacity-10 text-success x-small px-2 py-1 rounded-pill" style="font-size: 0.65rem;">Approved</span>
+                                {% else %}
+                                    <span class="badge bg-warning bg-opacity-10 text-warning x-small px-2 py-1 rounded-pill" style="font-size: 0.65rem;">Pending</span>
+                                {% endif %}
+                            </div>
+                            <p class="x-small text-muted-custom mb-2 lh-base">{{ event.description|truncatewords:15 }}</p>
+                            <div class="d-flex justify-content-between align-items-center pt-2 border-top border-custom">
+                                <span class="x-small fw-bold text-main"><i class="bi bi-calendar2-event me-1"></i> {{ event.event_date|date:"M d, Y" }}</span>
+                                <span class="x-small text-muted-custom">{{ event.created_at|timesince }} ago</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-muted small fw-medium mb-0">No department events posted yet.</p>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

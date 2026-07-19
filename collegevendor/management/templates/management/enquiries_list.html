@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}Admissions & Enquiries | Admin Console{% endblock %}
+
+{% block extra_css %}
+<style>
+    .enquiry-card {
+        border-radius: 20px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border: 1px solid rgba(241, 245, 249, 0.8) !important;
+        background: white;
+    }
+    .enquiry-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.04) !important;
+    }
+    .status-badge {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+    }
+    .status-PENDING { background: #fef3c7; color: #d97706; }
+    .status-REVIEWED { background: #e0e7ff; color: #4f46e5; }
+    .status-ACCEPTED { background: #dcfce7; color: #16a34a; }
+    .status-REJECTED { background: #fee2e2; color: #dc2626; }
+    
+    .filter-tab {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #64748b;
+        padding: 0.6rem 1.2rem;
+        border-radius: 10px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+    .filter-tab:hover {
+        color: #1e293b;
+        background: #f1f5f9;
+    }
+    .filter-tab.active {
+        color: var(--primary);
+        background: var(--primary-soft);
+        border-color: rgba(99, 102, 241, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+        <h2 class="fw-bold mb-1 text-dark" style="letter-spacing: -0.5px;">Admissions & Enquiries</h2>
+        <p class="text-muted small mb-0">Review and manage application forms submitted by prospective students.</p>
+    </div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="card border-0 shadow-sm p-3 mb-4 rounded-4" style="background: white;">
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <span class="small fw-bold text-muted me-2">FILTER STATUS:</span>
+        <a href="{% url 'college_enquiries_list' %}" class="filter-tab {% if not selected_status %}active{% endif %}">
+            All Enquiries
+        </a>
+        <a href="{% url 'college_enquiries_list' %}?status=PENDING" class="filter-tab {% if selected_status == 'PENDING' %}active{% endif %}">
+            Pending Review
+        </a>
+        <a href="{% url 'college_enquiries_list' %}?status=REVIEWED" class="filter-tab {% if selected_status == 'REVIEWED' %}active{% endif %}">
+            Reviewed
+        </a>
+        <a href="{% url 'college_enquiries_list' %}?status=ACCEPTED" class="filter-tab {% if selected_status == 'ACCEPTED' %}active{% endif %}">
+            Accepted
+        </a>
+        <a href="{% url 'college_enquiries_list' %}?status=REJECTED" class="filter-tab {% if selected_status == 'REJECTED' %}active{% endif %}">
+            Rejected
+        </a>
+    </div>
+</div>
+
+<!-- Enquiries List Grid -->
+<div class="row g-4">
+    {% for enquiry in enquiries %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card enquiry-card border-0 shadow-sm p-4 h-100 d-flex flex-column justify-content-between">
+            <div>
+                <!-- Card Header -->
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span class="status-badge status-{{ enquiry.status }}">{{ enquiry.get_status_display }}</span>
+                    <span class="x-small text-muted-custom"><i class="bi bi-clock me-1"></i>{{ enquiry.created_at|date:"M d, Y" }}</span>
+                </div>
+                
+                <!-- Student Info -->
+                <h5 class="fw-bold mb-1 text-dark">{{ enquiry.name }}</h5>
+                <p class="small text-primary fw-semibold mb-3">
+                    <i class="bi bi-mortarboard-fill me-1"></i>
+                    {% if enquiry.course_interested %}
+                        {{ enquiry.course_interested.name }} ({{ enquiry.course_interested.department.name }})
+                    {% else %}
+                        Uncategorized Program
+                    {% endif %}
+                </p>
+                
+                <!-- Contact Details -->
+                <div class="p-3 bg-light bg-opacity-50 rounded-3 mb-3 border border-light-subtle">
+                    <div class="d-flex align-items-center mb-2 small">
+                        <i class="bi bi-envelope-fill text-muted me-2"></i>
+                        <a href="mailto:{{ enquiry.email }}" class="text-decoration-none text-dark fw-medium">{{ enquiry.email }}</a>
+                    </div>
+                    <div class="d-flex align-items-center small">
+                        <i class="bi bi-telephone-fill text-muted me-2"></i>
+                        <a href="tel:{{ enquiry.phone_number }}" class="text-decoration-none text-dark fw-medium">{{ enquiry.phone_number }}</a>
+                    </div>
+                </div>
+                
+                <!-- Message -->
+                <h6 class="x-small fw-bold text-uppercase text-muted mb-1">Message / Cover Note</h6>
+                <p class="text-muted small mb-4 lh-base" style="white-space: pre-line;">{{ enquiry.message }}</p>
+            </div>
+            
+            <!-- Actions -->
+            <div class="pt-3 border-top d-flex gap-2">
+                {% if enquiry.status == 'PENDING' %}
+                <a href="{% url 'update_enquiry_status' enquiry.id 'REVIEWED' %}" class="btn btn-sm btn-indigo bg-primary bg-opacity-10 text-primary w-50 py-2 fw-bold" style="border-radius: 10px; border: none;">
+                    Mark Reviewed
+                </a>
+                {% endif %}
+                
+                {% if enquiry.status != 'ACCEPTED' and enquiry.status != 'REJECTED' %}
+                <div class="dropdown {% if enquiry.status == 'PENDING' %}w-50{% else %}w-100{% endif %}">
+                    <button class="btn btn-sm btn-outline-secondary w-100 py-2 fw-bold dropdown-toggle" type="button" data-bs-toggle="dropdown" style="border-radius: 10px;">
+                        Set Decision
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
+                        <li><a class="dropdown-item fw-bold text-success" href="{% url 'update_enquiry_status' enquiry.id 'ACCEPTED' %}"><i class="bi bi-check-circle-fill me-2"></i>Accept Application</a></li>
+                        <li><a class="dropdown-item fw-bold text-danger" href="{% url 'update_enquiry_status' enquiry.id 'REJECTED' %}"><i class="bi bi-x-circle-fill me-2"></i>Reject Application</a></li>
+                        {% if enquiry.status != 'REVIEWED' %}
+                        <li><a class="dropdown-item fw-bold text-primary" href="{% url 'update_enquiry_status' enquiry.id 'REVIEWED' %}"><i class="bi bi-eye-fill me-2"></i>Mark Reviewed</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                {% if enquiry.status == 'ACCEPTED' or enquiry.status == 'REJECTED' %}
+                <a href="{% url 'update_enquiry_status' enquiry.id 'PENDING' %}" class="btn btn-sm btn-light w-50 py-2 fw-bold" style="border-radius: 10px;">
+                    Reset Status
+                </a>
+                {% endif %}
+                
+                <a href="{% url 'delete_enquiry' enquiry.id %}" class="btn btn-sm btn-outline-danger py-2 px-3 fw-bold" style="border-radius: 10px;" title="Delete Record" onclick="return confirm('Permanently delete this enquiry record?')">
+                    <i class="bi bi-trash3"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <div class="opacity-25 mb-3" style="font-size: 4rem;">📥</div>
+        <h5 class="fw-bold text-muted">No Enquiries Found</h5>
+        <p class="text-muted small">No applications matching the selected status filter exist for your college.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

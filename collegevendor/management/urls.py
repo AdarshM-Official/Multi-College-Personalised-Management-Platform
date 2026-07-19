@@ -7,6 +7,7 @@ urlpatterns = [
     path('settings/', views.college_settings, name='college_settings'),
     path('gallery/delete/<int:image_id>/', views.delete_gallery_image, name='delete_gallery_image'),
     path('leaders/delete/<int:leader_id>/', views.delete_college_leader, name='delete_college_leader'),
+    path('achievements/delete/<int:achievement_id>/', views.delete_achievement, name='delete_achievement'),
     
     # Students
     path('students/', views.student_list, name='student_list'),
@@ -47,6 +48,7 @@ urlpatterns = [
     
     # Attendance
     path('attendance/', views.mark_attendance, name='mark_attendance'),
+    path('attendance/report/print/', views.print_monthly_attendance_report, name='print_monthly_attendance_report'),
     
     # Internal Marks
     path('internal-marks/', views.internal_marks_list, name='internal_marks_list'),
@@ -72,4 +74,14 @@ urlpatterns = [
     # Submissions
     path('assignments/<int:pk>/submissions/', views.assignment_submissions, name='assignment_submissions'),
     path('assignments/<int:pk>/submit/', views.submit_assignment, name='submit_assignment'),
+    
+    # Department Events
+    path('event/create/', views.create_department_event, name='create_department_event'),
+    path('event/approve/<int:event_id>/', views.approve_department_event, name='approve_department_event'),
+    path('event/reject/<int:event_id>/', views.reject_department_event, name='reject_department_event'),
+    
+    # Admissions Enquiries
+    path('enquiries/', views.college_enquiries_list, name='college_enquiries_list'),
+    path('enquiries/update/<int:enquiry_id>/<str:new_status>/', views.update_enquiry_status, name='update_enquiry_status'),
+    path('enquiries/delete/<int:enquiry_id>/', views.delete_enquiry, name='delete_enquiry'),
 ]

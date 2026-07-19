@@ -5,9 +5,9 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 import pandas as pd
-from .models import StudentProfile, TeacherProfile, Department, Specialization, Assignment, Submission, Attendance, HODProfile, TimeTable, ExamNotification, AcademicClass, InternalMarkCategory, InternalMark, TimeTablePeriod, Subject
+from .models import StudentProfile, TeacherProfile, Department, Specialization, Assignment, Submission, Attendance, HODProfile, TimeTable, ExamNotification, AcademicClass, InternalMarkCategory, InternalMark, TimeTablePeriod, Subject, DepartmentEvent, CollegeEnquiry
 from accounts.models import CustomUser
-from .forms import StudentForm, StudentEditForm, TeacherForm, TeacherEditForm, AssignmentForm, DepartmentForm, SpecializationForm, CollegeSettingsForm, ExcelImportForm, HODForm, TimeTableForm, ExamNotificationForm, HODEditForm, UserEditForm, AcademicClassForm, InternalMarkCategoryForm, SubjectForm
+from .forms import StudentForm, StudentEditForm, TeacherForm, TeacherEditForm, AssignmentForm, DepartmentForm, SpecializationForm, CollegeSettingsForm, ExcelImportForm, HODForm, TimeTableForm, ExamNotificationForm, HODEditForm, UserEditForm, AcademicClassForm, InternalMarkCategoryForm, SubjectForm, DepartmentEventForm
 from colleges.models import College, CollegeImage, CollegeAchievement, CollegeLeader
 
 @login_required
@@ -48,6 +48,17 @@ def college_settings(request):
                     image=request.FILES.get('leader_image')
                 )
             
+            if request.POST.get('action') == 'add_leader':
+                if leader_name:
+                    messages.success(request, "Leadership profile added successfully.")
+                else:
+                    messages.error(request, "Leader name is required.")
+                return redirect(request.path + '#leadership')
+                
+            if request.POST.get('action') == 'upload_gallery':
+                messages.success(request, "Gallery images uploaded successfully.")
+                return redirect(request.path + '#gallery')
+                
             messages.success(request, "Institutional profile and gallery updated.")
             return redirect('college_settings')
     else:
@@ -71,28 +82,45 @@ def delete_college_leader(request, leader_id):
     return redirect('college_settings')
 
 @login_required
+def delete_achievement(request, achievement_id):
+    if request.user.role != 'COLLEGE_ADMIN': return redirect('dashboard')
+    achievement = get_object_or_404(CollegeAchievement, id=achievement_id, college=request.college)
+    achievement.delete()
+    messages.warning(request, "Achievement removed.")
+    return redirect('/management/settings/#achievements')
+
+@login_required
 def student_list(request):
-    students = StudentProfile.objects.filter(college=request.college)
-    academic_classes = None
+    students = StudentProfile.objects.filter(college=request.college).select_related('user', 'department', 'specialization', 'academic_class')
+    
     if request.user.role == 'HOD':
         dept = request.user.hod_profile.department
         students = students.filter(department=dept)
-        academic_classes = AcademicClass.objects.filter(department=dept)
-    
-    # Filter by class if provided in GET, otherwise select the first class by default
-    class_id = request.GET.get('class_id')
-    if not class_id and academic_classes and academic_classes.exists():
-        class_id = academic_classes.first().id
         
-    if class_id:
-        students = students.filter(academic_class_id=class_id)
-        # Ensure class_id is a string for template comparison
-        class_id = str(class_id)
+    # Group students: Department -> Specialization (Program) -> AcademicClass (Batch/Year)
+    grouped_data = {}
+    for student in students:
+        dept_name = student.department.name if student.department else "Unassigned Department"
+        spec_name = student.specialization.name if student.specialization else "Unassigned Program"
+        class_name = student.academic_class.name if student.academic_class else "Unassigned Class/Year"
+        
+        if dept_name not in grouped_data:
+            grouped_data[dept_name] = {}
+        if spec_name not in grouped_data[dept_name]:
+            grouped_data[dept_name][spec_name] = {
+                'students_count': 0,
+                'classes': {}
+            }
+        if class_name not in grouped_data[dept_name][spec_name]['classes']:
+            grouped_data[dept_name][spec_name]['classes'][class_name] = []
+            
+        grouped_data[dept_name][spec_name]['classes'][class_name].append(student)
+        grouped_data[dept_name][spec_name]['students_count'] += 1
         
     return render(request, 'management/student_list.html', {
-        'students': students,
-        'academic_classes': academic_classes,
-        'selected_class': class_id
+        'grouped_data': grouped_data,
+        'total_count': students.count(),
+        'students': students
     })
 
 @login_required
@@ -468,21 +496,240 @@ def create_assignment(request):
 
 @login_required
 def mark_attendance(request):
-    if request.user.role not in ['TEACHER', 'HOD']: return redirect('dashboard')
-    students = StudentProfile.objects.filter(college=request.college)
-    if request.user.role == 'HOD':
-        students = students.filter(department=request.user.hod_profile.department)
+    if request.user.role not in ['TEACHER', 'HOD']: 
+        return redirect('dashboard')
+        
+    from django.utils import timezone
     
+    # Get user's department safely
+    if request.user.role == 'HOD':
+        dept = getattr(request.user.hod_profile, 'department', None)
+    else:
+        dept = getattr(request.user.teacher_profile, 'department', None)
+
+    if not dept:
+        messages.error(request, "You are not assigned to any department.")
+        return redirect('dashboard')
+
+    academic_classes = AcademicClass.objects.filter(department=dept)
+    
+    selected_class = None
+    selected_period = None
+    selected_date = None
+    students = []
+    
+    # Determine date safely
+    date_str = request.GET.get('date') or request.POST.get('date')
+    if date_str:
+        try:
+            from datetime import datetime
+            selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            selected_date = timezone.localdate()
+    else:
+        selected_date = timezone.localdate()
+
+    present_count = 0
+    absent_count = 0
+    late_count = 0
+    unmarked_count = 0
+    attendance_rate = 0
+
+    class_id = request.GET.get('class_id')
+    period = request.GET.get('period')
+    
+    if class_id:
+        selected_class = get_object_or_404(AcademicClass, id=class_id, department=dept)
+        if period:
+            selected_period = int(period)
+            students = list(StudentProfile.objects.filter(academic_class=selected_class))
+            
+            # Fetch existing attendance records
+            attendance_records = {
+                att.student_id: att.status 
+                for att in Attendance.objects.filter(
+                    academic_class=selected_class,
+                    period=selected_period,
+                    date=selected_date
+                )
+            }
+            
+            for student in students:
+                status = attendance_records.get(student.id)
+                student.existing_status = status
+                if status == 'PRESENT':
+                    present_count += 1
+                elif status == 'ABSENT':
+                    absent_count += 1
+                elif status == 'LATE':
+                    late_count += 1
+                else:
+                    unmarked_count += 1
+            
+            total_count = len(students)
+            if total_count > 0:
+                attendance_rate = int(((present_count + late_count) / total_count) * 100)
+                
     if request.method == 'POST':
-        date = request.POST.get('date')
-        for student in students:
-            status = request.POST.get(f'status_{student.id}')
-            Attendance.objects.update_or_create(
-                student=student, date=date, college=request.college,
-                defaults={'status': status, 'marked_by': request.user}
-            )
-        messages.success(request, "Attendance marked."); return redirect('dashboard')
-    return render(request, 'management/mark_attendance.html', {'students': students})
+        if request.user.role == 'HOD':
+            messages.error(request, "Permission Denied: HODs are only permitted to view attendance records.")
+            return redirect('mark_attendance')
+            
+        class_id = request.POST.get('class_id')
+        selected_period = request.POST.get('period')
+        
+        if class_id and selected_period:
+            selected_class = get_object_or_404(AcademicClass, id=class_id, department=dept)
+            selected_period = int(selected_period)
+            students = StudentProfile.objects.filter(academic_class=selected_class)
+            
+            for student in students:
+                status = request.POST.get(f'status_{student.id}')
+                if status:
+                    Attendance.objects.update_or_create(
+                        student=student,
+                        date=selected_date,
+                        period=selected_period,
+                        defaults={
+                            'status': status,
+                            'marked_by': request.user,
+                            'academic_class': selected_class,
+                            'college': request.college
+                        }
+                    )
+            messages.success(request, "Attendance saved successfully.")
+            return redirect(f"/management/attendance/?class_id={selected_class.id}&period={selected_period}&date={selected_date.strftime('%Y-%m-%d')}")
+
+    return render(request, 'management/mark_attendance.html', {
+        'academic_classes': academic_classes,
+        'selected_class': selected_class,
+        'selected_period': selected_period,
+        'selected_date': selected_date.strftime('%Y-%m-%d') if selected_date else '',
+        'students': students,
+        'present_count': present_count,
+        'absent_count': absent_count,
+        'late_count': late_count,
+        'unmarked_count': unmarked_count,
+        'attendance_rate': attendance_rate,
+        'current_month': timezone.localdate().strftime('%Y-%m')
+    })
+
+@login_required
+def print_monthly_attendance_report(request):
+    if request.user.role not in ['HOD', 'COLLEGE_ADMIN']:
+        return redirect('dashboard')
+        
+    from django.utils import timezone
+    from django.shortcuts import get_object_or_404
+    from django.contrib import messages
+    from datetime import datetime
+    
+    class_id = request.GET.get('class_id')
+    month_str = request.GET.get('month') # expected format: YYYY-MM
+    
+    if not class_id or not month_str:
+        messages.error(request, "Class and Month must be selected.")
+        return redirect('mark_attendance')
+        
+    # Get user's department
+    if request.user.role == 'HOD':
+        dept = getattr(request.user.hod_profile, 'department', None)
+    else:
+        dept = None
+
+    # Retrieve selected class and month
+    if dept:
+        selected_class = get_object_or_404(AcademicClass, id=class_id, department=dept)
+    else:
+        selected_class = get_object_or_404(AcademicClass, id=class_id, college=request.college)
+        
+    try:
+        year, month = map(int, month_str.split('-'))
+        date_obj = datetime(year, month, 1)
+        month_title = date_obj.strftime('%B %Y')
+    except ValueError:
+        messages.error(request, "Invalid month format.")
+        return redirect('mark_attendance')
+        
+    # Fetch students in this class
+    students = StudentProfile.objects.filter(academic_class=selected_class).order_by('roll_number')
+    if not students.exists():
+        messages.error(request, "No students enrolled in this class.")
+        return redirect('mark_attendance')
+        
+    # Fetch attendance logs for this class, month, and year
+    attendance_logs = Attendance.objects.filter(
+        academic_class=selected_class,
+        date__year=year,
+        date__month=month
+    ).order_by('date', 'period')
+    
+    # Find all unique (date, period) combinations chronologically
+    sessions = sorted(list(set((log.date, log.period) for log in attendance_logs)))
+    
+    total_p = 0
+    total_a = 0
+    total_l = 0
+    
+    rows = []
+    for student in students:
+        p_count = 0
+        a_count = 0
+        l_count = 0
+        
+        student_logs = { (log.date, log.period): log.status for log in attendance_logs.filter(student=student) }
+        
+        session_statuses = []
+        for session in sessions:
+            status = student_logs.get(session)
+            session_statuses.append(status)
+            if status == 'PRESENT':
+                p_count += 1
+            elif status == 'ABSENT':
+                a_count += 1
+            elif status == 'LATE':
+                l_count += 1
+                
+        total_p += p_count
+        total_a += a_count
+        total_l += l_count
+        
+        # Calculate percentage
+        total_student_sessions = p_count + a_count + l_count
+        pct = 100
+        if total_student_sessions > 0:
+            pct = int(((p_count + l_count) / total_student_sessions) * 100)
+            
+        rows.append({
+            'roll_no': student.roll_number,
+            'name': student.user.get_full_name(),
+            'session_statuses': session_statuses,
+            'p_count': p_count,
+            'a_count': a_count,
+            'l_count': l_count,
+            'pct': pct
+        })
+        
+    # Calculate overall averages
+    total_logs = total_p + total_a + total_l
+    present_rate = 100
+    absent_rate = 0
+    late_rate = 0
+    if total_logs > 0:
+        present_rate = int((total_p / total_logs) * 100)
+        absent_rate = int((total_a / total_logs) * 100)
+        late_rate = int((total_l / total_logs) * 100)
+        
+    return render(request, 'management/attendance_report_print.html', {
+        'selected_class': selected_class,
+        'month_str': month_str,
+        'month_title': month_title,
+        'sessions': sessions,
+        'rows': rows,
+        'present_rate': present_rate,
+        'absent_rate': absent_rate,
+        'late_rate': late_rate
+    })
 
 @login_required
 def generate_sample_data(request):
@@ -539,7 +786,7 @@ def create_timetable(request):
     if request.user.role != 'HOD': return redirect('dashboard')
     
     classes = AcademicClass.objects.filter(department=request.user.hod_profile.department)
-    teachers = TeacherProfile.objects.filter(user__college=request.college)
+    teachers = TeacherProfile.objects.filter(department=request.user.hod_profile.department)
     
     class_id = request.GET.get('class_id')
     selected_class = None
@@ -627,7 +874,7 @@ def edit_timetable(request, tt_id):
     selected_class = tt.academic_class
     
     classes = AcademicClass.objects.filter(department=request.user.hod_profile.department)
-    teachers = TeacherProfile.objects.filter(user__college=request.college)
+    teachers = TeacherProfile.objects.filter(department=request.user.hod_profile.department)
     
     days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
     if tt.periods.filter(day_of_week='Saturday').exists():
@@ -694,6 +941,45 @@ def create_exam_notification(request):
             messages.success(request, "Exam notification created."); return redirect('dashboard')
     else: form = ExamNotificationForm()
     return render(request, 'management/create_exam_notification.html', {'form': form})
+
+@login_required
+def create_department_event(request):
+    if request.user.role != 'HOD': 
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        form = DepartmentEventForm(request.POST)
+        if form.is_valid():
+            event = form.save(commit=False)
+            event.college = request.college
+            event.department = request.user.hod_profile.department
+            event.posted_by = request.user.hod_profile
+            event.save()
+            messages.success(request, "Department event created and submitted for College Admin approval.")
+            return redirect('dashboard')
+    else:
+        form = DepartmentEventForm()
+    return render(request, 'management/create_department_event.html', {'form': form})
+
+@login_required
+def approve_department_event(request, event_id):
+    if request.user.role != 'COLLEGE_ADMIN': 
+        return redirect('dashboard')
+    event = get_object_or_404(DepartmentEvent, id=event_id, college=request.college)
+    event.is_approved = True
+    event.approved_by = request.user
+    event.save()
+    messages.success(request, f"Event '{event.title}' approved successfully.")
+    return redirect('dashboard')
+
+@login_required
+def reject_department_event(request, event_id):
+    if request.user.role != 'COLLEGE_ADMIN': 
+        return redirect('dashboard')
+    event = get_object_or_404(DepartmentEvent, id=event_id, college=request.college)
+    event.delete()
+    messages.warning(request, f"Event request removed.")
+    return redirect('dashboard')
 
 @login_required
 def edit_profile(request):
@@ -781,7 +1067,32 @@ def student_timetable(request):
 def student_attendance(request):
     if request.user.role != 'STUDENT':
         return redirect('dashboard')
-    return render(request, 'management/student_attendance.html', {})
+    
+    profile = getattr(request.user, 'student_profile', None)
+    if not profile:
+        messages.error(request, "Student profile not found.")
+        return redirect('dashboard')
+        
+    attendances = Attendance.objects.filter(student=profile).order_by('-date', '-period')
+    
+    # Calculate attendance statistics
+    total_records = attendances.count()
+    present_count = attendances.filter(status='PRESENT').count()
+    late_count = attendances.filter(status='LATE').count()
+    absent_count = attendances.filter(status='ABSENT').count()
+    
+    attendance_rate = 0
+    if total_records > 0:
+        attendance_rate = int(((present_count + late_count) / total_records) * 100)
+        
+    return render(request, 'management/student_attendance.html', {
+        'attendances': attendances,
+        'total_records': total_records,
+        'present_count': present_count,
+        'late_count': late_count,
+        'absent_count': absent_count,
+        'attendance_rate': attendance_rate
+    })
 
 @login_required
 def student_assignments(request):
@@ -953,3 +1264,45 @@ def submit_assignment(request, pk):
             return redirect('student_assignments')
             
     return render(request, 'management/submit_assignment.html', {'assignment': assignment, 'submission': submission})
+
+@login_required
+def college_enquiries_list(request):
+    if request.user.role != 'COLLEGE_ADMIN':
+        return redirect('dashboard')
+    
+    status_filter = request.GET.get('status', '')
+    enquiries = CollegeEnquiry.objects.filter(college=request.college).order_by('-created_at')
+    
+    if status_filter:
+        enquiries = enquiries.filter(status=status_filter)
+        
+    return render(request, 'management/enquiries_list.html', {
+        'enquiries': enquiries,
+        'selected_status': status_filter,
+    })
+
+@login_required
+def update_enquiry_status(request, enquiry_id, new_status):
+    if request.user.role != 'COLLEGE_ADMIN':
+        return redirect('dashboard')
+    
+    enquiry = get_object_or_404(CollegeEnquiry, id=enquiry_id, college=request.college)
+    valid_statuses = dict(CollegeEnquiry.STATUS_CHOICES)
+    if new_status in valid_statuses:
+        enquiry.status = new_status
+        enquiry.save()
+        messages.success(request, f"Enquiry status updated to {valid_statuses[new_status]}.")
+    else:
+        messages.error(request, "Invalid status choice.")
+        
+    return redirect('college_enquiries_list')
+
+@login_required
+def delete_enquiry(request, enquiry_id):
+    if request.user.role != 'COLLEGE_ADMIN':
+        return redirect('dashboard')
+    
+    enquiry = get_object_or_404(CollegeEnquiry, id=enquiry_id, college=request.college)
+    enquiry.delete()
+    messages.warning(request, "Enquiry record deleted.")
+    return redirect('college_enquiries_list')

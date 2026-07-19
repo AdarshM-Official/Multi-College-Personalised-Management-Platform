@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import PasswordChangeForm
-from .models import StudentProfile, TeacherProfile, Department, Specialization, Assignment, Attendance, HODProfile, TimeTable, ExamNotification, AcademicClass, InternalMarkCategory, Subject
+from .models import StudentProfile, TeacherProfile, Department, Specialization, Assignment, Attendance, HODProfile, TimeTable, ExamNotification, AcademicClass, InternalMarkCategory, Subject, DepartmentEvent, CollegeEnquiry
 from accounts.models import CustomUser
 from colleges.models import College
 
@@ -30,12 +30,21 @@ class CollegeSettingsForm(forms.ModelForm):
 
     class Meta:
         model = College
-        fields = ['logo', 'address', 'district', 'website', 'theme_color', 'university_affiliation']
+        fields = [
+            'name', 'established_year', 'logo', 'address', 'district', 
+            'website', 'theme_color', 'university_affiliation', 
+            'contact_email', 'phone_number', 'description'
+        ]
         widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'established_year': forms.NumberInput(attrs={'class': 'form-control'}),
             'address': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'website': forms.URLInput(attrs={'class': 'form-control'}),
             'theme_color': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'}),
             'logo': forms.FileInput(attrs={'class': 'form-control'}),
+            'contact_email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -301,6 +310,16 @@ class ExamNotificationForm(forms.ModelForm):
             'exam_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         }
 
+class DepartmentEventForm(forms.ModelForm):
+    class Meta:
+        model = DepartmentEvent
+        fields = ['title', 'description', 'event_date']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Annual Tech Fest'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Event details and guidelines...'}),
+            'event_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        }
+
 class AcademicClassForm(forms.ModelForm):
     class Meta:
         model = AcademicClass
@@ -335,4 +354,23 @@ class InternalMarkCategoryForm(forms.ModelForm):
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Attendance'}),
             'max_marks': forms.NumberInput(attrs={'class': 'form-control', 'min': '1', 'max': '1000'}),
         }
+
+class CollegeEnquiryForm(forms.ModelForm):
+    class Meta:
+        model = CollegeEnquiry
+        fields = ['name', 'email', 'phone_number', 'course_interested', 'message']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Your Full Name', 'required': 'true'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'name@example.com', 'required': 'true'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., +91 9876543210', 'required': 'true'}),
+            'course_interested': forms.Select(attrs={'class': 'form-select', 'required': 'true'}),
+            'message': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Details of your enquiry/application...', 'required': 'true'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        college = kwargs.pop('college', None)
+        super().__init__(*args, **kwargs)
+        if college:
+            self.fields['course_interested'].queryset = Specialization.objects.filter(college=college)
+            self.fields['course_interested'].empty_label = "Select Program / Course"
 

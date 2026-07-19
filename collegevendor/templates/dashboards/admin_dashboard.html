@@ -177,6 +177,28 @@
 {% endblock %}
 
 {% block content %}
+{% if pending_enquiries_count > 0 %}
+<!-- Enquiry Alert Row -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-warning border-0 shadow-sm p-4 d-flex justify-content-between align-items-center mb-0" style="border-radius: 20px; background: #fffbeb; border-left: 5px solid #d97706 !important;">
+            <div class="d-flex align-items-center">
+                <div class="bg-warning bg-opacity-20 p-3 rounded-circle me-3 text-warning" style="font-size: 1.5rem; display: flex; align-items: center; justify-content: center; width: 50px; height: 50px;">
+                    <i class="bi bi-inboxes-fill"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-1 text-dark">New Admission Enquiries / Applications</h5>
+                    <p class="text-muted small mb-0">You have <strong>{{ pending_enquiries_count }}</strong> pending enquiry/application submissions waiting for review.</p>
+                </div>
+            </div>
+            <a href="{% url 'college_enquiries_list' %}?status=PENDING" class="btn btn-warning fw-bold text-dark px-4 py-2" style="border-radius: 10px; background: #fbbf24; border: none;">
+                Review Enquiries &rarr;
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="dashboard-header">
     <h1 class="dashboard-title">Command Center</h1>
     <p class="dashboard-subtitle">Real-time overview of your institution's operations.</p>
@@ -231,7 +253,47 @@
             <p class="w-desc text-white opacity-75">Operational Efficiency</p>
         </div>
     </div>
+{% if pending_events %}
+<!-- Event Approval Queue Row -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm p-4" style="border-radius: 20px; background: white;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="fw-bold mb-1" style="color: var(--cm-primary); letter-spacing:-0.5px;">Event Approval Requests</h4>
+                    <p class="text-muted small mb-0">HODs have submitted the following department events for approval.</p>
+                </div>
+                <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2 fw-bold">{{ pending_events|length }} Pending</span>
+            </div>
+
+            <div class="row g-4">
+                {% for event in pending_events %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="p-4 border rounded-4 bg-light bg-opacity-50 h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge bg-indigo bg-opacity-10 text-primary small px-2 py-1" style="font-size: 0.75rem;">{{ event.department.name }}</span>
+                                <span class="text-muted small"><i class="bi bi-calendar2-event me-1"></i>{{ event.event_date|date:"M d, Y" }}</span>
+                            </div>
+                            <h5 class="fw-bold mb-2 text-dark">{{ event.title }}</h5>
+                            <p class="text-muted small mb-3">{{ event.description }}</p>
+                        </div>
+                        <div class="d-flex gap-2 pt-3 border-top">
+                            <a href="{% url 'approve_department_event' event.id %}" class="btn btn-sm btn-success w-50 py-2 fw-bold" style="border-radius: 10px;">
+                                <i class="bi bi-check-circle me-1"></i> Approve
+                            </a>
+                            <a href="{% url 'reject_department_event' event.id %}" class="btn btn-sm btn-outline-danger w-50 py-2 fw-bold" style="border-radius: 10px;" onclick="return confirm('Reject and remove this event request?')">
+                                <i class="bi bi-x-circle me-1"></i> Reject
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
 </div>
+{% endif %}
 
 <div class="row g-4">
     <!-- Management Actions -->

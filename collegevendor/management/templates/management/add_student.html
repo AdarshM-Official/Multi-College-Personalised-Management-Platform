@@ -76,7 +76,7 @@
                             <label class="form-label fw-bold small">{{ form.specialization.label }}</label>
                             {{ form.specialization }}
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-4" id="academic_class_container">
                             <label class="form-label fw-bold small">{{ form.academic_class.label }}</label>
                             {{ form.academic_class }}
                         </div>
@@ -134,33 +134,105 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const deptSelect = document.getElementById('id_department');
+        const specSelect = document.getElementById('id_specialization');
+        const classSelect = document.getElementById('id_academic_class');
+        
+        const classContainer = document.getElementById('academic_class_container');
         const ugContainer = document.getElementById('ug_marks_container');
         const plusTwoContainer = document.getElementById('plus_two_marks_container');
 
+        // Mappings from database queries
         const depts = {
             {% for dept in form.department.field.queryset %}
                 "{{ dept.id }}": "{{ dept.category }}",
             {% endfor %}
         };
+        const specializationDepts = {
+            {% for spec in form.specialization.field.queryset %}
+                "{{ spec.id }}": "{{ spec.department_id }}",
+            {% endfor %}
+        };
+        const academicClassDepts = {
+            {% for cls in form.academic_class.field.queryset %}
+                "{{ cls.id }}": "{{ cls.department_id }}",
+            {% endfor %}
+        };
 
-        function toggleMarklists() {
-            const selectedDept = deptSelect.value;
-            const category = depts[selectedDept];
+        // Backup original options
+        const originalSpecOptions = Array.from(specSelect.options);
+        const originalClassOptions = Array.from(classSelect.options);
 
-            if (category === 'PG') {
-                ugContainer.style.display = 'block';
-                plusTwoContainer.style.display = 'none';
-            } else if (category === 'UG') {
-                ugContainer.style.display = 'none';
-                plusTwoContainer.style.display = 'block';
+        function updateDropdowns() {
+            const selectedDeptId = deptSelect.value;
+            const selectedSpecId = specSelect.value;
+            const selectedClassId = classSelect.value;
+
+            // 1. Filter Specialization options based on selected Department
+            specSelect.innerHTML = '';
+            originalSpecOptions.forEach(opt => {
+                if (opt.value === '' || specializationDepts[opt.value] === selectedDeptId) {
+                    specSelect.appendChild(opt.cloneNode(true));
+                }
+            });
+            // Restore selection if it still exists in the filtered options
+            if (Array.from(specSelect.options).some(opt => opt.value === selectedSpecId)) {
+                specSelect.value = selectedSpecId;
             } else {
-                ugContainer.style.display = 'block';
-                plusTwoContainer.style.display = 'block';
+                specSelect.value = '';
+            }
+
+            // 2. Filter Academic Class options based on selected Department
+            classSelect.innerHTML = '';
+            originalClassOptions.forEach(opt => {
+                if (opt.value === '' || academicClassDepts[opt.value] === selectedDeptId) {
+                    classSelect.appendChild(opt.cloneNode(true));
+                }
+            });
+            // Restore selection if it still exists in the filtered options
+            if (Array.from(classSelect.options).some(opt => opt.value === selectedClassId)) {
+                classSelect.value = selectedClassId;
+            } else {
+                classSelect.value = '';
+            }
+
+            // 3. Toggle marklists (UG vs Plus Two)
+            const category = depts[selectedDeptId];
+            if (category === 'PG') {
+                if (ugContainer) ugContainer.style.display = 'block';
+                if (plusTwoContainer) plusTwoContainer.style.display = 'none';
+            } else if (category === 'UG') {
+                if (ugContainer) ugContainer.style.display = 'none';
+                if (plusTwoContainer) plusTwoContainer.style.display = 'block';
+            } else {
+                if (ugContainer) ugContainer.style.display = 'block';
+                if (plusTwoContainer) plusTwoContainer.style.display = 'block';
+            }
+
+            // 4. Handle Academic Class visibility (only show when a valid Specialization is selected)
+            toggleAcademicClassVisibility();
+        }
+
+        function toggleAcademicClassVisibility() {
+            if (specSelect.value === '') {
+                classContainer.style.display = 'none';
+                classSelect.value = '';
+            } else {
+                classContainer.style.display = 'block';
             }
         }
 
-        deptSelect.addEventListener('change', toggleMarklists);
-        toggleMarklists(); // Initial run
+        // Event listeners
+        deptSelect.addEventListener('change', function() {
+            // Reset specialization before updating dropdowns to avoid mismatch
+            specSelect.value = '';
+            updateDropdowns();
+        });
+
+        specSelect.addEventListener('change', toggleAcademicClassVisibility);
+
+        // Initial execution
+        // Preserve any pre-selected values if editing or validation error occurred
+        updateDropdowns();
     });
 </script>
 {% endblock %}

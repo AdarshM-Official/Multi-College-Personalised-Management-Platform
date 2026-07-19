@@ -67,50 +67,86 @@
         background: rgba(255,255,255,0.2);
     }
 
-    /* Roster Cards */
-    .roster-card {
+    /* Roster Cards Redesign */
+    .student-row {
         transition: transform 0.2s, box-shadow 0.2s;
         border-radius: 16px;
+        background: white;
+        border: 1px solid rgba(241, 245, 249, 0.8);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.02);
     }
-    .roster-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.06) !important;
+    .student-row:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.04) !important;
     }
     
     .student-avatar {
-        width: 48px;
-        height: 48px;
-        border-radius: 14px;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
         background: var(--primary-soft);
         color: var(--primary);
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: bold;
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
     
-    .attendance-seg-btn {
-        border-radius: 10px !important;
-        transition: all 0.2s ease;
-        padding: 8px 0;
-        font-size: 0.9rem;
+    /* Segmented Control Styling */
+    .segmented-control {
+        background: #f1f5f9;
+        padding: 4px;
+        border-radius: 12px;
+        border: none;
+        display: inline-flex;
     }
-    
-    .btn-check[value="PRESENT"]:checked + .attendance-seg-btn {
+    .segmented-control .btn-check + label.btn {
+        border-radius: 8px !important;
+        font-weight: 700;
+        font-size: 0.8rem;
+        color: #64748b;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border: none !important;
+        margin: 0 2px;
+        padding: 6px 14px;
+    }
+    .segmented-control .btn-check:checked + label.btn[for^="pres_"] {
         background: #10b981 !important;
         color: white !important;
-        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);
     }
-    .btn-check[value="ABSENT"]:checked + .attendance-seg-btn {
+    .segmented-control .btn-check:checked + label.btn[for^="abs_"] {
         background: #ef4444 !important;
         color: white !important;
-        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25);
     }
-    .btn-check[value="LATE"]:checked + .attendance-seg-btn {
+    .segmented-control .btn-check:checked + label.btn[for^="late_"] {
         background: #f59e0b !important;
         color: white !important;
-        box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
+        box-shadow: 0 4px 10px rgba(245, 158, 11, 0.25);
+    }
+    
+    /* Responsive stacking */
+    @media (max-width: 576px) {
+        .student-row {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 14px;
+            padding: 1rem !important;
+        }
+        .student-row > div:last-child {
+            width: 100%;
+        }
+        .segmented-control {
+            display: flex;
+            width: 100%;
+        }
+        .segmented-control label.btn {
+            flex: 1;
+            text-align: center;
+            padding: 8px 0;
+        }
     }
     
     /* Mobile Adjustments */
@@ -125,8 +161,8 @@
 {% block content %}
 <div class="row g-4">
     <!-- Session Filter Card -->
-    <div class="col-12">
-        <div class="glass-header mb-2">
+    <div class="{% if request.user.role == 'HOD' %}col-lg-8{% else %}col-12{% endif %}">
+        <div class="glass-header mb-2 h-100 d-flex flex-column justify-content-between">
             <div class="d-flex align-items-center mb-4 position-relative z-1">
                 <div class="bg-white rounded-3 p-2 shadow-sm me-3 text-primary">
                     <i class="bi bi-calendar-check fs-4"></i>
@@ -149,8 +185,8 @@
                     </div>
                     
                     <div class="col-md-3">
-                        <label class="form-label fw-bold">Date <i class="bi bi-lock-fill ms-1 opacity-50 small"></i></label>
-                        <input type="text" class="form-control" value="{% now 'Y-m-d' %}" readonly disabled>
+                        <label class="form-label fw-bold">Date</label>
+                        <input type="date" name="date" class="form-control" value="{{ selected_date }}" required>
                     </div>
                     
                     <div class="col-md-5">
@@ -171,70 +207,147 @@
         </div>
     </div>
 
+    {% if request.user.role == 'HOD' %}
+    <!-- Monthly Attendance Report Card -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm p-4 bg-white h-100 d-flex flex-column justify-content-between" style="border-radius: 20px; border: 1px solid rgba(241, 245, 249, 0.8) !important;">
+            <div>
+                <div class="d-flex align-items-center mb-4">
+                    <div class="bg-danger bg-opacity-10 rounded-3 p-2 text-danger me-3">
+                        <i class="bi bi-file-pdf-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark">Monthly Report</h5>
+                        <small class="text-muted">Generate printable PDF report</small>
+                    </div>
+                </div>
+                
+                <form action="{% url 'print_monthly_attendance_report' %}" method="get" target="_blank">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small mb-1" style="text-transform: none; letter-spacing: normal;">Academic Class</label>
+                        <select name="class_id" class="form-select" required>
+                            <option value="">-- Select Class --</option>
+                            {% for c in academic_classes %}
+                                <option value="{{ c.id }}" {% if selected_class and selected_class.id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-muted small mb-1" style="text-transform: none; letter-spacing: normal;">Select Month</label>
+                        <input type="month" name="month" class="form-control" value="{{ current_month }}" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-danger w-100 py-2.5 fw-bold shadow-sm" style="border-radius: 12px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none;">
+                        <i class="bi bi-file-pdf-fill me-2"></i> Generate PDF Report
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Attendance Roster -->
     {% if selected_class %}
-    <div class="col-12 fade-in">
+    <div class="col-12 fade-in pb-5 mb-5">
+        
+        <!-- Statistics Dashboard -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3 col-6">
+                <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 20px;">
+                    <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.75rem;">Attendance Rate</span>
+                    <h3 class="fw-black text-primary mt-2 mb-2" style="font-size: 2rem; font-weight: 800;">{{ attendance_rate }}%</h3>
+                    <div class="progress" style="height: 6px; border-radius: 10px;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ attendance_rate }}%; border-radius: 10px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 20px;">
+                    <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.75rem;">Present</span>
+                    <h3 class="fw-black text-success mt-2 mb-0" style="font-size: 2rem; font-weight: 800;">{{ present_count }}</h3>
+                    <span class="text-muted x-small mt-1 d-block"><i class="bi bi-people-fill text-success me-1"></i>Active today</span>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 20px;">
+                    <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.75rem;">Absent</span>
+                    <h3 class="fw-black text-danger mt-2 mb-0" style="font-size: 2rem; font-weight: 800;">{{ absent_count }}</h3>
+                    <span class="text-muted x-small mt-1 d-block"><i class="bi bi-person-dash-fill text-danger me-1"></i>Not in class</span>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 20px;">
+                    <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.75rem;">Late</span>
+                    <h3 class="fw-black text-warning mt-2 mb-0" style="font-size: 2rem; font-weight: 800;">{{ late_count }}</h3>
+                    <span class="text-muted x-small mt-1 d-block"><i class="bi bi-clock-fill text-warning me-1"></i>Tardy logs</span>
+                </div>
+            </div>
+        </div>
+
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-4 px-2 gap-2">
             <div>
                 <h5 class="fw-bold text-main mb-1">Attendance Roster</h5>
-                <p class="text-muted small mb-0"><span class="badge bg-primary-soft text-primary me-2">{{ selected_class.name }}</span> Period {{ selected_period }} • {% now "M j, Y" %}</p>
+                <p class="text-muted small mb-0"><span class="badge bg-primary-soft text-primary me-2">{{ selected_class.name }}</span> Period {{ selected_period }} • {{ selected_date }}</p>
             </div>
             <div>
                 <span class="badge bg-light text-dark border px-3 py-2 rounded-pill shadow-sm"><i class="bi bi-people-fill me-1 text-primary"></i> {{ students.count }} Enrolled</span>
             </div>
         </div>
-        
+
         {% if students %}
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="class_id" value="{{ selected_class.id }}">
             <input type="hidden" name="period" value="{{ selected_period }}">
-            
+            <input type="hidden" name="date" value="{{ selected_date }}">
+
             <div class="roster-list pb-5 mb-5 mt-2">
                 {% for student in students %}
-                <div class="card border-0 mb-3 roster-card" style="border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
-                    <div class="card-body p-0">
-                        <div class="d-flex flex-column">
-                            
-                            <!-- Student Info Section -->
-                            <div class="p-3 pb-2 d-flex align-items-center bg-white">
-                                <div class="student-avatar me-3 flex-shrink-0" style="width: 44px; height: 44px; border-radius: 12px; font-size: 1rem;">
-                                    {{ student.user.first_name|first }}{{ student.user.last_name|first }}
-                                </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="fw-bold text-dark mb-0" style="font-size: 1.05rem; letter-spacing: -0.2px;">{{ student.user.get_full_name }}</h6>
-                                    <span class="text-muted" style="font-size: 0.8rem; font-weight: 500;">Roll: {{ student.roll_number }}</span>
-                                </div>
-                            </div>
-                            
-                            <!-- Action Segment Control -->
-                            <div class="px-3 pb-3 pt-1 bg-white">
-                                <div class="d-flex w-100 bg-light p-1" style="border-radius: 14px;">
-                                    
-                                    <input type="radio" class="btn-check" name="status_{{ student.id }}" id="pres_{{ student.id }}" value="PRESENT" {% if student.existing_status == 'PRESENT' %}checked{% endif %}>
-                                    <label class="btn flex-fill m-0 fw-bold border-0 attendance-seg-btn text-muted" for="pres_{{ student.id }}">
-                                        <i class="bi bi-check-circle me-1"></i>Present
-                                    </label>
-                                    
-                                    <input type="radio" class="btn-check" name="status_{{ student.id }}" id="abs_{{ student.id }}" value="ABSENT" {% if student.existing_status == 'ABSENT' %}checked{% endif %}>
-                                    <label class="btn flex-fill m-0 fw-bold border-0 attendance-seg-btn text-muted" for="abs_{{ student.id }}">
-                                        <i class="bi bi-x-circle me-1"></i>Absent
-                                    </label>
-                                    
-                                    <input type="radio" class="btn-check" name="status_{{ student.id }}" id="late_{{ student.id }}" value="LATE" {% if student.existing_status == 'LATE' %}checked{% endif %}>
-                                    <label class="btn flex-fill m-0 fw-bold border-0 attendance-seg-btn text-muted" for="late_{{ student.id }}">
-                                        <i class="bi bi-clock-history me-1"></i>Late
-                                    </label>
-                                    
-                                </div>
-                            </div>
-                            
+                <div class="student-row d-flex align-items-center justify-content-between p-3 mb-2 bg-white" style="border-radius: 16px;">
+                    <!-- Left side: Student Info -->
+                    <div class="d-flex align-items-center">
+                        <div class="student-avatar me-3 flex-shrink-0">
+                            {{ student.user.first_name|first }}{{ student.user.last_name|first }}
                         </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold text-dark" style="font-size: 1.05rem;">{{ student.user.get_full_name }}</h6>
+                            <small class="text-muted fw-semibold" style="font-size: 0.8rem;">Roll No: {{ student.roll_number }}</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Right side: Status / Control -->
+                    <div>
+                        {% if request.user.role == 'HOD' %}
+                            <!-- Read-only status indicator for HOD -->
+                            {% if student.existing_status == 'PRESENT' %}
+                                <span class="badge bg-success bg-opacity-10 text-success px-4 py-2 rounded-pill fw-bold" style="font-size: 0.8rem;"><i class="bi bi-check-circle-fill me-1"></i> PRESENT</span>
+                            {% elif student.existing_status == 'ABSENT' %}
+                                <span class="badge bg-danger bg-opacity-10 text-danger px-4 py-2 rounded-pill fw-bold" style="font-size: 0.8rem;"><i class="bi bi-x-circle-fill me-1"></i> ABSENT</span>
+                            {% elif student.existing_status == 'LATE' %}
+                                <span class="badge bg-warning bg-opacity-10 text-warning px-4 py-2 rounded-pill fw-bold" style="font-size: 0.8rem;"><i class="bi bi-clock-fill me-1"></i> LATE</span>
+                            {% else %}
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary px-4 py-2 rounded-pill fw-bold" style="font-size: 0.8rem;"><i class="bi bi-question-circle-fill me-1"></i> UNMARKED</span>
+                            {% endif %}
+                        {% else %}
+                            <!-- Segmented Switcher for Teacher -->
+                            <div class="btn-group segmented-control" role="group">
+                                <input type="radio" class="btn-check" name="status_{{ student.id }}" id="pres_{{ student.id }}" value="PRESENT" {% if student.existing_status == 'PRESENT' %}checked{% endif %}>
+                                <label class="btn btn-sm btn-outline-success" for="pres_{{ student.id }}">Present</label>
+                                
+                                <input type="radio" class="btn-check" name="status_{{ student.id }}" id="abs_{{ student.id }}" value="ABSENT" {% if student.existing_status == 'ABSENT' %}checked{% endif %}>
+                                <label class="btn btn-sm btn-outline-danger" for="abs_{{ student.id }}">Absent</label>
+                                
+                                <input type="radio" class="btn-check" name="status_{{ student.id }}" id="late_{{ student.id }}" value="LATE" {% if student.existing_status == 'LATE' %}checked{% endif %}>
+                                <label class="btn btn-sm btn-outline-warning" for="late_{{ student.id }}">Late</label>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
             </div>
-            
+
+            {% if request.user.role != 'HOD' %}
             <!-- Floating Action Bar -->
             <div class="position-fixed bottom-0 start-0 end-0 p-3 pointer-events-none" style="z-index: 1000; background: linear-gradient(to top, rgba(255,255,255,0.95) 40%, transparent);">
                 <div class="container-fluid d-flex justify-content-center pointer-events-auto">
@@ -243,6 +356,7 @@
                     </button>
                 </div>
             </div>
+            {% endif %}
         </form>
         {% else %}
         <div class="card border-0 bg-white shadow-sm rounded-4 text-center py-5">

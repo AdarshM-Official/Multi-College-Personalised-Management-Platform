@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Create Exam Notification | {{ request.college.name }}{% endblock %}
+{% block title %}Create Department Event | {{ request.college.name }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -72,11 +72,11 @@
             <div class="card card-premium border-0 shadow-lg">
                 <div class="header-premium card-header d-flex align-items-center gap-3">
                     <div class="bg-white bg-opacity-20 p-3 rounded-circle d-inline-flex">
-                        <i class="bi bi-bell-fill fs-3"></i>
+                        <i class="bi bi-calendar2-event-fill fs-3"></i>
                     </div>
                     <div>
-                        <h3 class="fw-bold mb-0 text-white">Post Exam Notification</h3>
-                        <p class="mb-0 opacity-75 small">Broadcast exam schedules and guidelines directly to students in your department.</p>
+                        <h3 class="fw-bold mb-0 text-white">Post Department Event</h3>
+                        <p class="mb-0 opacity-75 small">Submit a department event for approval. Approved events will scroll on the college landing page.</p>
                     </div>
                 </div>
                 
@@ -87,39 +87,39 @@
                         <div class="row g-4">
                             <!-- Title -->
                             <div class="col-12">
-                                <label class="form-label fw-bold small">Notification Title</label>
+                                <label class="form-label fw-bold small">Event Title</label>
                                 {{ form.title }}
                                 {{ form.title.errors }}
-                                <div class="form-text x-small text-muted">A clear, descriptive title (e.g., "Internal Assessment - Semester 2").</div>
+                                <div class="form-text x-small text-muted">A catchy and descriptive title for the event.</div>
                             </div>
                             
                             <!-- Date -->
                             <div class="col-md-6">
-                                <label class="form-label fw-bold small">Date of Examination</label>
-                                {{ form.exam_date }}
-                                {{ form.exam_date.errors }}
-                                <div class="form-text x-small text-muted">Select the scheduled date of the exam.</div>
+                                <label class="form-label fw-bold small">Event Date</label>
+                                {{ form.event_date }}
+                                {{ form.event_date.errors }}
+                                <div class="form-text x-small text-muted">Select the scheduled date of the event.</div>
                             </div>
 
-                            <!-- Department Info (Read-only badge style context) -->
+                            <!-- Department Info -->
                             <div class="col-md-6">
-                                <label class="form-label fw-bold small">Target Audience</label>
-                                <input type="text" class="form-control bg-light" value="{{ request.user.hod_profile.department.name }} Department" readonly>
-                                <div class="form-text x-small text-muted">Notifications are auto-targeted to your department.</div>
+                                <label class="form-label fw-bold small">Target Department</label>
+                                <input type="text" class="form-control bg-light" value="{{ request.user.hod_profile.department.name }}" readonly>
+                                <div class="form-text x-small text-muted">Events are auto-linked to your department.</div>
                             </div>
                             
                             <!-- Description -->
                             <div class="col-12">
-                                <label class="form-label fw-bold small">Exam Guidelines / Description</label>
+                                <label class="form-label fw-bold small">Event Details / Description</label>
                                 {{ form.description }}
                                 {{ form.description.errors }}
-                                <div class="form-text x-small text-muted">Provide instructions, syllabus topics, and reporting times.</div>
+                                <div class="form-text x-small text-muted">Include scheduling details, target participants, venues, and registration forms.</div>
                             </div>
                         </div>
 
                         <div class="mt-5 pt-4 border-top d-flex justify-content-end gap-3">
                             <a href="{% url 'dashboard' %}" class="btn btn-light-custom">Cancel</a>
-                            <button type="submit" class="btn btn-premium">Post Announcement</button>
+                            <button type="submit" class="btn btn-premium">Submit Event</button>
                         </div>
                     </form>
                 </div>

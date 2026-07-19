@@ -6,26 +6,76 @@ from .forms import CollegeRegistrationForm
 from colleges.models import College
 from .models import CustomUser
 
-class CustomPasswordResetView(auth_views.PasswordResetView):
-    def get_success_url(self):
-        return super().get_success_url()
-    
-    def form_valid(self, form):
-        # We can pass extra context to the email here
-        opts = {
-            'use_https': self.request.is_secure(),
-            'token_generator': self.token_generator,
-            'from_email': self.from_email,
-            'email_template_name': self.email_template_name,
-            'subject_template_name': self.subject_template_name,
-            'request': self.request,
-            'html_email_template_name': self.html_email_template_name,
-            'extra_email_context': {
-                'college': getattr(self.request, 'college', None),
-            },
-        }
-        form.save(**opts)
-        return super().form_valid(form)
+import random
+
+def forgot_password(request):
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip()
+        user = CustomUser.objects.filter(email=email).first()
+        if not user:
+            messages.error(request, "No account registered with this email address.")
+        else:
+            otp = str(random.randint(100000, 999999))
+            request.session['reset_email'] = email
+            request.session['reset_otp'] = otp
+            request.session['otp_verified'] = False
+            
+            # Print high-visibility OTP message to the terminal console
+            print("\n" + "="*80)
+            print(f" [PASSWORD RESET SERVICE] ".center(80, "="))
+            print(f"To: {email}")
+            print(f"Verification OTP Code: {otp}")
+            print("="*80 + "\n")
+            
+            messages.info(request, "A verification OTP has been sent. Please check your Email.")
+
+            return redirect('verify_otp')
+    return render(request, 'accounts/password_reset_form.html')
+
+def verify_otp(request):
+    email = request.session.get('reset_email')
+    if not email:
+        messages.error(request, "Session expired or invalid. Please start over.")
+        return redirect('password_reset')
+        
+    if request.method == 'POST':
+        entered_otp = request.POST.get('otp', '').strip()
+        session_otp = request.session.get('reset_otp')
+        if entered_otp == session_otp:
+            request.session['otp_verified'] = True
+            messages.success(request, "OTP verified successfully. Please set your new password.")
+            return redirect('new_password')
+        else:
+            messages.error(request, "Invalid OTP code. Please check the terminal console and try again.")
+            
+    return render(request, 'accounts/verify_otp.html', {'email': email})
+
+def new_password(request):
+    email = request.session.get('reset_email')
+    otp_verified = request.session.get('otp_verified')
+    if not email or not otp_verified:
+        messages.error(request, "Access denied. Please verify your identity first.")
+        return redirect('password_reset')
+        
+    if request.method == 'POST':
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+        if password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+        else:
+            user = CustomUser.objects.get(email=email)
+            user.set_password(password)
+            user.save()
+            
+            # Clear session
+            request.session.pop('reset_email', None)
+            request.session.pop('reset_otp', None)
+            request.session.pop('otp_verified', None)
+            
+            messages.success(request, "Your password has been reset successfully. Please log in.")
+            return redirect('login')
+            
+    return render(request, 'accounts/new_password.html')
 
 
 def register_college(request):

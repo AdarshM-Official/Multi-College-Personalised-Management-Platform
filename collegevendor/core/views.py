@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
-from management.models import StudentProfile, TeacherProfile, Department, Attendance, PlatformNotification, TimeTable, ExamNotification, Assignment, Submission
+from management.models import StudentProfile, TeacherProfile, Department, Attendance, PlatformNotification, TimeTable, ExamNotification, Assignment, Submission, DepartmentEvent, CollegeEnquiry
 from colleges.models import College
 from accounts.models import CustomUser
 
@@ -35,11 +35,29 @@ def tenant_home(request):
         return redirect('home')
     
     college = request.college
-    departments = Department.objects.filter(college=college).prefetch_related('specializations')
+    departments = Department.objects.filter(college=college).prefetch_related('specializations', 'academic_classes')
     
+    # Query approved department events
+    approved_events = DepartmentEvent.objects.filter(college=college, is_approved=True).order_by('-event_date')
+    
+    from management.forms import CollegeEnquiryForm
+    
+    if request.method == 'POST':
+        form = CollegeEnquiryForm(request.POST, college=college)
+        if form.is_valid():
+            enquiry = form.save(commit=False)
+            enquiry.college = college
+            enquiry.save()
+            messages.success(request, "Your application/enquiry has been submitted successfully to the college management!")
+            return redirect(request.path)
+    else:
+        form = CollegeEnquiryForm(college=college)
+        
     return render(request, 'core/tenant_home.html', {
         'college': college,
         'departments': departments,
+        'approved_events': approved_events,
+        'enquiry_form': form,
     })
 
 @login_required
@@ -58,6 +76,10 @@ def dashboard(request):
         context['platform_notifications'] = PlatformNotification.objects.filter(
             models.Q(college=user.college) | models.Q(college__isnull=True)
         ).order_by('-created_at')[:5]
+        # Query pending events for approval
+        context['pending_events'] = DepartmentEvent.objects.filter(college=user.college, is_approved=False).order_by('-created_at')
+        # Query pending enquiries count
+        context['pending_enquiries_count'] = CollegeEnquiry.objects.filter(college=user.college, status='PENDING').count()
         return render(request, 'dashboards/admin_dashboard.html', context)
     
     elif user.role == 'TEACHER':
@@ -66,6 +88,7 @@ def dashboard(request):
         # Default contexts
         context['stats'] = {'dept': 'None', 'active_assignments': 0, 'assigned_students': 0, 'pending_reviews': 0}
         context['recent_assignments'] = []
+        context['exam_alerts'] = []
         
         if profile:
             from django.utils import timezone
@@ -87,6 +110,9 @@ def dashboard(request):
             for assignment in recent_assignments:
                 assignment.progress_pct = int((assignment.submission_count / assigned_students) * 100) if assigned_students > 0 else 0
             
+            # Fetch exam alerts for teacher's department
+            exam_alerts = ExamNotification.objects.filter(department=profile.department).order_by('-date_posted')[:3]
+            
             context['stats'] = {
                 'dept': profile.department.name if profile.department else "None",
                 'active_assignments': active_assignments,
@@ -94,6 +120,7 @@ def dashboard(request):
                 'pending_reviews': pending_reviews,
             }
             context['recent_assignments'] = recent_assignments
+            context['exam_alerts'] = exam_alerts
             
         return render(request, 'dashboards/teacher_dashboard.html', context)
     
@@ -160,9 +187,12 @@ def dashboard(request):
             context['timetables'] = TimeTable.objects.filter(department=profile.department)
             context['exam_notifications'] = ExamNotification.objects.filter(department=profile.department).order_by('-id')[:5]
             context['teachers_list'] = TeacherProfile.objects.filter(department=profile.department)[:5]
+            # Fetch department events
+            context['department_events'] = DepartmentEvent.objects.filter(department=profile.department).order_by('-created_at')[:5]
         else:
             context['stats'] = {'dept': "None", 'teachers': 0, 'students': 0, 'subjects': 0}
             context['teachers_list'] = []
+            context['department_events'] = []
         return render(request, 'dashboards/hod_dashboard.html', context)
     
     return render(request, 'dashboard.html', context)

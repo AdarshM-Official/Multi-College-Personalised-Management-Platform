@@ -212,3 +212,32 @@ class InternalMark(TenantModel):
 
     def __str__(self):
         return f"{self.student.user.get_full_name()} - {self.category.name if self.category else 'No Category'} - {self.marks_obtained}"
+
+class DepartmentEvent(TenantModel):
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='events')
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    event_date = models.DateField()
+    posted_by = models.ForeignKey(HODProfile, on_delete=models.CASCADE, related_name='posted_events')
+    is_approved = models.BooleanField(default=False)
+    approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_events')
+
+    def __str__(self):
+        return f"{self.title} - {self.department.name} ({'Approved' if self.is_approved else 'Pending'})"
+
+class CollegeEnquiry(TenantModel):
+    STATUS_CHOICES = (
+        ('PENDING', 'Pending Review'),
+        ('REVIEWED', 'Reviewed'),
+        ('ACCEPTED', 'Accepted'),
+        ('REJECTED', 'Rejected'),
+    )
+    name = models.CharField(max_length=255)
+    email = models.EmailField()
+    phone_number = models.CharField(max_length=15)
+    course_interested = models.ForeignKey(Specialization, on_delete=models.SET_NULL, null=True, blank=True, related_name='enquiries')
+    message = models.TextField()
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='PENDING')
+
+    def __str__(self):
+        return f"Enquiry from {self.name} - {self.get_status_display()}"
