@@ -17,7 +17,16 @@
                             {% for field in form %}
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">{{ field.label }}</label>
+                                {% if field.name == 'password' %}
+                                <div class="input-group">
+                                    {{ field }}
+                                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                        <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                                    </button>
+                                </div>
+                                {% else %}
                                 {{ field }}
+                                {% endif %}
                                 {% if field.errors %}
                                 <div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>
                                 {% endif %}
@@ -34,4 +43,38 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function() {
+        function initPasswordToggle() {
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordField = document.getElementById('id_password');
+            
+            if (togglePassword && passwordField) {
+                togglePassword.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const type = passwordField.type === 'password' ? 'text' : 'password';
+                    passwordField.type = type;
+                    
+                    const icon = togglePassword.querySelector('i') || document.getElementById('togglePasswordIcon');
+                    if (icon) {
+                        if (type === 'password') {
+                            icon.className = 'bi bi-eye';
+                        } else {
+                            icon.className = 'bi bi-eye-slash';
+                        }
+                    }
+                });
+            }
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initPasswordToggle);
+        } else {
+            initPasswordToggle();
+        }
+    })();
+</script>
 {% endblock %}

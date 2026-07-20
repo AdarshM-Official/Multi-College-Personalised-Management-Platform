@@ -44,7 +44,12 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold small">Password</label>
-                            {{ form.password }}
+                            <div class="input-group">
+                                {{ form.password }}
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                                </button>
+                            </div>
                             <div class="form-text x-small text-muted">Temporary password for the student's first login.</div>
                         </div>
                         <div class="col-md-6">
@@ -233,6 +238,27 @@
         // Initial execution
         // Preserve any pre-selected values if editing or validation error occurred
         updateDropdowns();
+
+        // Password eye toggle logic
+        const togglePasswordBtn = document.getElementById('togglePassword');
+        const passwordInputField = document.getElementById('id_password');
+        if (togglePasswordBtn && passwordInputField) {
+            togglePasswordBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const type = passwordInputField.type === 'password' ? 'text' : 'password';
+                passwordInputField.type = type;
+                
+                const icon = togglePasswordBtn.querySelector('i') || document.getElementById('togglePasswordIcon');
+                if (icon) {
+                    if (type === 'password') {
+                        icon.className = 'bi bi-eye';
+                    } else {
+                        icon.className = 'bi bi-eye-slash';
+                    }
+                }
+            });
+        }
     });
 </script>
 {% endblock %}
