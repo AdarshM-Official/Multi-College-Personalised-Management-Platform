@@ -134,33 +134,44 @@
                     <i class="bi bi-award-fill fs-4"></i>
                 </div>
                 <div>
-                    <h4 class="fw-bold mb-0 text-white">Internal Marks</h4>
-                    <p class="mb-0 text-white text-opacity-75 small">Grade students based on HOD configured scales.</p>
+                    <h4 class="fw-bold mb-0 text-white">Semester Internal Marks</h4>
+                    <p class="mb-0 text-white text-opacity-75 small">Grade students for the selected semester based on HOD configured scales.</p>
                 </div>
             </div>
             
             <form method="get" class="position-relative z-1">
                 <div class="row g-3 align-items-end">
                     <div class="col-md-5">
-                        <label class="form-label fw-bold text-white">Academic Class</label>
+                        <label class="form-label fw-bold text-white">Academic Class / Semester</label>
                         <select name="class_id" class="form-select" onchange="this.form.submit()" required>
-                            <option value="">-- Select Class --</option>
+                            <option value="">-- Select Semester / Class --</option>
                             {% for c in academic_classes %}
                                 <option value="{{ c.id }}" {% if selected_class and selected_class.id == c.id %}selected{% endif %}>{{ c.name }} (Max: {{ c.max_internal_marks }})</option>
                             {% endfor %}
                         </select>
                     </div>
+                    {% if class_subjects %}
+                    <div class="col-md-5">
+                        <label class="form-label fw-bold text-white">Subject</label>
+                        <select name="subject_id" class="form-select" onchange="this.form.submit()" required>
+                            <option value="">-- Select Subject --</option>
+                            {% for s in class_subjects %}
+                                <option value="{{ s.id }}" {% if selected_subject and selected_subject.id == s.id %}selected{% endif %}>{{ s.name }} ({{ s.code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
                 </div>
             </form>
         </div>
     </div>
 
-    {% if selected_class %}
+    {% if selected_class and selected_subject %}
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-3 px-2">
             <div>
-                <h5 class="fw-bold text-dark mb-1">Marking Roster</h5>
-                <p class="text-muted small mb-0">Enter marks for each category.</p>
+                <h5 class="fw-bold text-dark mb-1">Semester Marking Roster</h5>
+                <p class="text-muted small mb-0">Enter internal marks for each subject category in this semester.</p>
             </div>
         </div>
 
@@ -172,6 +183,7 @@
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="class_id" value="{{ selected_class.id }}">
+            <input type="hidden" name="subject_id" value="{{ selected_subject.id }}">
             
             <div class="row g-3">
                 {% for item in students_data %}

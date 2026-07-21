@@ -1,116 +1,89 @@
 {% extends 'base.html' %}
 
-{% block title %}My Attendance Report | {{ request.college.name }}{% endblock %}
+{% block title %}My Attendance | {{ request.college.name }}{% endblock %}
 
 {% block extra_css %}
 <style>
-    .card-premium {
-        border-radius: 24px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-        border: 1px solid rgba(241, 245, 249, 0.8);
-        overflow: hidden;
-    }
-    .header-premium {
-        background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
-        color: white;
-        padding: 2.5rem;
-        border: none;
-    }
+    :root { --card-radius: 20px; }
+    .attendance-card { border-radius: var(--card-radius); border: 1px solid rgba(0,0,0,0.05); transition: transform 0.2s; }
+    .stat-card { border-radius: var(--card-radius); border-left: 4px solid transparent; }
+    .stat-card.primary { border-left-color: var(--primary); }
+    .stat-card.success { border-left-color: #10b981; }
+    .stat-card.danger { border-left-color: #ef4444; }
+    .stat-card.warning { border-left-color: #f59e0b; }
+    .status-pill { border-radius: 50px; padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <!-- Header Card -->
-    <div class="card card-premium border-0 mb-4">
-        <div class="header-premium card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <div class="d-flex align-items-center gap-3">
-                <div class="bg-white bg-opacity-20 p-3 rounded-circle d-inline-flex">
-                    <i class="bi bi-calendar2-check-fill fs-3"></i>
-                </div>
-                <div>
-                    <h3 class="fw-bold mb-0 text-white">My Attendance Report</h3>
-                    <p class="mb-0 opacity-75 small">View your academic attendance records and stats.</p>
-                </div>
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Attendance Dashboard</h2>
+            <p class="text-muted mb-0">Track your progress and attendance history.</p>
+        </div>
+        <div class="text-end">
+            <small class="text-uppercase text-muted fw-bold d-block">Current Rate</small>
+            <span class="h2 fw-bold text-primary mb-0">{{ attendance_rate }}%</span>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-6 col-md-3">
+            <div class="card stat-card primary shadow-sm p-4">
+                <p class="text-muted mb-1 small fw-bold">Total Sessions</p>
+                <h3 class="fw-bold mb-0">{{ total_records }}</h3>
             </div>
-            <div class="bg-white bg-opacity-20 px-4 py-2 rounded-pill fw-bold text-white shadow-sm">
-                Overall Rate: {{ attendance_rate }}%
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card stat-card success shadow-sm p-4">
+                <p class="text-muted mb-1 small fw-bold">Present</p>
+                <h3 class="fw-bold mb-0 text-success">{{ present_count }}</h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card stat-card danger shadow-sm p-4">
+                <p class="text-muted mb-1 small fw-bold">Absent</p>
+                <h3 class="fw-bold mb-0 text-danger">{{ absent_count }}</h3>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card stat-card warning shadow-sm p-4">
+                <p class="text-muted mb-1 small fw-bold">Late</p>
+                <h3 class="fw-bold mb-0 text-warning">{{ late_count }}</h3>
             </div>
         </div>
     </div>
 
-    <!-- Statistics Grid -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-3 col-6">
-            <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 20px;">
-                <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.75rem;">Total Classes</span>
-                <h3 class="fw-black text-primary mt-2 mb-0" style="font-size: 2rem; font-weight: 800;">{{ total_records }}</h3>
-                <span class="text-muted x-small mt-1 d-block"><i class="bi bi-info-circle me-1"></i>Recorded sessions</span>
-            </div>
+    <div class="card attendance-card shadow-sm border-0">
+        <div class="card-header bg-white border-0 py-3 px-4">
+            <h5 class="fw-bold mb-0">Recent Activity</h5>
         </div>
-        <div class="col-md-3 col-6">
-            <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 20px;">
-                <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.75rem;">Present</span>
-                <h3 class="fw-black text-success mt-2 mb-0" style="font-size: 2rem; font-weight: 800;">{{ present_count }}</h3>
-                <span class="text-muted x-small mt-1 d-block"><i class="bi bi-check-circle-fill text-success me-1"></i>Attended</span>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 20px;">
-                <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.75rem;">Absent</span>
-                <h3 class="fw-black text-danger mt-2 mb-0" style="font-size: 2rem; font-weight: 800;">{{ absent_count }}</h3>
-                <span class="text-muted x-small mt-1 d-block"><i class="bi bi-x-circle-fill text-danger me-1"></i>Missed</span>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 20px;">
-                <span class="text-muted small fw-bold text-uppercase" style="letter-spacing: 0.5px; font-size: 0.75rem;">Late</span>
-                <h3 class="fw-black text-warning mt-2 mb-0" style="font-size: 2rem; font-weight: 800;">{{ late_count }}</h3>
-                <span class="text-muted x-small mt-1 d-block"><i class="bi bi-clock-fill text-warning me-1"></i>Tardy logs</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Attendance History List -->
-    <div class="card border-0 shadow-sm bg-white" style="border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.02) !important;">
-        <div class="card-header bg-white border-0 p-4">
-            <h5 class="fw-bold text-dark mb-0">Attendance History</h5>
-        </div>
-        
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light bg-opacity-50">
-                    <tr class="small text-muted text-uppercase fw-bold">
+                <thead class="table-light">
+                    <tr>
                         <th class="ps-4">Date</th>
-                        <th>Class / Course</th>
+                        <th>Subject</th>
                         <th>Period</th>
                         <th class="text-center">Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for record in attendances %}
-                    <tr class="border-light">
-                        <td class="ps-4 fw-medium text-dark">{{ record.date|date:"F d, Y" }}</td>
-                        <td class="fw-bold text-muted">{{ record.academic_class.name|default:"General Class" }}</td>
-                        <td>Period {{ record.period }}</td>
+                    <tr>
+                        <td class="ps-4">{{ record.date|date:"M d, Y" }}</td>
+                        <td class="fw-semibold">{{ record.academic_class.name|default:"General Class" }}</td>
+                        <td>{{ record.period }}</td>
                         <td class="text-center">
-                            {% if record.status == 'PRESENT' %}
-                                <span class="badge bg-success bg-opacity-10 text-success px-4 py-2 rounded-pill fw-bold" style="font-size: 0.8rem;"><i class="bi bi-check-circle-fill me-1"></i> PRESENT</span>
-                            {% elif record.status == 'ABSENT' %}
-                                <span class="badge bg-danger bg-opacity-10 text-danger px-4 py-2 rounded-pill fw-bold" style="font-size: 0.8rem;"><i class="bi bi-x-circle-fill me-1"></i> ABSENT</span>
-                            {% elif record.status == 'LATE' %}
-                                <span class="badge bg-warning bg-opacity-10 text-warning px-4 py-2 rounded-pill fw-bold" style="font-size: 0.8rem;"><i class="bi bi-clock-fill me-1"></i> LATE</span>
-                            {% else %}
-                                <span class="badge bg-secondary bg-opacity-10 text-secondary px-4 py-2 rounded-pill fw-bold" style="font-size: 0.8rem;"><i class="bi bi-question-circle-fill me-1"></i> UNMARKED</span>
-                            {% endif %}
+                            <span class="status-pill {% if record.status == 'PRESENT' %}bg-success-subtle text-success{% elif record.status == 'ABSENT' %}bg-danger-subtle text-danger{% elif record.status == 'LATE' %}bg-warning-subtle text-warning{% else %}bg-secondary-subtle{% endif %}">
+                                {{ record.status }}
+                            </span>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="4" class="text-center py-5 text-muted">
-                            <i class="bi bi-calendar2-x fs-2 d-block mb-3 opacity-50"></i>
-                            No attendance records have been registered for you yet.
-                        </td>
+                        <td colspan="4" class="text-center py-5 text-muted">No attendance records found.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

@@ -15,6 +15,10 @@
         font-weight: 800;
         letter-spacing: -1px;
     }
+    .subject-header {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        border-bottom: 2px solid #e2e8f0;
+    }
 </style>
 {% endblock %}
 
@@ -23,104 +27,84 @@
     <!-- Header Section -->
     <div class="row align-items-center mb-4 g-3">
         <div class="col-md-6">
-            <h3 class="fw-bold mb-1 text-dark" style="letter-spacing: -0.8px;">Internal Marks</h3>
-            <p class="text-muted small mb-0"><i class="bi bi-award-fill me-1"></i> Review your academic performance and internal grades.</p>
+            <h3 class="fw-bold mb-1 text-dark" style="letter-spacing: -0.8px;">Subject-wise Internal Marks</h3>
+            <p class="text-muted small mb-0"><i class="bi bi-award-fill me-1"></i> Review your academic performance across all subjects.</p>
         </div>
         <div class="col-md-6 text-md-end">
             <span class="badge bg-light text-dark border px-3 py-2 rounded-pill"><i class="bi bi-person-check me-2"></i>{{ request.user.get_full_name }}</span>
         </div>
     </div>
 
-    {% if internal_marks %}
-    <!-- Statistics Overview & Graph Section -->
+    {% if subjects_data %}
+    <!-- Statistics Overview Card -->
     <div class="row g-4 mb-5">
-        <!-- Stats Summary Card -->
-        <div class="col-lg-4">
-            <div class="card mark-card border-0 p-4 h-100 d-flex flex-column justify-content-between">
+        <div class="col-12">
+            <div class="card mark-card border-0 p-4 d-flex flex-row align-items-center justify-content-between">
                 <div>
-                    <h5 class="fw-bold text-secondary mb-3" style="font-size: 0.95rem;">Performance Summary</h5>
-                    
-                    <div class="mb-4">
-                        <span class="text-muted small d-block">Overall Score</span>
-                        <strong class="stat-badge-premium text-primary">{{ total_obtained|floatformat:1 }} <span class="fs-5 text-muted fw-normal">/ {{ total_possible }} pts</span></strong>
-                    </div>
-
-                    <div class="mb-4">
-                        <span class="text-muted small d-block">Academic Percentage</span>
-                        <strong class="fs-2 text-success fw-bold">{{ percentage }}%</strong>
-                    </div>
+                    <h5 class="fw-bold text-secondary mb-1" style="font-size: 0.95rem;">Overall Academic Performance</h5>
+                    <span class="text-muted small">Aggregate internal score across all your enrolled subjects</span>
                 </div>
-                
-                <div>
-                    <div class="progress" style="height: 10px; border-radius: 10px;">
-                        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ percentage }}%;" aria-valuenow="{{ percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                    <span class="small text-muted mt-2 d-block">Completion rate towards maximum marks</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Graph Card -->
-        <div class="col-lg-8">
-            <div class="card mark-card border-0 p-4 h-100">
-                <h5 class="fw-bold text-secondary mb-3" style="font-size: 0.95rem;">Marks Breakdown Visualizer</h5>
-                <div style="position: relative; height: 260px; width: 100%;">
-                    <canvas id="marksChart"></canvas>
+                <div class="text-end">
+                    <strong class="stat-badge-premium text-primary me-3">{{ total_obtained|floatformat:1 }} <span class="fs-5 text-muted fw-normal">/ {{ total_possible }} pts</span></strong>
+                    <span class="badge {% if percentage >= 80 %}bg-success-soft text-success{% elif percentage >= 50 %}bg-warning-soft text-warning{% else %}bg-danger-soft text-danger{% endif %} px-3 py-2 rounded-pill fs-5 fw-bold align-middle">
+                        {{ percentage }}%
+                    </span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Textual Detail Table Card -->
-    <div class="card mark-card border-0 overflow-hidden mb-5">
-        <div class="card-header bg-white border-bottom p-4">
-            <h5 class="fw-bold text-dark mb-0">Academic Scorecard</h5>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
-                        <tr class="small text-muted text-uppercase fw-bold">
-                            <th class="px-4 py-3">Category Name</th>
-                            <th class="px-4 py-3 text-center">Marks Obtained</th>
-                            <th class="px-4 py-3 text-center">Max Potential Marks</th>
-                            <th class="px-4 py-3 text-center">Success Percentage</th>
-                            <th class="px-4 py-3 text-end pe-4">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for im in internal_marks %}
-                        <tr>
-                            <td class="px-4 py-3.5">
-                                <div class="d-flex align-items-center">
-                                    <div class="bg-primary-soft text-primary rounded-3 p-2.5 me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                                        <i class="bi bi-patch-check-fill fs-5"></i>
-                                    </div>
-                                    <span class="fw-bold text-dark">{{ im.category.name }}</span>
-                                </div>
-                            </td>
-                            <td class="px-4 py-3.5 text-center">
-                                <span class="fw-bold text-primary fs-6">{{ im.marks_obtained }}</span>
-                            </td>
-                            <td class="px-4 py-3.5 text-center">
-                                <span class="text-muted">{{ im.category.max_marks }}</span>
-                            </td>
-                            <td class="px-4 py-3.5 text-center">
-                                {% widthratio im.marks_obtained im.category.max_marks 100 as row_pct %}
-                                <span class="badge {% if row_pct|add:"0" >= 80 %}bg-success-soft text-success{% elif row_pct|add:"0" >= 50 %}bg-warning-soft text-warning{% else %}bg-danger-soft text-danger{% endif %} px-3 py-2 rounded-pill fw-bold">
-                                    {{ row_pct }}%
-                                </span>
-                            </td>
-                            <td class="px-4 py-3.5 text-end pe-4">
-                                <span class="small text-muted"><i class="bi bi-clock-history me-1"></i>Graded on {{ im.date_marked|date:"M d, Y" }}</span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <!-- Subject Tables -->
+    <div class="row g-4">
+        {% for subject_name, data in subjects_data.items %}
+        <div class="col-12 col-xl-6">
+            <div class="card mark-card border-0 overflow-hidden h-100">
+                <div class="card-header subject-header p-4 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-book-half text-primary me-2"></i>{{ subject_name }}</h5>
+                    <div class="text-end">
+                        <div class="fw-bold text-primary">{{ data.subject_total_obtained|floatformat:1 }} / {{ data.subject_total_possible }}</div>
+                        <div class="small text-muted">{{ data.percentage }}%</div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr class="small text-muted text-uppercase fw-bold">
+                                    <th class="px-4 py-3">Category</th>
+                                    <th class="px-4 py-3 text-center">Score</th>
+                                    <th class="px-4 py-3 text-end pe-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for im in data.marks %}
+                                <tr>
+                                    <td class="px-4 py-3.5">
+                                        <div class="d-flex align-items-center">
+                                            <span class="fw-bold text-dark">{{ im.category.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3.5 text-center">
+                                        <span class="fw-bold text-primary fs-6">{{ im.marks_obtained }}</span>
+                                        <span class="text-muted small">/ {{ im.category.max_marks }}</span>
+                                    </td>
+                                    <td class="px-4 py-3.5 text-end pe-4">
+                                        {% widthratio im.marks_obtained im.category.max_marks 100 as row_pct %}
+                                        <span class="badge {% if row_pct|add:"0" >= 80 %}bg-success-soft text-success{% elif row_pct|add:"0" >= 50 %}bg-warning-soft text-warning{% else %}bg-danger-soft text-danger{% endif %} px-3 py-1 rounded-pill fw-bold">
+                                            {{ row_pct }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
+        {% endfor %}
     </div>
+
     {% else %}
     <!-- Empty State -->
     <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white mb-5">
@@ -132,104 +116,4 @@
     </div>
     {% endif %}
 </div>
-{% endblock %}
-
-{% block extra_js %}
-{% if internal_marks %}
-<!-- Include Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const ctx = document.getElementById('marksChart').getContext('2d');
-        
-        // Prepare data from Django variables
-        const labels = [
-            {% for im in internal_marks %}
-                "{{ im.category.name }}",
-            {% endfor %}
-        ];
-        const marksObtained = [
-            {% for im in internal_marks %}
-                {{ im.marks_obtained }},
-            {% endfor %}
-        ];
-        const maxMarks = [
-            {% for im in internal_marks %}
-                {{ im.category.max_marks }},
-            {% endfor %}
-        ];
-
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Marks Obtained',
-                        data: marksObtained,
-                        backgroundColor: 'rgba(99, 102, 241, 0.85)',
-                        borderColor: '#6366f1',
-                        borderWidth: 2,
-                        borderRadius: 8,
-                        maxBarThickness: 45
-                    },
-                    {
-                        label: 'Max Possible Marks',
-                        data: maxMarks,
-                        backgroundColor: 'rgba(226, 232, 240, 0.5)',
-                        borderColor: '#cbd5e1',
-                        borderWidth: 2,
-                        borderRadius: 8,
-                        maxBarThickness: 45
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            font: {
-                                family: "'Inter', sans-serif",
-                                weight: 'bold'
-                            }
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                label += context.raw + ' pts';
-                                return label;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            font: {
-                                family: "'Inter', sans-serif"
-                            }
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            font: {
-                                family: "'Inter', sans-serif"
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    });
-</script>
-{% endif %}
 {% endblock %}

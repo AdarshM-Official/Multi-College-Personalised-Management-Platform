@@ -234,6 +234,9 @@
                 {% endif %}
                 
                 {% if user.role == 'COLLEGE_ADMIN' or user.role == 'HOD' %}
+                <a href="{% url 'promote_students' %}" class="btn btn-warning d-inline-flex align-items-center gap-2 py-2 px-3 fw-bold rounded-3 shadow-sm text-dark">
+                    <i class="bi bi-arrow-up-right-circle-fill"></i> Promote Students
+                </a>
                 <a href="{% url 'add_student' %}" class="btn btn-primary d-inline-flex align-items-center gap-2 py-2 px-3 fw-bold rounded-3 shadow-sm">
                     <i class="bi bi-person-plus-fill"></i> Add Student
                 </a>

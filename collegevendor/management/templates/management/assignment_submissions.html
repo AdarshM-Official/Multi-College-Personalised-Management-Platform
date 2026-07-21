@@ -1,5 +1,74 @@
 {% extends 'base.html' %}
-{% block content %}
-<h2>Submissions for {{ assignment.title }}</h2>
-<p>Coming soon...</p>
+
+{% block title %}Submissions – {{ assignment.title }} | {{ request.college.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .submission-card { border-radius: 12px; border: 1px solid rgba(226,232,240,0.8); background:#fff; box-shadow:0 2px 4px rgba(0,0,0,0.03); padding:1.5rem; }
+</style>
 {% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-10">
+      <h2 class="fw-bold mb-4">Submissions for <span class="text-primary">{{ assignment.title }}</span></h2>
+      {% if submissions %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="bg-light">
+              <tr class="small text-muted text-uppercase fw-bold">
+                <th class="px-4 py-3">Student</th>
+                <th class="px-4 py-3 text-center">Submitted At</th>
+                <th class="px-4 py-3 text-center">File</th>
+                <th class="px-4 py-3 text-center">Marks</th>
+                <th class="px-4 py-3 text-center">Feedback</th>
+                <th class="px-4 py-3 text-end pe-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for sub in submissions %}
+                <tr>
+                  <td class="px-4 py-3.5">
+                    {{ sub.student.user.get_full_name }}
+                  </td>
+                  <td class="px-4 py-3.5 text-center">
+                    {{ sub.submitted_at|date:"M d, Y H:i" }}
+                  </td>
+                  <td class="px-4 py-3.5 text-center">
+                    {% if sub.file %}
+                      <a href="{{ sub.file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">View</a>
+                    {% else %}
+                      <span class="text-muted small">—</span>
+                    {% endif %}
+                  </td>
+                  <td class="px-4 py-3.5 text-center">
+                    {% if sub.marks != None %}
+                      {{ sub.marks }}
+                    {% else %}
+                      <span class="text-muted small">Pending</span>
+                    {% endif %}
+                  </td>
+                  <td class="px-4 py-3.5 text-center">
+                    {{ sub.feedback|default:"—" }}
+                  </td>
+                  <td class="px-4 py-3.5 text-end pe-4">
+                    <a href="{% url 'grade_submission' sub.id %}" class="btn btn-sm btn-success">
+                      <i class="bi bi-pencil-square me-1"></i>Grade
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="alert alert-info border-0" role="alert">
+          No submissions have been uploaded for this assignment yet.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+

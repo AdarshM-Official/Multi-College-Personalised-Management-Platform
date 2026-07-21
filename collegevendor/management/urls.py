@@ -11,6 +11,7 @@ urlpatterns = [
     
     # Students
     path('students/', views.student_list, name='student_list'),
+    path('students/promote/', views.promote_students, name='promote_students'),
     path('students/add/', views.add_student, name='add_student'),
     path('students/view/<int:student_id>/', views.student_detail, name='student_detail'),
     path('students/edit/<int:student_id>/', views.edit_student, name='edit_student'),
@@ -77,6 +78,7 @@ urlpatterns = [
     # Submissions
     path('assignments/<int:pk>/submissions/', views.assignment_submissions, name='assignment_submissions'),
     path('assignments/<int:pk>/submit/', views.submit_assignment, name='submit_assignment'),
+    path('assignments/submission/<int:submission_id>/grade/', views.grade_submission, name='grade_submission'),
     
     # Department Events
     path('event/create/', views.create_department_event, name='create_department_event'),

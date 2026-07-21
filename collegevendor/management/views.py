@@ -1224,7 +1224,9 @@ def student_grades(request):
     if request.user.role != 'STUDENT':
         return redirect('dashboard')
     student = request.user.student_profile
-    internal_marks = InternalMark.objects.filter(student=student).select_related('category').order_by('category__name')
+    internal_marks = InternalMark.objects.filter(student=student).select_related('category', 'subject').order_by('subject__name', 'category__name')
+    
+    subjects_data = {}
     
     total_obtained = 0
     total_possible = 0
@@ -1233,12 +1235,29 @@ def student_grades(request):
             total_obtained += float(im.marks_obtained)
             total_possible += im.category.max_marks
             
+            subj_name = im.subject.name if im.subject else "General/Unassigned"
+            if subj_name not in subjects_data:
+                subjects_data[subj_name] = {
+                    'marks': [],
+                    'subject_total_obtained': 0,
+                    'subject_total_possible': 0,
+                }
+            subjects_data[subj_name]['marks'].append(im)
+            subjects_data[subj_name]['subject_total_obtained'] += float(im.marks_obtained)
+            subjects_data[subj_name]['subject_total_possible'] += im.category.max_marks
+            
+    for subj_name, data in subjects_data.items():
+        if data['subject_total_possible'] > 0:
+            data['percentage'] = round((data['subject_total_obtained'] / data['subject_total_possible']) * 100, 1)
+        else:
+            data['percentage'] = 0
+            
     percentage = 0
     if total_possible > 0:
         percentage = round((total_obtained / total_possible) * 100, 1)
         
     return render(request, 'management/student_grades.html', {
-        'internal_marks': internal_marks,
+        'subjects_data': subjects_data,
         'total_obtained': total_obtained,
         'total_possible': total_possible,
         'percentage': percentage
@@ -1401,10 +1420,15 @@ def delete_internal_mark_category(request, category_id):
 
 @login_required
 def assignment_submissions(request, pk):
-    if request.user.role not in ['TEACHER', 'HOD']: return redirect('dashboard')
+    if request.user.role not in ['TEACHER', 'HOD']:
+        return redirect('dashboard')
     assignment = get_object_or_404(Assignment, pk=pk)
-    submissions = Submission.objects.filter(assignment=assignment)
-    return render(request, 'management/assignment_submissions.html', {'assignment': assignment, 'submissions': submissions})
+    # Fetch all submissions for this assignment, eager‑load student user for display
+    submissions = Submission.objects.filter(assignment=assignment).select_related('student__user')
+    return render(request, 'management/assignment_submissions.html', {
+        'assignment': assignment,
+        'submissions': submissions,
+    })
 
 @login_required
 def internal_marks_list(request):
@@ -1423,11 +1447,20 @@ def internal_marks_list(request):
     students = []
     
     class_id = request.GET.get('class_id') or request.POST.get('class_id')
+    subject_id = request.GET.get('subject_id') or request.POST.get('subject_id')
+    
+    class_subjects = None
+    selected_subject = None
+    
     if class_id:
         selected_class = get_object_or_404(AcademicClass, id=class_id, department=department)
         students = StudentProfile.objects.filter(academic_class=selected_class)
+        class_subjects = Subject.objects.filter(academic_class=selected_class, department=department)
         
-    if request.method == 'POST' and selected_class:
+        if subject_id:
+            selected_subject = Subject.objects.filter(id=subject_id, academic_class=selected_class, department=department).first()
+            
+    if request.method == 'POST' and selected_class and selected_subject:
         for student in students:
             for cat in categories:
                 mark_key = f'marks_{student.id}_{cat.id}'
@@ -1438,22 +1471,24 @@ def internal_marks_list(request):
                             student=student,
                             category=cat,
                             academic_class=selected_class,
+                            subject=selected_subject,
                             defaults={'marks_obtained': float(mark_val), 'college': request.college}
                         )
                     else:
                         InternalMark.objects.filter(
                             student=student,
                             category=cat,
-                            academic_class=selected_class
+                            academic_class=selected_class,
+                            subject=selected_subject
                         ).delete()
         messages.success(request, 'Marks saved successfully.')
-        return redirect(f"{request.path}?class_id={selected_class.id}")
+        return redirect(f"{request.path}?class_id={selected_class.id}&subject_id={selected_subject.id}")
         
     students_data = []
-    if selected_class:
+    if selected_class and selected_subject:
         for student in students:
             category_marks = {}
-            marks = InternalMark.objects.filter(student=student, academic_class=selected_class)
+            marks = InternalMark.objects.filter(student=student, academic_class=selected_class, subject=selected_subject)
             for m in marks:
                 category_marks[m.category.id] = m.marks_obtained
             students_data.append({
@@ -1464,6 +1499,8 @@ def internal_marks_list(request):
     return render(request, 'management/internal_marks.html', {
         'academic_classes': classes,
         'selected_class': selected_class,
+        'class_subjects': class_subjects,
+        'selected_subject': selected_subject,
         'categories': categories,
         'students_data': students_data
     })
@@ -1486,6 +1523,22 @@ def submit_assignment(request, pk):
             return redirect('student_assignments')
             
     return render(request, 'management/submit_assignment.html', {'assignment': assignment, 'submission': submission})
+
+@login_required
+def grade_submission(request, submission_id):
+    if request.user.role not in ['TEACHER', 'HOD']:
+        return redirect('dashboard')
+    submission = get_object_or_404(Submission, id=submission_id)
+    if request.method == 'POST':
+        marks = request.POST.get('marks', '').strip()
+        feedback = request.POST.get('feedback', '').strip()
+        if marks:
+            submission.marks = float(marks)
+        submission.feedback = feedback
+        submission.save()
+        messages.success(request, f'Marks saved for {submission.student.user.get_full_name()}.')
+        return redirect('assignment_submissions', pk=submission.assignment.id)
+    return render(request, 'management/grade_submission.html', {'submission': submission})
 
 @login_required
 def college_enquiries_list(request):
@@ -1528,3 +1581,42 @@ def delete_enquiry(request, enquiry_id):
     enquiry.delete()
     messages.warning(request, "Enquiry record deleted.")
     return redirect('college_enquiries_list')
+
+@login_required
+def promote_students(request):
+    if request.user.role not in ['COLLEGE_ADMIN', 'HOD']:
+        return redirect('dashboard')
+        
+    department = None
+    if request.user.role == 'HOD':
+        department = request.user.hod_profile.department
+        
+    # Get classes to populate dropdowns
+    if department:
+        classes = AcademicClass.objects.filter(department=department)
+    else:
+        classes = AcademicClass.objects.filter(department__college=request.college)
+        
+    if request.method == 'POST':
+        from_class_id = request.POST.get('from_class_id')
+        to_class_id = request.POST.get('to_class_id')
+        
+        if from_class_id and to_class_id:
+            from_class = get_object_or_404(AcademicClass, id=from_class_id)
+            to_class = get_object_or_404(AcademicClass, id=to_class_id)
+            
+            # Security check
+            if department and (from_class.department != department or to_class.department != department):
+                messages.error(request, "You can only promote students within your department.")
+                return redirect('promote_students')
+                
+            students = StudentProfile.objects.filter(academic_class=from_class)
+            count = students.count()
+            students.update(academic_class=to_class)
+            
+            messages.success(request, f"Successfully promoted {count} students from {from_class.name} to {to_class.name}.")
+            return redirect('student_list')
+        else:
+            messages.error(request, "Please select both From and To classes.")
+            
+    return render(request, 'management/promote_students.html', {'classes': classes})

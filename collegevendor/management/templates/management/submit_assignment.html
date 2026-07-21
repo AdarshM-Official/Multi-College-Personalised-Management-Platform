@@ -1,5 +1,40 @@
 {% extends 'base.html' %}
-{% block content %}
-<h2>Submit {{ assignment.title }}</h2>
-<p>Coming soon...</p>
+
+{% block title %}Submit Assignment | {{ assignment.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .submission-card { border-radius: 18px; border: 1px solid rgba(226,232,240,0.8); background:#fff; box-shadow:0 4px 8px rgba(0,0,0,0.02); padding:1.5rem; }
+</style>
 {% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="submission-card">
+        <h3 class="fw-bold mb-3">{{ assignment.title }}</h3>
+        <p class="text-muted mb-4">{{ assignment.description|linebreaksbr }}</p>
+        <p><strong>Deadline:</strong> {{ assignment.deadline|date:"M d, Y H:i" }}</p>
+        {% if submission %}
+          <p class="mt-3"><i class="bi bi-check-circle-fill text-success me-2"></i>You have already submitted this assignment.</p>
+          <a href="{{ submission.file.url }}" class="btn btn-outline-primary mb-3" download>Download Your Submission</a>
+          <p class="text-muted small">Submitted on {{ submission.submitted_at|date:"M d, Y H:i" }}</p>
+        {% else %}
+          <form method="post" enctype="multipart/form-data" class="mt-4">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label fw-bold">Upload File</label>
+              <input type="file" name="file" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary fw-bold">
+              <i class="bi bi-cloud-upload me-2"></i>Submit Assignment
+            </button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

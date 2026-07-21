@@ -202,13 +202,14 @@ class InternalMarkCategory(TenantModel):
 class InternalMark(TenantModel):
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='internal_marks')
     academic_class = models.ForeignKey(AcademicClass, on_delete=models.CASCADE, related_name='internal_marks')
+    subject = models.ForeignKey('Subject', on_delete=models.CASCADE, related_name='internal_marks', null=True, blank=True)
     category = models.ForeignKey(InternalMarkCategory, on_delete=models.CASCADE, related_name='internal_marks', null=True)
     marks_obtained = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     marked_by = models.ForeignKey(TeacherProfile, on_delete=models.SET_NULL, null=True)
     date_marked = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('student', 'academic_class', 'category')
+        unique_together = ('student', 'academic_class', 'subject', 'category')
 
     def __str__(self):
         return f"{self.student.user.get_full_name()} - {self.category.name if self.category else 'No Category'} - {self.marks_obtained}"
