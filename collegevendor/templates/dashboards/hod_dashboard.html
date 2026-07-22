@@ -3,433 +3,481 @@
 {% block title %}HOD Command Center | {{ stats.dept }}{% endblock %}
 
 {% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
     :root {
-        --glass-bg: var(--surface);
-        --glass-border: var(--border);
+        --primary-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        --secondary-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        --info-gradient: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+        --surface-glass: rgba(255, 255, 255, 0.7);
+        --surface-glass-dark: rgba(255, 255, 255, 0.9);
+        --border-glass: rgba(255, 255, 255, 0.5);
+        --shadow-glass: 0 8px 32px rgba(31, 38, 135, 0.07);
+        --font-heading: 'Outfit', sans-serif;
+        --font-body: 'Inter', sans-serif;
+    }
+
+    body {
+        font-family: var(--font-body);
+        background-color: #f8fafc;
+        color: #1e293b;
     }
 
     .dashboard-container {
-        animation: fadeIn 0.8s ease-out;
+        animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        opacity: 0;
+        transform: translateY(20px);
     }
 
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
+    @keyframes fadeUp {
         to { opacity: 1; transform: translateY(0); }
     }
 
     .glass-card {
-        background: var(--glass-bg);
-        backdrop-filter: blur(12px);
-        border: 1px solid var(--glass-border);
-        border-radius: 28px;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .stat-pill {
-        position: relative;
+        background: var(--surface-glass);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--border-glass);
+        border-radius: 24px;
+        box-shadow: var(--shadow-glass);
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         overflow: hidden;
     }
 
-    .stat-pill::after {
+    .glass-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(31, 38, 135, 0.1);
+        background: var(--surface-glass-dark);
+    }
+
+    .stat-card {
+        position: relative;
+        padding: 2rem;
+        z-index: 1;
+    }
+
+    .stat-card::before {
         content: '';
         position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        opacity: 0;
-        transition: opacity 0.3s;
+        top: 0; left: 0; right: 0; bottom: 0;
+        border-radius: inherit;
+        opacity: 0.05;
+        z-index: -1;
+        transition: opacity 0.3s ease;
     }
 
-    .stat-pill:hover::after {
-        opacity: 1;
-    }
+    .stat-card.primary::before { background: var(--primary-gradient); }
+    .stat-card.success::before { background: var(--success-gradient); }
+    .stat-card.info::before { background: var(--info-gradient); }
+    .stat-card.warning::before { background: var(--warning-gradient); }
 
-    .action-icon-box {
-        width: 60px;
-        height: 60px;
+    .stat-card:hover::before { opacity: 0.1; }
+
+    .stat-icon-wrapper {
+        width: 56px;
+        height: 56px;
+        border-radius: 18px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 20px;
         font-size: 1.5rem;
+        color: white;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
     }
 
-    .hover-lift {
+    .stat-icon-wrapper.primary { background: var(--primary-gradient); }
+    .stat-icon-wrapper.success { background: var(--success-gradient); }
+    .stat-icon-wrapper.info { background: var(--info-gradient); }
+    .stat-icon-wrapper.warning { background: var(--warning-gradient); }
+
+    .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.5rem;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+        color: #0f172a;
+        letter-spacing: -1px;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .header-title {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        font-size: 2.2rem;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.5px;
+    }
+
+    .profile-avatar-wrapper {
+        position: relative;
+        padding: 5px;
+        background: var(--primary-gradient);
+        border-radius: 50%;
+        box-shadow: 0 15px 30px rgba(99, 102, 241, 0.2);
+    }
+
+    .profile-avatar {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        border: 4px solid white;
+        object-fit: cover;
+    }
+
+    .action-btn {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 0.75rem 1.25rem;
+        font-weight: 600;
+        color: #334155;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .action-btn:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px rgba(0,0,0,0.05);
+        color: #0f172a;
+    }
+
+    .action-btn.primary {
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
+    }
+
+    .action-btn.primary:hover {
+        box-shadow: 0 15px 25px rgba(99, 102, 241, 0.3);
+        transform: translateY(-2px);
+        color: white;
+    }
+
+    /* Lists and Tables styling */
+    .section-title {
+        font-family: var(--font-heading);
+        font-weight: 700;
+        font-size: 1.25rem;
+        color: #1e293b;
+    }
+
+    .list-item-glass {
+        background: rgba(255, 255, 255, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 16px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
         transition: all 0.3s ease;
     }
 
-    .hover-lift:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.08) !important;
+    .list-item-glass:hover {
+        background: white;
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
     }
 
-    .faculty-avatar {
-        width: 42px;
-        height: 42px;
-        border: 2px solid var(--surface);
+    .faculty-list-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        object-fit: cover;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
 
-    .pulse-badge {
+    .badge-soft {
+        padding: 0.35rem 0.75rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .badge-soft.primary { background: rgba(99, 102, 241, 0.1); color: #4f46e5; }
+    .badge-soft.warning { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+    .badge-soft.success { background: rgba(16, 185, 129, 0.1); color: #059669; }
+
+    .pulse-dot {
+        width: 8px;
+        height: 8px;
+        background-color: #f59e0b;
+        border-radius: 50%;
+        display: inline-block;
         position: relative;
     }
 
-    .pulse-badge::before {
+    .pulse-dot::after {
         content: '';
         position: absolute;
         width: 100%;
         height: 100%;
+        background-color: inherit;
         border-radius: inherit;
-        background: inherit;
-        animation: pulse 2s infinite;
-        opacity: 0.5;
+        animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
         z-index: -1;
     }
 
-    @keyframes pulse {
-        0% { transform: scale(1); opacity: 0.5; }
-        100% { transform: scale(1.5); opacity: 0; }
+    @keyframes pulse-ring {
+        0% { transform: scale(1); opacity: 0.8; }
+        100% { transform: scale(3); opacity: 0; }
     }
 
-    .table-hover tbody tr {
-        transition: background-color 0.2s;
-    }
-
-    .table-hover tbody tr:hover {
-        background-color: rgba(var(--bs-primary-rgb), 0.02);
-    }
-
-    .bg-light-soft {
-        background-color: var(--surface-2);
-    }
-    
-    .shadow-xs {
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid p-0 dashboard-container">
-    <!-- Sophisticated Header -->
+<div class="container-fluid py-4 dashboard-container">
+    <!-- Header Section -->
     <div class="row mb-5 align-items-center">
         <div class="col-lg-7">
             <div class="d-flex align-items-center gap-4">
-                <div class="position-relative">
+                <div class="profile-avatar-wrapper">
                     {% if user.hod_profile.profile_photo %}
-                        <img src="{{ user.hod_profile.profile_photo.url }}" class="rounded-circle shadow-lg object-fit-cover" style="width: 90px; height: 90px; border: 4px solid white;" alt="Profile">
+                        <img src="{{ user.hod_profile.profile_photo.url }}" class="profile-avatar" alt="Profile">
                     {% else %}
-                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center shadow-lg" style="width: 90px; height: 90px; border: 4px solid white;">
-                            <i class="bi bi-person-workspace fs-1"></i>
+                        <div class="profile-avatar bg-white d-flex align-items-center justify-content-center text-primary fs-1 fw-bold">
+                            {{ user.first_name|first|default:"H" }}
                         </div>
                     {% endif %}
-                    <span class="position-absolute bottom-0 end-0 p-2 bg-success border border-white border-3 rounded-circle"></span>
                 </div>
                 <div>
-                    <h1 class="fw-bold text-main mb-1 h3">Head of Department Panel</h1>
-                    <p class="text-muted mb-0 d-flex align-items-center gap-2">
-                        <span class="fw-bold text-primary">{{ stats.dept }}</span>
-                        <i class="bi bi-dot"></i>
-                        <span>Administering Faculty & Students</span>
-                        <i class="bi bi-dot"></i>
-                        <!-- <a href="{% url 'edit_profile' %}" class="small text-primary text-decoration-none fw-bold"><i class="bi bi-pencil-square me-1"></i>Edit Profile</a> -->
+                    <h1 class="header-title mb-1">Command Center</h1>
+                    <p class="text-muted mb-0 fw-medium d-flex align-items-center gap-2">
+                        <span class="badge badge-soft primary">{{ stats.dept }}</span>
+                        <i class="bi bi-dot text-muted"></i>
+                        <span>Department Administration</span>
                     </p>
                 </div>
             </div>
         </div>
         <div class="col-lg-5 text-lg-end mt-4 mt-lg-0">
-            <div class="d-inline-flex gap-2 p-2 bg-card rounded-4 shadow-sm border border-custom">
-                <a href="{% url 'add_teacher' %}" class="btn btn-primary rounded-3 px-4 fw-bold">
+            <div class="d-inline-flex gap-2 p-2 bg-white rounded-4 shadow-sm border border-light">
+                <a href="{% url 'add_teacher' %}" class="action-btn primary text-decoration-none">
                     <i class="bi bi-person-plus-fill me-2"></i>New Faculty
                 </a>
-                <a href="{% url 'create_timetable' %}" class="btn btn-outline-dark rounded-3 px-3 border-custom text-main" title="Update Timetable">
+                <a href="{% url 'create_timetable' %}" class="action-btn text-decoration-none" title="Update Timetable">
                     <i class="bi bi-calendar3"></i>
                 </a>
-                <a href="{% url 'create_exam_notification' %}" class="btn btn-outline-dark rounded-3 px-3 border-custom text-main" title="New Notice">
+                <a href="{% url 'create_exam_notification' %}" class="action-btn text-decoration-none" title="New Notice">
                     <i class="bi bi-megaphone"></i>
                 </a>
-                <a href="{% url 'create_department_event' %}" class="btn btn-outline-dark rounded-3 px-3 border-custom text-main" title="New Event">
+                <a href="{% url 'create_department_event' %}" class="action-btn text-decoration-none" title="New Event">
                     <i class="bi bi-calendar-event"></i>
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- Analytics Cards -->
+    <!-- Analytics Section -->
     <div class="row g-4 mb-5">
-        <div class="col-md-3">
-            <div class="card glass-card border-0 shadow-sm p-4 stat-pill bg-primary text-white hover-lift">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="bg-white bg-opacity-20 p-2 rounded-3">
-                        <i class="bi bi-people-fill fs-4"></i>
-                    </div>
-                    <i class="bi bi-arrow-up-right text-white-50"></i>
+        <div class="col-xl-3 col-md-6">
+            <div class="glass-card stat-card primary">
+                <div class="stat-icon-wrapper primary">
+                    <i class="bi bi-people-fill"></i>
                 </div>
-                <h2 class="fw-bold mb-1">{{ stats.teachers }}</h2>
-                <p class="text-white text-opacity-75 small mb-0 fw-medium">Faculty Members</p>
+                <div class="stat-value">{{ stats.teachers }}</div>
+                <div class="stat-label">Faculty Members</div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card glass-card border-0 shadow-sm p-4 stat-pill hover-lift">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="bg-success bg-opacity-10 text-success p-2 rounded-3">
-                        <i class="bi bi-mortarboard-fill fs-4"></i>
-                    </div>
-                    <i class="bi bi-person-check text-muted opacity-50"></i>
+        <div class="col-xl-3 col-md-6">
+            <div class="glass-card stat-card success">
+                <div class="stat-icon-wrapper success">
+                    <i class="bi bi-mortarboard-fill"></i>
                 </div>
-                <h2 class="fw-bold mb-1">{{ stats.students }}</h2>
-                <p class="text-muted small mb-0 fw-medium">Active Students</p>
+                <div class="stat-value">{{ stats.students }}</div>
+                <div class="stat-label">Active Students</div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card glass-card border-0 shadow-sm p-4 stat-pill hover-lift">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="bg-info-soft text-info p-2 rounded-3">
-                        <i class="bi bi-journal-bookmark-fill fs-4"></i>
-                    </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="glass-card stat-card info">
+                <div class="stat-icon-wrapper info">
+                    <i class="bi bi-journal-bookmark-fill"></i>
                 </div>
-                <h2 class="fw-bold mb-1">{{ stats.subjects }}</h2>
-                <p class="text-muted small mb-0 fw-medium">Specializations</p>
+                <div class="stat-value">{{ stats.subjects }}</div>
+                <div class="stat-label">Total Subjects</div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card glass-card border-0 shadow-sm p-4 stat-pill hover-lift">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div class="bg-warning-soft text-warning p-2 rounded-3">
-                        <i class="bi bi-lightning-charge-fill fs-4"></i>
-                    </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="glass-card stat-card warning">
+                <div class="stat-icon-wrapper warning">
+                    <i class="bi bi-person-check-fill"></i>
                 </div>
-                <h2 class="fw-bold mb-1">94%</h2>
-                <p class="text-muted small mb-0 fw-medium">Faculty Attendance</p>
+                <div class="stat-value">{{ stats.attendance_pct }}%</div>
+                <div class="stat-label">Student Attendance</div>
             </div>
         </div>
     </div>
 
-    <div class="row g-4 mb-4">
-        <div class="col-md-4">
-            <div class="card glass-card border-0 shadow-sm p-4 h-100 hover-lift">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-4">
-                        <i class="bi bi-person-badge-fill fs-3"></i>
-                    </div>
-                    <div>
-                        <h6 class="fw-bold mb-1 text-main">Faculty Desk</h6>
-                        <a href="{% url 'teacher_list' %}" class="small text-primary fw-bold text-decoration-none">Manage Team <i class="bi bi-chevron-right ms-1"></i></a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card glass-card border-0 shadow-sm p-4 h-100 hover-lift">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="bg-success bg-opacity-10 text-success p-3 rounded-4">
-                        <i class="bi bi-people-fill fs-3"></i>
-                    </div>
-                    <div>
-                        <h6 class="fw-bold mb-1 text-main">Student Base</h6>
-                        <a href="{% url 'student_list' %}" class="small text-success fw-bold text-decoration-none">Enrollments <i class="bi bi-chevron-right ms-1"></i></a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card glass-card border-0 shadow-sm p-4 h-100 hover-lift">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="bg-info bg-opacity-10 text-info p-3 rounded-4">
-                        <i class="bi bi-calendar2-check-fill fs-3"></i>
-                    </div>
-                    <div>
-                        <h6 class="fw-bold mb-1 text-main">Attendance</h6>
-                        <a href="{% url 'mark_attendance' %}" class="small text-info fw-bold text-decoration-none">Daily Register <i class="bi bi-chevron-right ms-1"></i></a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <!-- Main Content Area -->
     <div class="row g-4">
-        <!-- Main Content Area -->
+        
+        <!-- Left Column -->
         <div class="col-lg-8">
-            <!-- Faculty Quick View -->
-            <div class="card glass-card border-0 shadow-sm mb-4">
-                <div class="card-header bg-transparent border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
+            
+            <!-- Faculty Directory Preview -->
+            <div class="glass-card p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
                     <div>
-                        <h5 class="fw-bold mb-0">Department Faculty</h5>
-                        <p class="x-small text-muted mb-0">Recently added or updated profiles</p>
+                        <h3 class="section-title mb-1">Department Faculty</h3>
+                        <p class="text-muted small mb-0">Overview of teaching staff</p>
                     </div>
-                    <a href="{% url 'teacher_list' %}" class="btn btn-light btn-sm rounded-pill px-3 fw-bold">View Directory</a>
+                    <a href="{% url 'teacher_list' %}" class="action-btn text-decoration-none py-2 px-3 text-sm">View All &rarr;</a>
                 </div>
-                <div class="card-body p-4">
-                    <div class="row g-3">
-                        {% for teacher in teachers_list %}
-                        <div class="col-sm-6">
-                            <div class="p-3 border rounded-4 d-flex align-items-center gap-3 bg-light-soft hover-lift shadow-xs">
-                                {% if teacher.profile_photo %}
-                                    <img src="{{ teacher.profile_photo.url }}" class="faculty-avatar rounded-circle object-fit-cover" alt="Photo">
-                                {% else %}
-                                    <div class="faculty-avatar rounded-circle bg-card d-flex align-items-center justify-content-center fw-bold text-primary small border border-custom">
-                                        {{ teacher.user.first_name|first }}
-                                    </div>
-                                {% endif %}
-                                <div class="overflow-hidden">
-                                    <h6 class="mb-0 text-truncate small fw-bold">{{ teacher.user.get_full_name }}</h6>
-                                    <p class="x-small text-muted mb-0 text-truncate">{{ teacher.qualification }}</p>
+                
+                <div class="row g-3">
+                    {% for teacher in teachers_list %}
+                    <div class="col-md-6">
+                        <div class="list-item-glass d-flex align-items-center gap-3 m-0 h-100">
+                            {% if teacher.profile_photo %}
+                                <img src="{{ teacher.profile_photo.url }}" class="faculty-list-avatar" alt="Photo">
+                            {% else %}
+                                <div class="faculty-list-avatar bg-light text-primary d-flex align-items-center justify-content-center fw-bold fs-4">
+                                    {{ teacher.user.first_name|first }}
                                 </div>
+                            {% endif %}
+                            <div class="overflow-hidden">
+                                <h6 class="fw-bold mb-0 text-truncate text-dark">{{ teacher.user.get_full_name }}</h6>
+                                <p class="small text-muted mb-0 text-truncate">{{ teacher.qualification }}</p>
                             </div>
                         </div>
-                        {% empty %}
-                        <div class="col-12 text-center py-4 text-muted x-small">No faculty profiles recorded yet.</div>
-                        {% endfor %}
                     </div>
+                    {% empty %}
+                    <div class="col-12 text-center py-4 text-muted">No faculty members found.</div>
+                    {% endfor %}
                 </div>
             </div>
 
-            <!-- Timetables Section -->
-            <div class="card glass-card border-0 shadow-sm mb-4">
-                <div class="card-header bg-transparent border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0">Academic Timetables</h5>
-                    <a href="{% url 'create_timetable' %}" class="btn btn-primary-soft btn-sm rounded-pill px-3 fw-bold"><i class="bi bi-upload me-1"></i> New Upload</a>
+            <!-- Timetables -->
+            <div class="glass-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="section-title mb-0">Academic Timetables</h3>
+                    <a href="{% url 'create_timetable' %}" class="badge-soft primary text-decoration-none"><i class="bi bi-upload me-1"></i> Upload</a>
                 </div>
-                <div class="card-body p-4">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead>
-                                <tr class="text-muted x-small text-uppercase">
-                                    <th class="border-0 pb-3">Document Title</th>
-                                    <th class="border-0 pb-3">Release Date</th>
-                                    <th class="border-0 pb-3 text-end">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for tt in timetables %}
-                                <tr>
-                                    <td class="border-light py-3">
-                                        <div class="d-flex align-items-center gap-3">
-                                            {% if tt.file %}
-                                            <div class="p-2 bg-danger-soft text-danger rounded-3">
-                                                <i class="bi bi-file-pdf-fill"></i>
-                                            </div>
-                                            <div>
-                                                <span class="fw-bold small d-block">{{ tt.title }}</span>
-                                                <span class="x-small text-muted">PDF Document</span>
-                                            </div>
-                                            {% else %}
-                                            <div class="p-2 bg-primary-soft text-primary rounded-3">
-                                                <i class="bi bi-grid-3x3-gap-fill"></i>
-                                            </div>
-                                            <div>
-                                                <span class="fw-bold small d-block">{{ tt.title }}</span>
-                                                <span class="x-small text-muted">Digital Grid</span>
-                                            </div>
-                                            {% endif %}
+                
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle mb-0">
+                        <thead class="border-bottom">
+                            <tr class="text-muted small text-uppercase" style="letter-spacing: 0.5px;">
+                                <th class="pb-3 fw-medium">Document</th>
+                                <th class="pb-3 fw-medium">Date added</th>
+                                <th class="pb-3 fw-medium text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tt in timetables %}
+                            <tr class="border-bottom" style="border-color: rgba(0,0,0,0.03) !important;">
+                                <td class="py-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="p-2 rounded-3" style="background: rgba(239, 68, 68, 0.1); color: #ef4444;">
+                                            <i class="bi {% if tt.file %}bi-file-earmark-pdf-fill{% else %}bi-grid-1x2-fill{% endif %} fs-5"></i>
                                         </div>
-                                    </td>
-                                    <td class="border-light py-3 small text-muted">{{ tt.created_at|date:"M d, Y" }}</td>
-                                    <td class="border-custom py-3 text-end">
-                                        <div class="btn-group shadow-sm rounded-pill bg-card border border-custom p-1">
-                                            {% if tt.file %}
-                                            <a href="{{ tt.file.url }}" class="btn btn-sm btn-icon border-0 text-main" title="View Document" target="_blank"><i class="bi bi-eye"></i></a>
-                                            {% endif %}
-                                            <a href="{% url 'edit_timetable' tt.id %}" class="btn btn-sm btn-icon border-0 text-main" title="Edit Schedule"><i class="bi bi-pencil"></i></a>
-                                            <a href="{% url 'delete_timetable' tt.id %}" class="btn btn-sm btn-icon border-0 text-danger" title="Delete Schedule" onclick="return confirm('Permanent delete this timetable?')"><i class="bi bi-trash"></i></a>
+                                        <div>
+                                            <h6 class="fw-bold mb-0 text-dark">{{ tt.title }}</h6>
+                                            <span class="small text-muted">{% if tt.file %}PDF Document{% else %}Digital Entry{% endif %}</span>
                                         </div>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="3" class="text-center py-5 text-muted small border-0">No active schedules found.</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                                    </div>
+                                </td>
+                                <td class="py-3 small text-muted">{{ tt.created_at|date:"M d, Y" }}</td>
+                                <td class="py-3 text-end">
+                                    <div class="d-flex gap-2 justify-content-end">
+                                        {% if tt.file %}
+                                        <a href="{{ tt.file.url }}" class="btn btn-sm btn-light rounded-3" target="_blank"><i class="bi bi-eye text-primary"></i></a>
+                                        {% endif %}
+                                        <a href="{% url 'edit_timetable' tt.id %}" class="btn btn-sm btn-light rounded-3"><i class="bi bi-pencil text-secondary"></i></a>
+                                        <a href="{% url 'delete_timetable' tt.id %}" class="btn btn-sm btn-light rounded-3" onclick="return confirm('Delete this timetable?')"><i class="bi bi-trash text-danger"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center py-5 text-muted">No timetables available.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
+
         </div>
 
-        <!-- Right Sidebar - Communication & Alerts -->
+        <!-- Right Column -->
         <div class="col-lg-4">
+            
             <!-- Exam Notifications -->
-            <div class="card glass-card border-0 shadow-sm mb-4 h-100">
-                <div class="card-header bg-transparent border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0 text-main">Exam Bulletins</h5>
-                    <span class="badge bg-warning text-dark pulse-badge rounded-pill px-3 x-small">Live</span>
+            <div class="glass-card p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="section-title mb-0 d-flex align-items-center gap-2">
+                        Exam Bulletins <span class="pulse-dot"></span>
+                    </h3>
                 </div>
-                <div class="card-body p-4">
-                    {% if exam_notifications %}
-                        {% for en in exam_notifications %}
-                        <div class="p-4 bg-body-custom rounded-4 mb-4 border-start border-warning border-4 shadow-xs">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h6 class="fw-bold mb-0 small pe-3 text-main">{{ en.title }}</h6>
-                                <i class="bi bi-pin-angle-fill text-warning"></i>
-                            </div>
-                            <p class="x-small text-muted-custom mb-3 lh-base">{{ en.description|truncatewords:25 }}</p>
-                            <div class="d-flex justify-content-between align-items-center pt-2 border-top border-custom">
-                                <span class="x-small fw-bold text-main"><i class="bi bi-calendar-event me-1"></i> {{ en.exam_date|date:"M d, Y" }}</span>
-                                <span class="x-small text-muted-custom">{{ en.created_at|timesince }} ago</span>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="text-center py-5">
-                            <div class="mb-3 opacity-25">
-                                <i class="bi bi-megaphone-fill display-2 text-muted"></i>
-                            </div>
-                            <p class="text-muted small fw-medium">No pending exam notices.</p>
-                            <a href="{% url 'create_exam_notification' %}" class="btn btn-link text-primary btn-sm fw-bold text-decoration-none">Create One Now</a>
-                        </div>
-                    {% endif %}
-                </div>
-                <div class="card-footer bg-transparent border-0 p-4 pt-0 mt-auto">
-                    <div class="bg-primary bg-opacity-10 p-3 rounded-4">
-                        <div class="d-flex align-items-start gap-3">
-                            <div class="p-2 bg-primary rounded-3 text-white">
-                                <i class="bi bi-shield-lock-fill"></i>
-                            </div>
-                            <div>
-                                <h6 class="fw-bold mb-1 x-small">Authorized Access</h6>
-                                <p class="x-small text-muted mb-0">Your management actions are logged and visible to College Administration.</p>
-                            </div>
+                
+                <div class="d-flex flex-column gap-3">
+                    {% for en in exam_notifications %}
+                    <div class="list-item-glass m-0 border-start border-4 border-warning">
+                        <h6 class="fw-bold text-dark mb-2">{{ en.title }}</h6>
+                        <p class="small text-muted mb-3">{{ en.description|truncatewords:15 }}</p>
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top border-light">
+                            <span class="badge-soft warning"><i class="bi bi-calendar-event me-1"></i> {{ en.exam_date|date:"M d" }}</span>
+                            <span class="small text-muted">{{ en.created_at|timesince }} ago</span>
                         </div>
                     </div>
+                    {% empty %}
+                    <div class="text-center py-4 bg-light rounded-4">
+                        <i class="bi bi-bell-slash text-muted fs-2 mb-2 d-block"></i>
+                        <span class="small text-muted">No pending notices</span>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
 
             <!-- Department Events -->
-            <div class="card glass-card border-0 shadow-sm mb-4 mt-4">
-                <div class="card-header bg-transparent border-0 p-4 pb-0 d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0 text-main">Dept Events</h5>
-                    <a href="{% url 'create_department_event' %}" class="btn btn-primary-soft btn-sm rounded-pill px-3 fw-bold"><i class="bi bi-plus-lg me-1"></i> Add</a>
+            <div class="glass-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="section-title mb-0">Events</h3>
+                    <a href="{% url 'create_department_event' %}" class="badge-soft primary text-decoration-none"><i class="bi bi-plus-lg"></i></a>
                 </div>
-                <div class="card-body p-4">
-                    {% if department_events %}
-                        {% for event in department_events %}
-                        <div class="p-3 bg-body-custom rounded-4 mb-3 border-start {% if event.is_approved %}border-success{% else %}border-warning{% endif %} border-4 shadow-xs">
-                            <div class="d-flex justify-content-between align-items-start mb-1">
-                                <h6 class="fw-bold mb-0 small pe-3 text-main">{{ event.title }}</h6>
-                                {% if event.is_approved %}
-                                    <span class="badge bg-success bg-opacity-10 text-success x-small px-2 py-1 rounded-pill" style="font-size: 0.65rem;">Approved</span>
-                                {% else %}
-                                    <span class="badge bg-warning bg-opacity-10 text-warning x-small px-2 py-1 rounded-pill" style="font-size: 0.65rem;">Pending</span>
-                                {% endif %}
-                            </div>
-                            <p class="x-small text-muted-custom mb-2 lh-base">{{ event.description|truncatewords:15 }}</p>
-                            <div class="d-flex justify-content-between align-items-center pt-2 border-top border-custom">
-                                <span class="x-small fw-bold text-main"><i class="bi bi-calendar2-event me-1"></i> {{ event.event_date|date:"M d, Y" }}</span>
-                                <span class="x-small text-muted-custom">{{ event.created_at|timesince }} ago</span>
-                            </div>
+
+                <div class="d-flex flex-column gap-3">
+                    {% for event in department_events %}
+                    <div class="list-item-glass m-0 border-start border-4 {% if event.is_approved %}border-success{% else %}border-secondary{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="fw-bold text-dark mb-0">{{ event.title }}</h6>
+                            {% if event.is_approved %}
+                                <i class="bi bi-check-circle-fill text-success fs-6"></i>
+                            {% else %}
+                                <i class="bi bi-clock-fill text-muted fs-6" title="Pending Approval"></i>
+                            {% endif %}
                         </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="text-center py-4">
-                            <p class="text-muted small fw-medium mb-0">No department events posted yet.</p>
+                        <p class="small text-muted mb-3">{{ event.description|truncatewords:12 }}</p>
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top border-light">
+                            <span class="badge-soft {% if event.is_approved %}success{% else %}primary{% endif %} bg-opacity-10"><i class="bi bi-calendar2-event me-1"></i> {{ event.event_date|date:"M d" }}</span>
+                            <span class="small text-muted">{{ event.created_at|timesince }} ago</span>
                         </div>
-                    {% endif %}
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4 bg-light rounded-4">
+                        <i class="bi bi-calendar-x text-muted fs-2 mb-2 d-block"></i>
+                        <span class="small text-muted">No upcoming events</span>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
+
         </div>
     </div>
 </div>

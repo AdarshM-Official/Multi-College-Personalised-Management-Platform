@@ -84,3 +84,24 @@ class CollegeLeader(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.designation}"
+
+class CollegeEvent(models.Model):
+    college = models.ForeignKey(College, on_delete=models.CASCADE, related_name='college_events')
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    event_date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-event_date']
+
+    def __str__(self):
+        return f"{self.title} - {self.college.name}"
+
+class CollegeEventImage(models.Model):
+    event = models.ForeignKey(CollegeEvent, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='college_events/')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Image for {self.event.title}"

@@ -89,4 +89,10 @@ urlpatterns = [
     path('enquiries/', views.college_enquiries_list, name='college_enquiries_list'),
     path('enquiries/update/<int:enquiry_id>/<str:new_status>/', views.update_enquiry_status, name='update_enquiry_status'),
     path('enquiries/delete/<int:enquiry_id>/', views.delete_enquiry, name='delete_enquiry'),
+    
+    # College Events
+    path('college-events/', views.college_event_list, name='college_event_list'),
+    path('college-events/create/', views.create_college_event, name='create_college_event'),
+    path('college-events/edit/<int:event_id>/', views.edit_college_event, name='edit_college_event'),
+    path('college-events/delete/<int:event_id>/', views.delete_college_event, name='delete_college_event'),
 ]

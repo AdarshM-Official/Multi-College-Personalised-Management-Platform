@@ -568,6 +568,65 @@
 </section>
 {% endif %}
 
+<!-- College Events -->
+{% if college_events %}
+<section id="college-events" class="py-5" style="background-color: var(--college-secondary);">
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Campus Highlights & Events</h2>
+            <div class="hero-divider mx-auto" style="margin: 1.5rem auto; background: var(--college-primary); width: 60px;"></div>
+            <p class="section-subtitle mx-auto">Explore recent happenings, celebrations, and key moments across our campus.</p>
+        </div>
+        
+        <div class="row g-4">
+            {% for event in college_events %}
+            <div class="col-lg-12 mb-4">
+                <div class="card border-0 shadow-sm overflow-hidden rounded-4">
+                    <div class="row g-0">
+                        <div class="col-md-5">
+                            {% if event.images.exists %}
+                                <!-- Carousel for multiple images -->
+                                <div id="eventCarousel{{ event.id }}" class="carousel slide h-100" data-bs-ride="carousel">
+                                    <div class="carousel-inner h-100">
+                                        {% for img in event.images.all %}
+                                        <div class="carousel-item {% if forloop.first %}active{% endif %} h-100">
+                                            <img src="{{ img.image.url }}" class="d-block w-100 h-100 object-fit-cover" alt="Event photo" style="min-height: 300px;">
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% if event.images.count > 1 %}
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#eventCarousel{{ event.id }}" data-bs-slide="prev">
+                                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Previous</span>
+                                    </button>
+                                    <button class="carousel-control-next" type="button" data-bs-target="#eventCarousel{{ event.id }}" data-bs-slide="next">
+                                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Next</span>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <div class="bg-light h-100 d-flex align-items-center justify-content-center" style="min-height: 300px;">
+                                    <i class="bi bi-images text-muted opacity-25 display-1"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-7 d-flex flex-column justify-content-center p-4 p-md-5">
+                            <span class="badge mb-3 align-self-start py-2 px-3 text-uppercase tracking-widest fw-bold" style="background: var(--college-primary); color: white; letter-spacing: 1px;">
+                                <i class="bi bi-calendar2-event me-2"></i>{{ event.event_date|date:"F d, Y" }}
+                            </span>
+                            <h3 class="font-heading fw-bold mb-3" style="color: #0f172a;">{{ event.title }}</h3>
+                            <p class="text-muted lh-lg mb-0" style="font-size: 1.05rem;">{{ event.description|linebreaksbr }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
 <!-- Admissions / Enquiry Form Section -->
 <section id="admissions" class="py-5" style="background: linear-gradient(135deg, var(--college-primary) 0%, #1e293b 100%); color: white; position: relative; overflow: hidden;">
     <div class="container py-5">
@@ -678,7 +737,7 @@
                     </li>
                     <li class="d-flex gap-3 mb-3">
                         <i class="bi bi-telephone fs-5 text-white"></i>
-                        <span>(555) 123-4567</span>
+                        <span>{{ college.phone_number|default:"(555) 123-4567" }}</span>
                     </li>
                     <li class="d-flex gap-3">
                         <i class="bi bi-envelope fs-5 text-white"></i>

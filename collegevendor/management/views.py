@@ -1620,3 +1620,81 @@ def promote_students(request):
             messages.error(request, "Please select both From and To classes.")
             
     return render(request, 'management/promote_students.html', {'classes': classes})
+
+# College Events Management
+from colleges.models import CollegeEvent, CollegeEventImage
+from .forms import CollegeEventForm, CollegeEventImageForm
+# College Events Management
+from colleges.models import CollegeEvent, CollegeEventImage
+from .forms import CollegeEventForm, CollegeEventImageForm
+
+@login_required
+def college_event_list(request):
+    if request.user.role != 'COLLEGE_ADMIN':
+        return redirect('dashboard')
+    
+    events = CollegeEvent.objects.filter(college=request.college).order_by('-event_date')
+    return render(request, 'management/college_events_list.html', {'events': events})
+
+@login_required
+def create_college_event(request):
+    if request.user.role != 'COLLEGE_ADMIN':
+        return redirect('dashboard')
+        
+    if request.method == 'POST':
+        form = CollegeEventForm(request.POST)
+        if form.is_valid():
+            event = form.save(commit=False)
+            event.college = request.college
+            event.save()
+            # Images are optional — handle directly from FILES
+            for image in request.FILES.getlist('images'):
+                CollegeEventImage.objects.create(event=event, image=image)
+            messages.success(request, 'College event created successfully.')
+            return redirect('college_event_list')
+    else:
+        form = CollegeEventForm()
+        
+    return render(request, 'management/college_event_form.html', {
+        'form': form,
+        'title': 'Create College Event'
+    })
+
+@login_required
+def edit_college_event(request, event_id):
+    if request.user.role != 'COLLEGE_ADMIN':
+        return redirect('dashboard')
+        
+    event = get_object_or_404(CollegeEvent, id=event_id, college=request.college)
+    
+    if request.method == 'POST':
+        form = CollegeEventForm(request.POST, instance=event)
+        if form.is_valid():
+            form.save()
+            # Add any newly uploaded images
+            for image in request.FILES.getlist('images'):
+                CollegeEventImage.objects.create(event=event, image=image)
+            # Delete images that were checked for removal
+            delete_ids = request.POST.getlist('delete_images')
+            if delete_ids:
+                CollegeEventImage.objects.filter(id__in=delete_ids, event=event).delete()
+            messages.success(request, 'College event updated successfully.')
+            return redirect('college_event_list')
+    else:
+        form = CollegeEventForm(instance=event)
+        
+    return render(request, 'management/college_event_form.html', {
+        'form': form,
+        'event': event,
+        'title': 'Edit College Event'
+    })
+
+@login_required
+def delete_college_event(request, event_id):
+    if request.user.role != 'COLLEGE_ADMIN':
+        return redirect('dashboard')
+        
+    event = get_object_or_404(CollegeEvent, id=event_id, college=request.college)
+    event.delete()
+    messages.success(request, 'College event deleted successfully.')
+    return redirect('college_event_list')

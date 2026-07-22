@@ -40,6 +40,9 @@ def tenant_home(request):
     # Query approved department events
     approved_events = DepartmentEvent.objects.filter(college=college, is_approved=True).order_by('-event_date')
     
+    from colleges.models import CollegeEvent
+    college_events = CollegeEvent.objects.filter(college=college).prefetch_related('images').order_by('-event_date')
+    
     from management.forms import CollegeEnquiryForm
     
     if request.method == 'POST':
@@ -57,6 +60,7 @@ def tenant_home(request):
         'college': college,
         'departments': departments,
         'approved_events': approved_events,
+        'college_events': college_events,
         'enquiry_form': form,
     })
 
@@ -182,17 +186,46 @@ def dashboard(request):
     
     elif user.role == 'HOD':
         profile = getattr(user, 'hod_profile', None)
-        context['stats'] = {'dept': profile.department.name if profile and profile.department else "None"}
+        
         if profile and profile.department:
-            context['timetables'] = TimeTable.objects.filter(department=profile.department)
-            context['exam_notifications'] = ExamNotification.objects.filter(department=profile.department).order_by('-id')[:5]
-            context['teachers_list'] = TeacherProfile.objects.filter(department=profile.department)[:5]
-            # Fetch department events
-            context['department_events'] = DepartmentEvent.objects.filter(department=profile.department).order_by('-created_at')[:5]
+            dept = profile.department
+            teachers_count = TeacherProfile.objects.filter(department=dept).count()
+            students_count = StudentProfile.objects.filter(department=dept).count()
+            
+            # Since Subject model exists, we can count it
+            from management.models import Subject
+            subjects_count = Subject.objects.filter(department=dept).count()
+            
+            # Calculate overall student attendance percentage for the department
+            total_attendances = Attendance.objects.filter(student__department=dept).count()
+            present_attendances = Attendance.objects.filter(student__department=dept, status='PRESENT').count()
+            attendance_pct = int((present_attendances / total_attendances * 100)) if total_attendances > 0 else 0
+            
+            context['stats'] = {
+                'dept': dept.name,
+                'teachers': teachers_count,
+                'students': students_count,
+                'subjects': subjects_count,
+                'attendance_pct': attendance_pct,
+            }
+            
+            context['timetables'] = TimeTable.objects.filter(department=dept)
+            context['exam_notifications'] = ExamNotification.objects.filter(department=dept).order_by('-id')[:5]
+            context['teachers_list'] = TeacherProfile.objects.filter(department=dept)[:5]
+            context['department_events'] = DepartmentEvent.objects.filter(department=dept).order_by('-created_at')[:5]
         else:
-            context['stats'] = {'dept': "None", 'teachers': 0, 'students': 0, 'subjects': 0}
+            context['stats'] = {
+                'dept': "None",
+                'teachers': 0,
+                'students': 0,
+                'subjects': 0,
+                'attendance_pct': 0,
+            }
+            context['timetables'] = []
+            context['exam_notifications'] = []
             context['teachers_list'] = []
             context['department_events'] = []
+            
         return render(request, 'dashboards/hod_dashboard.html', context)
     
     return render(request, 'dashboard.html', context)

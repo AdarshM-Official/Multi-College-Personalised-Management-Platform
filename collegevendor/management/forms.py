@@ -374,3 +374,20 @@ class CollegeEnquiryForm(forms.ModelForm):
             self.fields['course_interested'].queryset = Specialization.objects.filter(college=college)
             self.fields['course_interested'].empty_label = "Select Program / Course"
 
+from colleges.models import CollegeEvent, CollegeEventImage
+
+class CollegeEventForm(forms.ModelForm):
+    class Meta:
+        model = CollegeEvent
+        fields = ['title', 'description', 'event_date']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Annual Sports Day'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Provide details about the event...'}),
+            'event_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        }
+
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+class CollegeEventImageForm(forms.Form):
+    images = forms.ImageField(widget=MultipleFileInput(attrs={'class': 'form-control', 'multiple': True}), required=False)
